@@ -1,0 +1,115 @@
+﻿@page "/PrisonersOverview"
+@using Entities
+@using Contracts
+
+@inject IPrisonerService _prisonerService
+
+<h3>PrisonersOverview</h3>
+
+<AuthorizeView>
+    <NotAuthorized>
+        <p>Log in first to see the content</p>
+    </NotAuthorized>
+    
+    <Authorized>
+        <div class="card">
+            <h2>Add new prisoner:</h2>
+            
+            <div class="field">
+                <label style="text-align: center">SSN:</label>
+                <input type="number" @bind="_newPrisoner.Ssn"/>
+            </div>
+            
+            <div class="field">
+                <label>First name:</label>
+                <input type="text" @bind="_newPrisoner.Firstname"/>
+            </div>
+
+            <div class="field">
+                <label style="text-align: center">Last name:</label>
+                <input type="text" @bind="_newPrisoner.Lastname"/>
+            </div>
+            
+            <div class="field">
+                <label style="text-align: center">Crime comitted:</label>
+                <input type="text" @bind="_newPrisoner.CrimeCommitted"/>
+            </div>
+            
+            <div class="field">
+                <label style="text-align: center">Note:</label>
+                <input type="text" @bind="_newPrisoner.Note"/>
+            </div>
+
+
+            @if (!string.IsNullOrEmpty(_errorLabel))
+            {
+                <div class="field">
+                    <label style="color: red">
+                        @_errorLabel
+                    </label>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(_successLabel))
+            {
+                <div class="field">
+                    <label style="color: green">
+                        @_successLabel
+                    </label>
+                </div>
+            }
+            
+            <div class="field">
+                <button class="btn btn-primary" @onclick="AddPrisonerAsync">Add prisoner</button>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private string _errorLabel = "", _successLabel="";
+    private Prisoner _newPrisoner = new Prisoner();
+    
+    
+    private void AddPrisonerAsync()
+    {
+        _errorLabel = "";
+        _successLabel = "";
+        
+        if (_newPrisoner.Ssn < 100)
+        {
+            _errorLabel += "-invalid SSN [<100???]!\n";
+        }
+        if (string.IsNullOrEmpty(_newPrisoner.Firstname))
+        {
+            _errorLabel += "-field 'First name' must not be empty!\n";
+        }
+        if (string.IsNullOrEmpty(_newPrisoner.Lastname))
+        {
+            _errorLabel += "-field 'Last name' must not be empty!\n";
+        }
+        if (string.IsNullOrEmpty(_newPrisoner.CrimeCommitted))
+        {
+            _errorLabel += "-field 'Crime committed' must not be empty!\n";
+        }
+        if (string.IsNullOrEmpty(_newPrisoner.Note))
+        {
+            _newPrisoner.Note = "";
+        }
+
+        if (string.IsNullOrEmpty(_errorLabel))
+        {
+            Prisoner? addedPrisoner = _prisonerService.AddPrisonerAsync(_newPrisoner);
+            if (addedPrisoner == null)
+            {
+                _errorLabel = "Failed to add new prisoner";
+            }
+            else
+            {
+                _successLabel = $"Prisoner-{addedPrisoner.Id} was added successfully";
+            }
+            
+            _newPrisoner = new Prisoner();
+        }
+    }
+
+}

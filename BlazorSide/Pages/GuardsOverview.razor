@@ -1,0 +1,63 @@
+@page "/GuardsOverview"
+@using Entities
+@using Contracts
+@inject IGuardService _guardService
+<h3>Guards Overview</h3>
+<AuthorizeView>
+    <NotAuthorized>
+        <p>Log in first to see the content</p>
+    </NotAuthorized>
+    
+    <Authorized>
+        <div class="card">
+            <h2>Add new guard:</h2>
+            <div class="field">
+                <label>First name:</label>
+                <input type="text" @bind="_newGuard.FirstName"/>
+            </div>
+
+            <div class="field">
+                <label style="text-align: center">Last name:</label>
+                <input type="text" @bind="_newGuard.LastName"/>
+            </div>
+
+            @if (!string.IsNullOrEmpty(_errorLabel))
+            {
+                <div class="field">
+                    <label style="color: red">
+                        @_errorLabel
+                    </label>
+                </div>
+            }
+
+            <div class="field">
+                <button class="btn btn-primary" @onclick="AddGuardAsync">Add guard: </button>
+            </div>
+        </div>
+    </Authorized>
+</AuthorizeView>
+@code {
+    private string _errorLabel = "";
+    private Guard _newGuard = new Guard();
+    
+    
+
+    private void AddGuardAsync()
+    {
+        _errorLabel = "";
+        if (string.IsNullOrEmpty(_newGuard.FirstName))
+        {
+            _errorLabel += "field 'First name' must not be empty!\n";
+        }
+        if (string.IsNullOrEmpty(_newGuard.LastName))
+        {
+            _errorLabel += "field 'Last name' must not be empty!\n";
+        }
+
+        if (string.IsNullOrEmpty(_errorLabel))
+        {
+            Console.WriteLine(_guardService.CreateGuard(_newGuard));
+            _newGuard = new Guard();
+        }
+    }
+}
