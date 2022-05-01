@@ -6,6 +6,7 @@ using Contracts;
 using Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using RabbitMQClient;
+using RabbitMqClients;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,7 +1,10 @@
 ﻿@page "/PrisonersOverview"
 @using Entities
 @using Contracts
+@using BlazorLoginApp.Authentication
 
+@inject NavigationManager _navMgr
+@inject IAuthService _authService
 @inject IPrisonerService _prisonerService
 
 <h3>PrisonersOverview</h3>
@@ -12,104 +15,94 @@
     </NotAuthorized>
     
     <Authorized>
-        <div class="card">
-            <h2>Add new prisoner:</h2>
-            
+        @if (!string.IsNullOrEmpty(_errorLabel))
+        {
             <div class="field">
-                <label style="text-align: center">SSN:</label>
-                <input type="number" @bind="_newPrisoner.Ssn"/>
+                <label style="color: red">
+                    @_errorLabel
+                </label>
             </div>
-            
+        }
+        
+        @if (!string.IsNullOrEmpty(_successLabel))
+        {
             <div class="field">
-                <label>First name:</label>
-                <input type="text" @bind="_newPrisoner.Firstname"/>
+                <label style="color: green">
+                    @_successLabel
+                </label>
             </div>
-
-            <div class="field">
-                <label style="text-align: center">Last name:</label>
-                <input type="text" @bind="_newPrisoner.Lastname"/>
+        }
+        
+        @if (_filteredPrisoners == null)
+        {
+            <p>failed to fetch</p>
+        }
+        else if (_filteredPrisoners.Count == 0)
+        {
+            <p>no prisoners; (empty)</p>
+        }
+        else
+        {
+            <div>
+                <table class="table align-middle">
+                    <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">First name</th>
+                        <th scope="col">Last name</th>
+                        <th scope="col">SSN</th>
+                        <th scope="col">detail</th>
+                    </tr>
+                    </thead>
+                
+                    <tbody>
+                    @foreach (var p in _filteredPrisoners)
+                    {
+                        <tr>
+                            <th scope="row">@p.Id</th>
+                            <td>@p.Firstname</td>
+                            <td>@p.Lastname</td>
+                            <td>@p.Ssn</td>
+                            <td>
+                                <button @onclick="@(() => PrisonerDetail(p.Id))" type="button" class="btn btn-link btn-sm px-3" data-ripple-color="dark">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
             </div>
-            
-            <div class="field">
-                <label style="text-align: center">Crime comitted:</label>
-                <input type="text" @bind="_newPrisoner.CrimeCommitted"/>
-            </div>
-            
-            <div class="field">
-                <label style="text-align: center">Note:</label>
-                <input type="text" @bind="_newPrisoner.Note"/>
-            </div>
-
-
-            @if (!string.IsNullOrEmpty(_errorLabel))
-            {
-                <div class="field">
-                    <label style="color: red">
-                        @_errorLabel
-                    </label>
-                </div>
-            }
-            @if (!string.IsNullOrEmpty(_successLabel))
-            {
-                <div class="field">
-                    <label style="color: green">
-                        @_successLabel
-                    </label>
-                </div>
-            }
-            
-            <div class="field">
-                <button class="btn btn-primary" @onclick="AddPrisonerAsync">Add prisoner</button>
-            </div>
+        }
+        
+        
+        <div class="field">
+            <button class="btn btn-primary" @onclick="AddPrisoner">+ Add prisoner</button>
         </div>
+
     </Authorized>
 </AuthorizeView>
 
 @code {
     private string _errorLabel = "", _successLabel="";
-    private Prisoner _newPrisoner = new Prisoner();
-    
-    
-    private void AddPrisonerAsync()
-    {
-        _errorLabel = "";
-        _successLabel = "";
-        
-        if (_newPrisoner.Ssn < 100)
-        {
-            _errorLabel += "-invalid SSN [<100???]!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.Firstname))
-        {
-            _errorLabel += "-field 'First name' must not be empty!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.Lastname))
-        {
-            _errorLabel += "-field 'Last name' must not be empty!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.CrimeCommitted))
-        {
-            _errorLabel += "-field 'Crime committed' must not be empty!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.Note))
-        {
-            _newPrisoner.Note = "";
-        }
 
-        if (string.IsNullOrEmpty(_errorLabel))
-        {
-            Prisoner? addedPrisoner = _prisonerService.AddPrisonerAsync(_newPrisoner);
-            if (addedPrisoner == null)
-            {
-                _errorLabel = "Failed to add new prisoner";
-            }
-            else
-            {
-                _successLabel = $"Prisoner-{addedPrisoner.Id} was added successfully";
-            }
-            
-            _newPrisoner = new Prisoner();
-        }
+    private ICollection<Prisoner>? _allPrisoners;
+    private ICollection<Prisoner>? _filteredPrisoners;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _allPrisoners = await _prisonerService.GetPrisonersAsync();
+        _filteredPrisoners = _allPrisoners;
+    }
+
+    private void AddPrisoner()
+    {
+        _navMgr.NavigateTo("/AddPrisoner");
+    }
+
+    private void PrisonerDetail(long pId)
+    {
+        _navMgr.NavigateTo($"PrisonerDetail/{pId}");
     }
 
 }

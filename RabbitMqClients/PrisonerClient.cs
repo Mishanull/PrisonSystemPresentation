@@ -6,7 +6,7 @@ using Entities;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace RabbitMQClient;
+namespace RabbitMqClients;
 
 public class PrisonerClient : IPrisonerService
 {
@@ -16,6 +16,8 @@ public class PrisonerClient : IPrisonerService
     private readonly EventingBasicConsumer consumer;
     private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> callbackMapper = new();
     private readonly string replyQueueName;
+
+    private const string Exchange = "prisoner.exchange";
 
     public PrisonerClient()
     {
@@ -50,7 +52,7 @@ public class PrisonerClient : IPrisonerService
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(prisoner));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "prisoner.exchange", routingKey: "prisoner.add", basicProperties: props, body: messageBytes);
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.add", basicProperties: props, body: messageBytes);
         Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         
@@ -66,11 +68,84 @@ public class PrisonerClient : IPrisonerService
 
     public string RemovePrisonerAsync(Prisoner releasedPrisoner)
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(releasedPrisoner));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.remove", basicProperties: props, body: messageBytes);
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        string msg = JsonSerializer.Deserialize<string>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        
+        return msg;
     }
 
-    public Prisoner GetPrisonerByIdAsync(long prisonerId)
+    public async Task<Prisoner> GetPrisonerByIdAsync(long prisonerId)
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(prisonerId));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getById", basicProperties: props, body: messageBytes);
+    
+        Console.WriteLine("message published login");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        Prisoner p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return p;
+    }
+
+    public async Task<ICollection<Prisoner>?> GetPrisonersAsync()
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.get", basicProperties: props, body: messageBytes);
+    
+        Console.WriteLine("message published login");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        try
+        {
+            ICollection<Prisoner>? ps = JsonSerializer.Deserialize<ICollection<Prisoner>>(response, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            })!;
+            return ps;
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
     }
 }

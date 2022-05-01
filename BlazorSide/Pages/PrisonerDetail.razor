@@ -1,0 +1,25 @@
+﻿@page "/PrisonerDetail/{pId:int}"
+@using Entities
+@using Contracts
+@inject IPrisonerService _prisonerService
+
+<h3>PrisonerDetail</h3>
+
+<div>
+    <p>prisoner n.: @_prisoner.Id</p>
+    <p>name: @_prisoner.Firstname @_prisoner.Lastname</p>
+    <p>ToDo ...</p>
+</div>
+
+
+@code {
+    [Parameter]
+    public int pId { get; set; }
+    private Prisoner _prisoner;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _prisoner = await _prisonerService.GetPrisonerByIdAsync(pId);
+    }
+
+}
