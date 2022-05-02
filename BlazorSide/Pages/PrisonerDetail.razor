@@ -1,26 +1,73 @@
-﻿@page "/PrisonerDetail/{pId:int}"
+﻿@page "/PrisonerDetail/{pId:long}"
+
 @using Entities
 @using Contracts
+
+@inject NavigationManager _navMgr
 @inject IPrisonerService _prisonerService
 
 <h3>PrisonerDetail</h3>
 
 <div>
-    <p>prisoner n.: @_prisoner.Id</p>
-    <p>name: @_prisoner.Firstname @_prisoner.Lastname</p>
-    <p>note: @_prisoner.Note</p>
-    <p>ToDo ...</p>
+    @if (!string.IsNullOrEmpty(_errorLabel))
+    {
+        <div class="field">
+            <label style="color: red">
+                @_errorLabel
+            </label>
+        </div>
+    }
+
+    @if (_prisoner == null)
+    {
+        <p>failed to fetch data of prisoner n.@PId</p>
+    }
+    else
+    {
+        <p>prisoner n.: @_prisoner.Id</p>
+        <p>name: @_prisoner.FirstName @_prisoner.LastName</p>
+        <p>note: @_prisoner.Note</p>
+        <p>ToDo ...</p>
+                
+        <button @onclick="EditPrisoner">Edit</button>
+        <button @onclick="DeletePrisoner">Delete</button>
+    }
 </div>
 
 
 @code {
     [Parameter]
-    public int pId { get; set; }
-    private Prisoner _prisoner;
+    public long PId { get; set; }
+    private Prisoner? _prisoner;
+
+    private string _errorLabel="";
 
     protected override async Task OnInitializedAsync()
     {
-        _prisoner = await _prisonerService.GetPrisonerByIdAsync(pId);
+        _prisoner = await _prisonerService.GetPrisonerByIdAsync(PId);
     }
 
+    private void EditPrisoner()
+    {
+        if (_prisoner == null)
+        {
+            _errorLabel = "unable to edit prisoner's data";
+        }
+        else
+        {
+            _navMgr.NavigateTo("/EditPrisoner");
+        }
+    }
+
+    private void DeletePrisoner()
+    {
+        if (_prisoner == null)
+        {
+            _errorLabel = "unable to delete prisoner data";
+        }
+        else
+        {
+            _prisonerService.RemovePrisonerAsync(_prisoner);
+        }
+    }
 }

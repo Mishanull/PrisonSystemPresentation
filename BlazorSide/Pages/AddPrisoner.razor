@@ -24,12 +24,12 @@
             
             <div class="field">
                 <label>First name:</label>
-                <input type="text" @bind="_newPrisoner.Firstname"/>
+                <input type="text" @bind="_newPrisoner.FirstName"/>
             </div>
 
             <div class="field">
                 <label style="text-align: center">Last name:</label>
-                <input type="text" @bind="_newPrisoner.Lastname"/>
+                <input type="text" @bind="_newPrisoner.LastName"/>
             </div>
             
             <div class="field">
@@ -72,7 +72,7 @@
     private Prisoner _newPrisoner = new Prisoner();
     
     
-    private void AddPrisonerAsync()
+    private async Task AddPrisonerAsync()
     {
         _errorLabel = "";
         _successLabel = "";
@@ -81,11 +81,11 @@
         {
             _errorLabel += "-invalid SSN [<100???]!\n";
         }
-        if (string.IsNullOrEmpty(_newPrisoner.Firstname))
+        if (string.IsNullOrEmpty(_newPrisoner.FirstName))
         {
             _errorLabel += "-field 'First name' must not be empty!\n";
         }
-        if (string.IsNullOrEmpty(_newPrisoner.Lastname))
+        if (string.IsNullOrEmpty(_newPrisoner.LastName))
         {
             _errorLabel += "-field 'Last name' must not be empty!\n";
         }
@@ -100,7 +100,7 @@
 
         if (string.IsNullOrEmpty(_errorLabel))
         {
-            Prisoner? addedPrisoner = _prisonerService.AddPrisonerAsync(_newPrisoner);
+            Prisoner? addedPrisoner = await _prisonerService.AddPrisonerAsync(_newPrisoner);
             if (addedPrisoner == null)
             {
                 _errorLabel = "Failed to add new prisoner";

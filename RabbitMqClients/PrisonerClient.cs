@@ -41,7 +41,7 @@ public class PrisonerClient : IPrisonerService
     }
     
     
-    public Prisoner AddPrisonerAsync(Prisoner prisoner)
+    public async Task<Prisoner> AddPrisonerAsync(Prisoner prisoner)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -66,7 +66,7 @@ public class PrisonerClient : IPrisonerService
         return p;
     }
 
-    public string RemovePrisonerAsync(Prisoner releasedPrisoner)
+    public async Task<string> RemovePrisonerAsync(Prisoner releasedPrisoner)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -91,7 +91,7 @@ public class PrisonerClient : IPrisonerService
         return msg;
     }
 
-    public async Task<Prisoner> GetPrisonerByIdAsync(long prisonerId)
+    public async Task<Prisoner?> GetPrisonerByIdAsync(long prisonerId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -109,7 +109,7 @@ public class PrisonerClient : IPrisonerService
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        Prisoner p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
+        Prisoner? p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         })!;

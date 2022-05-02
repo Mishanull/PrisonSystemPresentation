@@ -9,4 +9,6 @@ public interface IAuthService
     public Task LogoutAsync();
     public Task<ClaimsPrincipal> GetAuthAsync();
     public Action<ClaimsPrincipal> OnAuthStateChanged { get; set; }
+
+    public User getLoggedUser();
 }

@@ -33,11 +33,11 @@
             </div>
         }
         
-        @if (_filteredPrisoners == null)
+        @if (_prisonersToShow == null)
         {
             <p>failed to fetch</p>
         }
-        else if (_filteredPrisoners.Count == 0)
+        else if (_prisonersToShow.Count == 0)
         {
             <p>no prisoners; (empty)</p>
         }
@@ -55,12 +55,12 @@
                     </thead>
                 
                     <tbody>
-                    @foreach (var p in _filteredPrisoners)
+                    @foreach (var p in _prisonersToShow)
                     {
                         <tr @onclick="@(() => PrisonerDetail(p.Id))">
                             <th scope="row">@p.Id</th>
-                            <td>@p.Firstname</td>
-                            <td>@p.Lastname</td>
+                            <td>@p.FirstName</td>
+                            <td>@p.LastName</td>
                             <td>@p.Ssn</td>
                         </tr>
                     }
@@ -80,13 +80,15 @@
 @code {
     private string _errorLabel = "", _successLabel="";
 
-    private ICollection<Prisoner>? _allPrisoners;
-    private ICollection<Prisoner>? _filteredPrisoners;
+    private ICollection<Prisoner>? _allPrisoners, _prisonersToShow;
 
     protected override async Task OnInitializedAsync()
     {
-        _allPrisoners = await _prisonerService.GetPrisonersAsync();
-        _filteredPrisoners = _allPrisoners;
+        if (_authService.getLoggedUser() != null)
+        {
+            _allPrisoners = await _prisonerService.GetPrisonersAsync();
+            _prisonersToShow = _allPrisoners;
+        }
     }
 
     private void AddPrisoner()

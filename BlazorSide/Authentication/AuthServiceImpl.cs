@@ -12,6 +12,13 @@ public class AuthServiceImpl : IAuthService
     public Action<ClaimsPrincipal> OnAuthStateChanged { get; set; } = null!; // assigning to null! to suppress null warning.
     private readonly IUserService userService;
     private readonly IJSRuntime jsRuntime;
+
+    private User? _loggedUser = null;
+    public User getLoggedUser()
+    {
+        return _loggedUser!;
+    }
+
     public AuthServiceImpl(IUserService userService, IJSRuntime jsRuntime)
     {
         this.userService = userService;
@@ -21,6 +28,7 @@ public class AuthServiceImpl : IAuthService
     public async Task LoginAsync(string username, string password)
     {
         User? user = await userService.GetUserAsync(username); // Get user from database
+        _loggedUser = user;
 
         ValidateLoginCredentials(password, user); // Validate input data against data from database
         // validation success
