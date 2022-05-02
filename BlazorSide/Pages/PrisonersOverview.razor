@@ -51,23 +51,17 @@
                         <th scope="col">First name</th>
                         <th scope="col">Last name</th>
                         <th scope="col">SSN</th>
-                        <th scope="col">detail</th>
                     </tr>
                     </thead>
                 
                     <tbody>
                     @foreach (var p in _filteredPrisoners)
                     {
-                        <tr>
+                        <tr @onclick="@(() => PrisonerDetail(p.Id))">
                             <th scope="row">@p.Id</th>
                             <td>@p.Firstname</td>
                             <td>@p.Lastname</td>
                             <td>@p.Ssn</td>
-                            <td>
-                                <button @onclick="@(() => PrisonerDetail(p.Id))" type="button" class="btn btn-link btn-sm px-3" data-ripple-color="dark">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </td>
                         </tr>
                     }
                     </tbody>
