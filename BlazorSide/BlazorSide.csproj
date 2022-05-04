@@ -12,4 +12,8 @@
       <ProjectReference Include="..\RabbitMqClients\RabbitMqClients.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Remove="wwwroot\img\200.gif" />
+    </ItemGroup>
+
 </Project>

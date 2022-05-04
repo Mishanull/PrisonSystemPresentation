@@ -1,0 +1,57 @@
+﻿@page "/PrisonersOptions"
+@using Entities
+@using Contracts
+@using BlazorLoginApp.Authentication
+
+@inject NavigationManager _navMgr
+@inject IAuthService _authService
+@inject IPrisonerService _prisonerService
+
+
+<AuthorizeView>
+
+    <Authorized>
+       
+        <div class="row">
+                <div class="col-md-6 m-0">
+                    <div class="card">
+                        
+                        <a @onclick="AddPrisoner">
+                            <button class="border-0 p-0"><img src="img/more.png" height="100" width="100" style="background-color: white;"/></button>
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">Add New Inmate</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 m-0">
+                    <div class="card">
+                        <a @onclick="PrisonersOverview">
+                            <button class="border-0 p-0 ripple-surface"><img src="img/file.png" height="100" width="100" style="background-color: white;"/></button>
+                            </a>
+                        <div class="card-body">
+                            <h5 class="card-title">Inmates Overview</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+        <!--Old table -->
+        
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    
+    
+
+    private async Task AddPrisoner()
+    {
+       _navMgr.NavigateTo($"/AddPrisoner");
+    }
+    private async Task PrisonersOverview()
+    {
+        _navMgr.NavigateTo($"/PrisonersOverview");
+    }
+
+}

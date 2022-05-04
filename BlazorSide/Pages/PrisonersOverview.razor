@@ -7,7 +7,6 @@
 @inject IAuthService _authService
 @inject IPrisonerService _prisonerService
 
-<h3>PrisonersOverview</h3>
 
 <AuthorizeView>
     <NotAuthorized>
@@ -32,10 +31,11 @@
                 </label>
             </div>
         }
-        
+                <!--Old table -->
         @if (_prisonersToShow == null)
         {
-            <p>failed to fetch</p>
+            <p>Loading..</p>
+        
         }
         else if (_prisonersToShow.Count == 0)
         {
@@ -44,35 +44,76 @@
         else
         {
             <div>
-                <table class="table align-middle">
-                    <thead>
+                <table class="table align-middle mb-0 bg-white">
+                    <thead class="bg-light">
                     <tr>
                         <th scope="col">ID</th>
                         <th scope="col">First name</th>
                         <th scope="col">Last name</th>
                         <th scope="col">SSN</th>
+                        <th scope="col">Actions</th>
                     </tr>
                     </thead>
-                
+        
                     <tbody>
                     @foreach (var p in _prisonersToShow)
                     {
-                        <tr @onclick="@(() => PrisonerDetail(p.Id))">
-                            <th scope="row">@p.Id</th>
-                            <td>@p.FirstName</td>
-                            <td>@p.LastName</td>
-                            <td>@p.Ssn</td>
+                        
+                        <tr>
+                            
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img
+                                      src="img/download.png"
+                                      class="rounded-circle"
+                                      alt=""
+                                      style="width: 45px; height: 45px"
+                                      />
+                                    <div class="ms-3">
+                                        <p class="fw-bold mb-1">@p.Id</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@p.FirstName</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@p.LastName</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@p.Ssn</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <a @onclick="@((() => PrisonerDetail(p.Id)))">
+                                <button
+                                    type="button"
+                                    class="btn btn-link btn-rounded btn-sm fw-bold"
+                                    data-mdb-ripple-color="dark">
+                                    Edit
+                                </button>
+                                </a>
+                            </td>
                         </tr>
                     }
                     </tbody>
                 </table>
             </div>
-        }
+            
+        } 
         
-        
-        <div class="field">
-            <button class="btn btn-primary" @onclick="AddPrisoner">+ Add prisoner</button>
-        </div>
+       
 
     </Authorized>
 </AuthorizeView>
