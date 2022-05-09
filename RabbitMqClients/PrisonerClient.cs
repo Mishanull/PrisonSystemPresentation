@@ -41,7 +41,7 @@ public class PrisonerClient : IPrisonerService
     }
     
     
-    public async Task<Prisoner> AddPrisonerAsync(Prisoner prisoner)
+    public async Task<Prisoner> AddPrisonerAsync(Prisoner? prisoner)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -147,5 +147,30 @@ public class PrisonerClient : IPrisonerService
         {
             return null;
         }
+    }
+
+    public async Task<Prisoner?> UpdatePrisonerAsync(Prisoner newPrisoner)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newPrisoner));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.update", basicProperties: props, body: messageBytes);
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        Prisoner p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        
+        return p;
     }
 }
