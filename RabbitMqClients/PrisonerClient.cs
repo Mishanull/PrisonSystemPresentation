@@ -159,7 +159,8 @@ public class PrisonerClient : IPrisonerService
         
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newPrisoner));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
+        callbackMapper.TryAdd(correlationId, tcs); 
+        
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.update", basicProperties: props, body: messageBytes);
         Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
