@@ -45,50 +45,57 @@
     {
         if (Id.HasValue)
         {
-            editedGuard = await _guardService.GetGuard(Id.Value);
+            editedGuard = await _guardService.GetGuardByIdAsync(Id.Value);
         }
         await base.OnParametersSetAsync();
     }
 
     private async Task EditGuard()
     {
-        try
-        {
+        
             var parameters = new ModalParameters();
             parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to edit the information about the guard?");
             var modalRef=_modalService.Show<ActionConfirm>("Success",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
-                await _guardService.UpdateGuard(editedGuard);
-                _navMgr.NavigateTo("/GuardsOverview");
+                try
+                {
+                    await _guardService.UpdateGuardAsync(editedGuard);
+                    _navMgr.NavigateTo("/GuardsOverview");
+
+                }
+                catch (Exception e)
+                {
+                    parameters.Add(nameof(ActionConfirm.Message),e.Message);
+                    _modalService.Show<ActionConfirm>("Failure", parameters);
+                }
+            
             }
-        }
-        catch (Exception e)
-        {
-            errorLabel = e.Message;
-        }
     }
 
 
     private async Task DeleteGuard()
     {
-        try
-        {
-            var parameters = new ModalParameters();
+        var parameters = new ModalParameters();
             parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to delete the information about the guard? WARNING: You cannot undo this action");
             var modalRef=_modalService.Show<ActionConfirm>("Delete",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
-                await _guardService.DeleteGuard(Id.Value);
-                _navMgr.NavigateTo("/GuardsOverview");
+                try
+                {
+                    await _guardService.RemoveGuardAsync(editedGuard.Id);
+                    _navMgr.NavigateTo("/GuardsOverview");
+                }
+                catch (Exception e)
+                {
+                    parameters.Add(nameof(ActionConfirm.Message),e.Message);
+                    _modalService.Show<ActionConfirm>("Failure", parameters);
+                }
             }
-        }
-        catch (Exception e)
-        {
-            errorLabel = e.Message;
-        }
+        
+       
     }
 
 }

@@ -35,47 +35,49 @@
     private IModalService Modal { get; set; }
     private async Task AddNewGuard()
     {
-        try
-        {
+        
             var parameters = new ModalParameters();
-            parameters.Add(nameof(ChoiceModal.Message),"Guard added succesfully");
+            parameters.Add(nameof(ChoiceModal.Message),"Guard added successfully");
             parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
             parameters.Add(nameof(ChoiceModal.SecondButton),"Go to Guards Overview");
             parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Guard");
-            
-            await _guardService.CreateGuard(newGuard);
-            newGuard = new Guard();
-            var modalRef=_modalService.Show<ChoiceModal>("Success",parameters);
-            var result = await modalRef.Result;
-            if (!result.Cancelled)
+            try
             {
-                string? message;
-                message = result.Data?.ToString() ?? string.Empty;
-                switch (message)
+                await _guardService.CreateGuardAsync(newGuard);
+                newGuard = new Guard();
+                var modalRef=_modalService.Show<ChoiceModal>("Success",parameters);
+                var result = await modalRef.Result;
+                if (!result.Cancelled)
                 {
-                    case "Go back":
+                    string? message;
+                    message = result.Data?.ToString() ?? string.Empty;
+                    switch (message)
                     {
-                        await BackToOptions();
-                        break;
-                    }
-                    case "Go to Guards Overview":
-                    {
-                        await GoToOverview();
-                        break;
-                    }
-                    case "Add Another Guard":
-                    {
-                        await BackToAdd();
-                        break;
+                        case "Go back":
+                        {
+                            await BackToOptions();
+                            break;
+                        }
+                        case "Go to Guards Overview":
+                        {
+                            await GoToOverview();
+                            break;
+                        }
+                        case "Add Another Guard":
+                        {
+                            await BackToAdd();
+                            break;
+                        }
                     }
                 }
             }
+            catch (Exception e)
+            {
+                errorLabel = e.Message;
+            }
+            
         }
-        catch (Exception e)
-        {
-            errorLabel = e.Message;
-        }
-    }
+    
 
     private async Task BackToAdd()
     {

@@ -42,7 +42,7 @@ public class GuardClient : IGuardService
            
     }
 
-    public async Task<Guard> GetGuard(long id)
+    public async Task<Guard> GetGuardByIdAsync(long id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -59,6 +59,10 @@ public class GuardClient : IGuardService
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to fetch guard.");
+        }
         Guard g = JsonSerializer.Deserialize<Guard>(response, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
@@ -66,7 +70,7 @@ public class GuardClient : IGuardService
         return g;
     }
 
-    public async Task<ICollection<Guard>> GetGuards(int number)
+    public async Task<ICollection<Guard>> GetGuardsAsync(int number)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -83,21 +87,18 @@ public class GuardClient : IGuardService
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        try
+        if (response.Equals("fail"))
         {
+            throw new Exception("Failed to fetch guards.");
+        }
             ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             })!;
             return g;
-        }
-        catch (Exception e)
-        {
-            return null;
-        }
     }
 
-    public async Task<string> CreateGuard(Guard guard)
+    public async Task CreateGuardAsync(Guard guard)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -118,16 +119,13 @@ public class GuardClient : IGuardService
         Console.WriteLine("message published guard/add");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
-        Guard confirm = JsonSerializer.Deserialize<Guard>(response, new JsonSerializerOptions
+        if (response.Equals("fail"))
         {
-            PropertyNameCaseInsensitive = true
-        })!;
-        Console.WriteLine(confirm+" guard/add");
-
-        return "confirmed";
+            throw new Exception("Failed to create guard.");
+        }
     }
 
-    public async Task<string> DeleteGuard(long id)
+    public async Task RemoveGuardAsync(long id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -144,11 +142,14 @@ public class GuardClient : IGuardService
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to remove guard.");
+        }
         
-        return response;
     }
 
-    public async Task<string> UpdateGuard(Guard guard)
+    public async Task UpdateGuardAsync(Guard guard)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -166,8 +167,10 @@ public class GuardClient : IGuardService
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        
-        return response;
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to update guard.");
+        }
     }
 
  

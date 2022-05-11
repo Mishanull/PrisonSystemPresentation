@@ -60,15 +60,23 @@
         }
     }
 
-    private void DeletePrisoner()
+    private async Task DeletePrisoner()
     {
         if (_prisoner == null)
         {
-            _errorLabel = "unable to delete prisoner data";
+            _errorLabel = "unable to retrieve prisoner data";
         }
         else
         {
-            _prisonerService.RemovePrisonerAsync(_prisoner);
+            try
+            {
+                await _prisonerService.RemovePrisonerAsync(PId);
+                _navMgr.NavigateTo("/PrisonersOverview");
+            }
+            catch (Exception e)
+            {
+                _errorLabel = e.Message;
+            }
         }
     }
 }

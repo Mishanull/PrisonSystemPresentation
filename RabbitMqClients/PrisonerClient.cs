@@ -41,7 +41,7 @@ public class PrisonerClient : IPrisonerService
     }
     
     
-    public async Task<Prisoner> AddPrisonerAsync(Prisoner? prisoner)
+    public async Task CreatePrisonerAsync(Prisoner? prisoner)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -58,15 +58,14 @@ public class PrisonerClient : IPrisonerService
         
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        Prisoner p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
+        if (response.Equals("fail"))
         {
-            PropertyNameCaseInsensitive = true
-        })!;
+            throw new Exception("Prisoner failed to create.");
+        }
         
-        return p;
     }
 
-    public async Task<string> RemovePrisonerAsync(Prisoner releasedPrisoner)
+    public async Task RemovePrisonerAsync(long id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -74,7 +73,7 @@ public class PrisonerClient : IPrisonerService
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
         
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(releasedPrisoner));
+        var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.remove", basicProperties: props, body: messageBytes);
@@ -83,12 +82,10 @@ public class PrisonerClient : IPrisonerService
         
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        string msg = JsonSerializer.Deserialize<string>(response, new JsonSerializerOptions
+        if (response.Equals("fail"))
         {
-            PropertyNameCaseInsensitive = true
-        })!;
-        
-        return msg;
+            throw new Exception("Failed to remove prisoner");
+        }
     }
 
     public async Task<Prisoner?> GetPrisonerByIdAsync(long prisonerId)
@@ -149,7 +146,7 @@ public class PrisonerClient : IPrisonerService
         }
     }
 
-    public async Task<Prisoner?> UpdatePrisonerAsync(Prisoner newPrisoner)
+    public async Task UpdatePrisonerAsync(Prisoner newPrisoner)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -167,11 +164,9 @@ public class PrisonerClient : IPrisonerService
         
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        Prisoner p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
+        if (response.Equals("fail"))
         {
-            PropertyNameCaseInsensitive = true
-        })!;
-        
-        return p;
+            throw new Exception("Failed to update prisoner");
+        }
     }
 }

@@ -9,7 +9,6 @@
 <div class="row container"><h5>Choose how you want to see the guards: </h5></div>
 <br/>
 <div class="row container w-25">
-    
     <SfDropDownList  TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
         <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
     </SfDropDownList>
@@ -140,7 +139,7 @@
     private ICollection<Guard>? guards;
     protected  override async Task OnInitializedAsync()
     {
-        guards = await _guardService.GetGuards(20);
+        guards = await _guardService.GetGuardsAsync(20);
     }
     public string[] Options = Enum.GetNames(typeof(OptionsValues));
 

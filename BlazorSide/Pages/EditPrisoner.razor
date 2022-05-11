@@ -114,18 +114,15 @@
 
         if (string.IsNullOrEmpty(_errorLabel))
         {
-            Prisoner? editedPrisoner = await _prisonerService.UpdatePrisonerAsync(_newPrisoner);
-            if (editedPrisoner == null)
+            try
             {
-                _errorLabel = "Failed to edit chosen prisoner";
+                await _prisonerService.UpdatePrisonerAsync(_newPrisoner);
+                _navMgr.NavigateTo($"/PrisonerDetail/{PId}");
             }
-            else
-            {
-                _successLabel = $"Prisoner-{editedPrisoner.Id} was edited successfully";
-                _navMgr.NavigateTo($"/PrisonerDetail/{editedPrisoner.Id}");
+            catch(Exception e){
+                _errorLabel = e.Message;
+
             }
-            
-            _newPrisoner = new Prisoner();
         }
     }
 }
