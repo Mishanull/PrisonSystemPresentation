@@ -52,7 +52,7 @@ public class GuardClient : IGuardService
         var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "sep3.prison", routingKey: "guard.get", basicProperties: props,
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getById", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
@@ -76,18 +76,25 @@ public class GuardClient : IGuardService
         var messageBytes = Encoding.UTF8.GetBytes(number.ToString());
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "sep3.prison", routingKey: "guard.all", basicProperties: props,
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guards.get", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
+        try
         {
-            PropertyNameCaseInsensitive = true
-        })!;
-        return g;
+            ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            })!;
+            return g;
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
     }
 
     public async Task<string> CreateGuard(Guard guard)
@@ -97,11 +104,6 @@ public class GuardClient : IGuardService
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
-        guard.Id = 2;
-        guard.Email = "test@email.com";
-        guard.PhoneNumber = "123123213";
-        guard.Password = "213123asad";
-        guard.Username = "facjsad";
         String guardToSend = JsonSerializer.Serialize(guard,new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -135,18 +137,15 @@ public class GuardClient : IGuardService
         var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "sep3.prison", routingKey: "guard.remove", basicProperties: props,
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.remove", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        string confirm = JsonSerializer.Deserialize<string>(response, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        })!;
-        return confirm;
+        
+        return response;
     }
 
     public async Task<string> UpdateGuard(Guard guard)
@@ -160,18 +159,15 @@ public class GuardClient : IGuardService
         var messageBytes = Encoding.UTF8.GetBytes(guardToSend);
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "sep3.prison", routingKey: "guard.update", basicProperties: props,
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.update", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-        string confirm = JsonSerializer.Deserialize<string>(response, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        })!;
-        return confirm;
+        
+        return response;
     }
 
  

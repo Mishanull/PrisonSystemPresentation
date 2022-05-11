@@ -4,9 +4,9 @@ namespace Contracts;
 
 public interface IPrisonerService
 {
-    Task<Prisoner> AddPrisonerAsync(Prisoner? newPrisoner);
-    Task<string> RemovePrisonerAsync(Prisoner releasedPrisoner);
-    Task<Prisoner?> GetPrisonerByIdAsync(long prisonerId);
-    Task<ICollection<Prisoner>?> GetPrisonersAsync();
-    Task<Prisoner?> UpdatePrisonerAsync(Prisoner newPrisoner);
+    public Task<Prisoner> AddPrisonerAsync(Prisoner? newPrisoner);
+    public Task<string> RemovePrisonerAsync(Prisoner releasedPrisoner);
+    public Task<Prisoner?> GetPrisonerByIdAsync(long prisonerId);
+    public Task<ICollection<Prisoner>?> GetPrisonersAsync();
+    public Task<Prisoner?> UpdatePrisonerAsync(Prisoner newPrisoner);
 }

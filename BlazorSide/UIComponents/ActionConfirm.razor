@@ -1,0 +1,25 @@
+﻿@using RabbitMQ.Client
+<div class="modal fade show d-block mt-5" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050"> 
+        <div class="modal-content">
+            <div class="modal-body">
+                <p>@Message</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" @onclick="Close">Yes</button>
+                <button type="button" class="btn btn-primary" @onclick="Cancel">No</button>
+
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+
+    [CascadingParameter]
+    BlazoredModalInstance BlazoredModal { get; set; }=default! ;
+
+  [Parameter] public String? Message { get; set; }
+    async Task Close() => await BlazoredModal.CloseAsync(ModalResult.Ok(true));
+    async Task Cancel() => await BlazoredModal.CancelAsync();
+}

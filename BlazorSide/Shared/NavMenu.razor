@@ -1,6 +1,9 @@
 ﻿@using BlazorLoginApp.Authentication
- @inject IAuthService authService
+@using BlazorSide.UIComponents
+@inject IAuthService authService
+@inject IModalService _modalService
 @inject NavigationManager navMgr
+
 
 
 
@@ -26,7 +29,7 @@
       <!-- Search form -->
       <span class="nav-item me-3 me-lg-0 my-auto">
                 <a class="nav-link" @onclick="Logout" >
-                  <i class="bi bi-box-arrow-in-left" aria-label="Login"></i>
+                  <i class="bi bi-box-arrow-in-left" ></i>
                 </a>
         </span>
 
@@ -87,15 +90,24 @@
     private bool collapseNavMenu = true;
     private string? NavBarCssClass => collapseNavMenu ? null : "show";
     private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
-
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
     private async Task Logout()
     {
-        await authService.LogoutAsync();
-        navMgr.NavigateTo("/");
+      var parameters = new ModalParameters();
+      parameters.Add(nameof(ActionConfirm.Message), "Are you sure you want to log out?");
+      var modal=_modalService.Show<ActionConfirm>("Log Out",parameters);
+      var result = await modal.Result;
+      if (result.Cancelled)
+      {
+        return;
+      }
+      await authService.LogoutAsync();
+      navMgr.NavigateTo("/");
     }
 
 }

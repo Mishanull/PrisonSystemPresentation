@@ -1,0 +1,54 @@
+﻿@page "/GuardsOptions"
+@using BlazorLoginApp.Authentication
+@using Contracts
+@inject NavigationManager _navMgr
+@inject IAuthService _authService
+@inject IGuardService _prisonerService
+
+
+
+<AuthorizeView>
+
+    <Authorized>
+       
+        <div class="row">
+                <div class="col-md-6 m-0">
+                    <div class="card">
+                        
+                        <a @onclick="AddGuard">
+                            <button class="border-0 p-0"><img src="img/more.png" height="100" width="100" style="background-color: white;"/></button>
+                        </a>
+                        <div class="card-body">
+                            <h5 class="card-title">Add New Guard</h5>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 m-0">
+                    <div class="card">
+                        <a @onclick="GuardsOverview">
+                            <button class="border-0 p-0 ripple-surface"><img src="img/file.png" height="100" width="100" style="background-color: white;"/></button>
+                            </a>
+                        <div class="card-body">
+                            <h5 class="card-title">Guards Overview</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    
+    
+
+    private async Task AddGuard()
+    {
+       _navMgr.NavigateTo($"/AddGuard");
+    }
+    private async Task GuardsOverview()
+    {
+        _navMgr.NavigateTo($"/GuardsOverview");
+    }
+
+}

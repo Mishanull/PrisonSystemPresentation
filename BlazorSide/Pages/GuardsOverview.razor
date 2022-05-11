@@ -1,64 +1,157 @@
 @page "/GuardsOverview"
 @using Entities
 @using Contracts
+@using Microsoft.Extensions.Options
 @inject IGuardService _guardService
-<h3>Guards Overview</h3>
-<img src="img/construction.gif"/>
-@* <AuthorizeView> *@
-@*     <NotAuthorized> *@
-@*         <p>Log in first to see the content</p> *@
-@*     </NotAuthorized> *@
-@*      *@
-@*     <Authorized> *@
-@*         <div class="card "> *@
-@*             <h2>Add new guard:</h2> *@
-@*             <div class="field"> *@
-@*                 <label>First name:</label> *@
-@*                 <input type="text" @bind="_newGuard.FirstName"/> *@
-@*             </div> *@
-@*             <br/> *@
-@*             <div class="field"> *@
-@*                 <label style="text-align: center">Last name:</label> *@
-@*                 <input type="text" @bind="_newGuard.LastName"/> *@
-@*             </div> *@
-@*             <br/> *@
-@*             @if (!string.IsNullOrEmpty(_errorLabel)) *@
-@*             { *@
-@*                 <div class="field"> *@
-@*                     <label style="color: red"> *@
-@*                         @_errorLabel *@
-@*                     </label> *@
-@*                 </div> *@
-@*             } *@
-@*             <br/> *@
-@*             <div class="field"> *@
-@*                 <button class="btn btn-primary" @onclick="AddGuardAsync">Add guard: </button> *@
-@*             </div> *@
-@*         </div> *@
-@*     </Authorized> *@
-@* </AuthorizeView> *@
-@* @code { *@
-@*     private string _errorLabel = ""; *@
-@*     private Guard _newGuard = new Guard(); *@
-@*      *@
-@*      *@
-@* *@
-@*     private void AddGuardAsync() *@
-@*     { *@
-@*         _errorLabel = ""; *@
-@*         if (string.IsNullOrEmpty(_newGuard.FirstName)) *@
-@*         { *@
-@*             _errorLabel += "field 'First name' must not be empty!\n"; *@
-@*         } *@
-@*         if (string.IsNullOrEmpty(_newGuard.LastName)) *@
-@*         { *@
-@*             _errorLabel += "field 'Last name' must not be empty!\n"; *@
-@*         } *@
-@* *@
-@*         if (string.IsNullOrEmpty(_errorLabel)) *@
-@*         { *@
-@*             Console.WriteLine(_guardService.CreateGuard(_newGuard)); *@
-@*             _newGuard = new Guard(); *@
-@*         } *@
-@*     } *@
-@* } *@
+@inject NavigationManager _navMgr
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.DropDowns
+<div class="row container"><h5>Choose how you want to see the guards: </h5></div>
+<br/>
+<div class="row container w-25">
+    
+    <SfDropDownList  TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
+        <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
+    </SfDropDownList>
+</div>
+<div class="row container mt-5">
+    @if (currentOption == OptionsValues.Table)
+    {
+        <div class="container-fluid m-0 p-0 w-50">
+                <table class="table align-middle mb-0 bg-white">
+                    <thead class="bg-light">
+                    <tr>
+                        <th scope="col">First name</th>
+                        <th scope="col">Last name</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Sector</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                    </thead>
+        
+                    <tbody>
+                    @foreach (var g in guards )
+                    {
+                        <tr>
+                            
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img
+                                      src="img/officer.jpg"
+                                      class="rounded-circle"
+                                      alt=""
+                                      style="width: 45px; height: 45px"
+                                      />
+                                    <div class="ms-3">
+                                        <p class="fw-bold mb-1">@g.FirstName</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@g.LastName</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@g.Username</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@g.Email</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">####</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-success rounded-pill d-inline">Working</span>
+                            </td>
+                           
+                            <td>
+                                <a @onclick="@(()=>{_navMgr.NavigateTo("/GuardDetails/"+@g.Id);})">
+                                <button
+                                    type="button"
+                                    class="btn btn-link btn-rounded btn-sm fw-bold"
+                                    data-mdb-ripple-color="dark">
+                                    Edit
+                                </button>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+    }
+    else if (currentOption == OptionsValues.Grid)
+    {
+        <div class="row row-cols-1 row-cols-md-3">
+            @foreach (var g in guards)
+            {
+                <div class="col mx-3">
+                    <div class="card mt-3 ">
+                        <div class="card-header text-white" style="background-color: #41B3D3 !important">@g.FirstName @g.LastName</div>
+                        <div class="card-body text-center">
+                            <img 
+                          src="img/officer.jpg"
+                          class="rounded-circle"
+                          alt=""
+                          style="width: 100px; height: 100px"
+                          />
+                            <ul class="list-group list-group-light">
+                                <li class="list-group-item px-3">Username: @g.Username</li>
+                                <li class="list-group-item px-3">Email: @g.Email</li>
+                                <li class="list-group-item px-3">Status: <span class="badge badge-danger rounded-pill d-inline">Not Working Today</span> </li>
+                                <li class="list-group-item px-3">Sector: ### </li>
+                            </ul>
+                            <br/>
+                            <a @onclick="@(()=>{_navMgr.NavigateTo("/GuardDetails/"+@g.Id);})"  class="btn btn-primary">Edit</a>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+            }
+
+        </div>
+    }
+    @if (guards == null && !guards.Any())
+    {
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
+</div>
+@code{
+    private OptionsValues currentOption { get; set; }=OptionsValues.Table;
+    private ICollection<Guard>? guards;
+    protected  override async Task OnInitializedAsync()
+    {
+        guards = await _guardService.GetGuards(20);
+    }
+    public string[] Options = Enum.GetNames(typeof(OptionsValues));
+
+    public enum OptionsValues
+    {
+        Table,
+        Grid
+    }
+    private void OnDropdownSelected()
+    {
+        Console.WriteLine(currentOption);
+
+    }
+}

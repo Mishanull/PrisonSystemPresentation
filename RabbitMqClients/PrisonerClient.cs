@@ -162,7 +162,7 @@ public class PrisonerClient : IPrisonerService
         callbackMapper.TryAdd(correlationId, tcs); 
         
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.update", basicProperties: props, body: messageBytes);
-        Console.WriteLine("message published");
+        Console.WriteLine("message published update prisoner");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;

@@ -1,6 +1,95 @@
 ﻿@page "/AddGuard"
-<h3>AddGuard</h3>
-<img src="img/construction.gif">
+@using Entities
+@using Microsoft.AspNetCore.Components
+@using Contracts
+@using BlazorSide.UIComponents
+@inject IGuardService _guardService
+@inject IModalService _modalService
+@inject NavigationManager _navMgr
+<div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
+    <EditForm Model="@newGuard" OnValidSubmit="@AddNewGuard">
+        <DataAnnotationsValidator/> 
+        <ValidationSummary/>
+        <div class="row">
+            <div class="col-md-6"><InputText @bind-Value="newGuard.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
+            <div class="col-md-6"><InputText @bind-Value="newGuard.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>
+        </div>
+        <br/>
+        <InputText @bind-Value="newGuard.Email" class="form-control" type="email" placeholder="Email" />
+        <br/>  
+        <InputText @bind-Value="newGuard.PhoneNumber" class="form-control" placeholder="Phone Number" rows="4"/>
+        <br/>
+        <InputText @bind-Value="newGuard.Username" class="form-control" placeholder="Username" rows="4"/>
+        <br/>
+        <button class="btn btn-white" type="submit">Add New Guard</button>
+    </EditForm>
+</div>
+@if (!string.IsNullOrEmpty(errorLabel))
+        {
+            <label style="color: red;">Error: @errorLabel</label>
+        }
 @code {
-    
+    private Guard newGuard=new Guard();
+    private string errorLabel=String.Empty;
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
+    private async Task AddNewGuard()
+    {
+        try
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ChoiceModal.Message),"Guard added succesfully");
+            parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
+            parameters.Add(nameof(ChoiceModal.SecondButton),"Go to Guards Overview");
+            parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Guard");
+            
+            await _guardService.CreateGuard(newGuard);
+            newGuard = new Guard();
+            var modalRef=_modalService.Show<ChoiceModal>("Success",parameters);
+            var result = await modalRef.Result;
+            if (!result.Cancelled)
+            {
+                string? message;
+                message = result.Data?.ToString() ?? string.Empty;
+                switch (message)
+                {
+                    case "Go back":
+                    {
+                        await BackToOptions();
+                        break;
+                    }
+                    case "Go to Guards Overview":
+                    {
+                        await GoToOverview();
+                        break;
+                    }
+                    case "Add Another Guard":
+                    {
+                        await BackToAdd();
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            errorLabel = e.Message;
+        }
+    }
+
+    private async Task BackToAdd()
+    {
+        StateHasChanged();
+    }
+
+    private async Task GoToOverview()
+    {
+        _navMgr.NavigateTo("/GuardsOverview");
+    }
+
+    private async Task BackToOptions()
+    {
+        _navMgr.NavigateTo("/GuardsOptions");
+    }
+
 }

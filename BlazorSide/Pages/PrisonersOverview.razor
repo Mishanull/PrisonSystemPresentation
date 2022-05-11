@@ -9,10 +9,6 @@
 
 
 <AuthorizeView>
-    <NotAuthorized>
-        <p>Log in first to see the content</p>
-    </NotAuthorized>
-    
     <Authorized>
         @if (!string.IsNullOrEmpty(_errorLabel))
         {
@@ -31,10 +27,11 @@
                 </label>
             </div>
         }
-                <!--Old table -->
         @if (_prisonersToShow == null)
         {
-            <p>Loading..</p>
+            <div class="spinner-border text-info" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
         
         }
         else if (_prisonersToShow.Count == 0)
@@ -125,17 +122,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (_authService.getLoggedUser() != null)
-        {
-            _allPrisoners = await _prisonerService.GetPrisonersAsync();
+        _allPrisoners = await _prisonerService.GetPrisonersAsync();
             _prisonersToShow = _allPrisoners;
-        }
     }
-
-    private void AddPrisoner()
-    {
-        _navMgr.NavigateTo("/AddPrisoner");
-    }
+    
 
     private void PrisonerDetail(long pId)
     {

@@ -7,12 +7,15 @@ using Entities;
 using Microsoft.AspNetCore.Components.Authorization;
 using RabbitMQClient;
 using RabbitMqClients;
-
+using Blazored.Modal;
+using Syncfusion.Blazor;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddSyncfusionBlazor(options => { options.IgnoreScriptIsolation = true; });
+builder.Services.AddBlazoredModal();
 builder.Services.AddScoped<IAuthService, AuthServiceImpl>();
 builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthenticationStateProvider>();
 
