@@ -6,7 +6,7 @@
 @inject NavigationManager _navMgr
 @inject IPrisonerService _prisonerService
 
-<h3>PrisonerDetail</h3>
+<h3>Prisoner Detail</h3>
 
 <div>
     @if (!string.IsNullOrEmpty(_errorLabel))
@@ -25,13 +25,29 @@
     }
     else
     {
-        <p>prisoner n.: @_prisoner.Id</p>
-        <p>name: @_prisoner.FirstName @_prisoner.LastName</p>
-        <p>note: @_prisoner.Note</p>
-        <p>ToDo ...</p>
+        <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
+            <EditForm Model="@_prisoner" OnValidSubmit="@EditPrisoner">
+                <DataAnnotationsValidator/> 
+                <ValidationSummary/>
+                <div class="row">
+                    <div class="col-md-6"><InputText @bind-Value="_prisoner.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
+                    <div class="col-md-6"><InputText @bind-Value="_prisoner.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>
+                </div>
+                <br/>
+                <InputNumber @bind-Value="_prisoner.Ssn" class="form-control" placeholder="SSN" />
+                <br/>  
+                <InputText @bind-Value="_prisoner.CrimeCommitted" class="form-control" placeholder="Crime committed" rows="4"/>
+                <br/>
+                <InputText @bind-Value="_prisoner.Note" class="form-control" placeholder="Note" rows="4"/>
+                <br/>
+                <div class="row">
+                    <div class="col-md-6"><button class="btn btn-white" @onclick="EditPrisoner" >Edit prisoner</button></div>
+                    <div class="col-md-6"><button class="btn btn-white" @onclick="DeletePrisoner">Delete prisoner</button></div>
+                </div>
                 
-        <button @onclick="EditPrisoner">Edit</button>
-        <button @onclick="DeletePrisoner">Delete</button>
+                
+            </EditForm>
+        </div>
     }
 </div>
 
@@ -45,10 +61,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _prisoner = await _prisonerService.GetPrisonerByIdAsync(PId);
+        try
+        {
+            _prisoner = await _prisonerService.GetPrisonerByIdAsync(PId);
+        }
+        catch (Exception e)
+        {
+            _errorLabel = e.Message;
+        }
     }
 
-    private void EditPrisoner()
+    private async void EditPrisoner()
     {
         if (_prisoner == null)
         {
@@ -56,7 +79,40 @@
         }
         else
         {
-            _navMgr.NavigateTo($"/EditPrisoner/{_prisoner.Id}");
+            _errorLabel = "";
+
+            if (_prisoner!.Ssn < 100)
+            {
+                _errorLabel += "-invalid SSN [<100???]!\n";
+            }
+            if (string.IsNullOrEmpty(_prisoner.FirstName))
+            {
+                _errorLabel += "-field 'First name' must not be empty!\n";
+            }
+            if (string.IsNullOrEmpty(_prisoner.LastName))
+            {
+                _errorLabel += "-field 'Last name' must not be empty!\n";
+            }
+            if (string.IsNullOrEmpty(_prisoner.CrimeCommitted))
+            {
+                _errorLabel += "-field 'Crime committed' must not be empty!\n";
+            }
+            if (string.IsNullOrEmpty(_prisoner.Note))
+            {
+                _prisoner.Note = "";
+            }
+
+            if (string.IsNullOrEmpty(_errorLabel))
+            {
+                try
+                {
+                    await _prisonerService.UpdatePrisonerAsync(_prisoner);
+                    _navMgr.NavigateTo($"/PrisonersOverview");
+                }
+                catch(Exception e){
+                    _errorLabel = e.Message;
+                }
+            }
         }
     }
 
@@ -64,7 +120,7 @@
     {
         if (_prisoner == null)
         {
-            _errorLabel = "unable to retrieve prisoner data";
+            _errorLabel = "unable to retrieve prisoner's data";
         }
         else
         {

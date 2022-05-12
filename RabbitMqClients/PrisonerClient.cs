@@ -41,7 +41,7 @@ public class PrisonerClient : IPrisonerService
     }
     
     
-    public async Task CreatePrisonerAsync(Prisoner? prisoner)
+    public async Task CreatePrisonerAsync(Prisoner prisoner)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -53,16 +53,13 @@ public class PrisonerClient : IPrisonerService
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.add", basicProperties: props, body: messageBytes);
-        Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
-        Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Prisoner failed to create.");
+            throw new Exception("Failed to create prisoner");
         }
-        
     }
 
     public async Task RemovePrisonerAsync(long id)
@@ -77,18 +74,16 @@ public class PrisonerClient : IPrisonerService
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.remove", basicProperties: props, body: messageBytes);
-        Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
-        Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Failed to remove prisoner");
+            throw new Exception($"Failed to remove prisoner n.-{id}");
         }
     }
 
-    public async Task<Prisoner?> GetPrisonerByIdAsync(long prisonerId)
+    public async Task<Prisoner> GetPrisonerByIdAsync(long prisonerId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -101,19 +96,21 @@ public class PrisonerClient : IPrisonerService
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getById", basicProperties: props, body: messageBytes);
-    
-        Console.WriteLine("message published login");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
         String response =  tcs.Task.Result;
-        Console.WriteLine(response);
-        Prisoner? p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
+        if (response.Equals("fail"))
+        {
+            throw new Exception($"Failed to load prisoner n.-{prisonerId}");
+        }
+        Prisoner p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         })!;
         return p;
     }
 
-    public async Task<ICollection<Prisoner>?> GetPrisonersAsync()
+    public async Task<ICollection<Prisoner>> GetPrisonersAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -126,24 +123,19 @@ public class PrisonerClient : IPrisonerService
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.get", basicProperties: props, body: messageBytes);
-    
-        Console.WriteLine("message published login");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
-        Console.WriteLine(response);
-        try
+        if (response.Equals("fail"))
         {
-            ICollection<Prisoner>? ps = JsonSerializer.Deserialize<ICollection<Prisoner>>(response, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            })!;
-            return ps;
+            throw new Exception("Failed to load prisoners");
         }
-        catch (Exception e)
+    
+        ICollection<Prisoner> ps = JsonSerializer.Deserialize<ICollection<Prisoner>>(response, new JsonSerializerOptions
         {
-            return null;
-        }
+            PropertyNameCaseInsensitive = true
+        })!;
+        return ps;
     }
 
     public async Task UpdatePrisonerAsync(Prisoner newPrisoner)
@@ -159,14 +151,12 @@ public class PrisonerClient : IPrisonerService
         callbackMapper.TryAdd(correlationId, tcs); 
         
         channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.update", basicProperties: props, body: messageBytes);
-        Console.WriteLine("message published update prisoner");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
-        Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Failed to update prisoner");
+            throw new Exception($"Failed to update prisoner n.-{newPrisoner.Id}");
         }
     }
 }

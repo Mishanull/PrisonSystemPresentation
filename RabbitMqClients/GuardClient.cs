@@ -91,11 +91,11 @@ public class GuardClient : IGuardService
         {
             throw new Exception("Failed to fetch guards.");
         }
-            ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            })!;
-            return g;
+        ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return g;
     }
 
     public async Task CreateGuardAsync(Guard guard)
