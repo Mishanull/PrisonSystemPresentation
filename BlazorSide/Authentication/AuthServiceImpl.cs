@@ -29,7 +29,7 @@ public class AuthServiceImpl : IAuthService
     {
         User? user = await userService.GetUserAsync(username); // Get user from database
         _loggedUser = user;
-
+        Console.WriteLine(user.Role);
         ValidateLoginCredentials(password, user); // Validate input data against data from database
         // validation success
         await CacheUserAsync(user!); // Cache the user object in the browser 

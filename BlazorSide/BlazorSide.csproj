@@ -15,12 +15,30 @@
 
     <ItemGroup>
       <Content Remove="wwwroot\img\200.gif" />
+      
     </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Blazored.Modal" Version="6.0.1" />
       <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="20.1.0.52" />
       <PackageReference Include="Syncfusion.Blazor.Themes" Version="20.1.0.52" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <AdditionalFiles Include="Pages\WardenView\AddGuard.razor" />
+      <AdditionalFiles Include="Pages\WardenView\AddPrisoner.razor" />
+      <AdditionalFiles Include="Pages\WardenView\EditPrisoner.razor" />
+      <AdditionalFiles Include="Pages\WardenView\GuardDetails.razor" />
+      <AdditionalFiles Include="Pages\WardenView\GuardsOptions.razor" />
+      <AdditionalFiles Include="Pages\WardenView\GuardsOverview.razor" />
+      <AdditionalFiles Include="Pages\WardenView\Index.razor" />
+      <AdditionalFiles Include="Pages\WardenView\PrisonerDetail.razor" />
+      <AdditionalFiles Include="Pages\WardenView\PrisonersOptions.razor" />
+      <AdditionalFiles Include="Pages\WardenView\PrisonersOverview.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Pages\GuardView" />
     </ItemGroup>
 
 </Project>

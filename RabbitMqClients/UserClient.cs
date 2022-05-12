@@ -58,8 +58,7 @@ public class UserClient : IUserService
                 {
                     PropertyNameCaseInsensitive = true
                 })!;
-                 u.Role = "Warden";
-                 return u;
+            return u;
 
 
     }

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using System.Text.Json;
 using BlazorLoginApp.Authentication;
 using Microsoft.AspNetCore.Components;
@@ -22,7 +23,11 @@ builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthenticationStat
 builder.Services.AddScoped<IUserService, UserClient >();
 builder.Services.AddScoped<IPrisonerService, PrisonerClient >();
 builder.Services.AddScoped<IGuardService, GuardClient >();
-
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("WardenAccess", pb => pb.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "warden"));
+    options.AddPolicy("GuardAccess", pb => pb.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "guard"));
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
