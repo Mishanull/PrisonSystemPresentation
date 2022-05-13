@@ -40,7 +40,7 @@
     private string errorLabel=String.Empty;
     [CascadingParameter]
     private IModalService Modal { get; set; }
-
+    
     protected override async Task OnParametersSetAsync()
     {
         if (Id.HasValue)
@@ -72,6 +72,7 @@
                 }
             
             }
+
     }
 
 

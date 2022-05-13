@@ -37,8 +37,4 @@
       <AdditionalFiles Include="Pages\WardenView\PrisonersOverview.razor" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Pages\GuardView" />
-    </ItemGroup>
-
 </Project>
