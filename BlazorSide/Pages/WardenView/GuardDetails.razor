@@ -10,6 +10,7 @@
     <EditForm Model="@editedGuard" OnValidSubmit="@EditGuard">
         <DataAnnotationsValidator/> 
         <ValidationSummary/>
+        <h3>Guard n.-@editedGuard.Id:</h3>
         <div class="row">
             <div class="col-md-6"><InputText @bind-Value="editedGuard.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
             <div class="col-md-6"><InputText @bind-Value="editedGuard.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>

@@ -3,111 +3,77 @@
 @using Entities
 @using Contracts
 
-@inject IPrisonerService _prisonerService
-@inject NavigationManager _navMgr
+@inject IPrisonerService prisonerService
+@inject NavigationManager navMgr
 
-<h3>AddPrisoner</h3>
-
-<AuthorizeView>
-    <NotAuthorized>
-        <p>Log in first to see the content</p>
-    </NotAuthorized>
-    
-    <Authorized>
-        <div class="card">
-            <h2>Add new prisoner:</h2>
-            
-            <div class="field">
-                <label style="text-align: center">SSN:</label>
-                <input type="number" @bind="_newPrisoner.Ssn"/>
-            </div>
-            
-            <div class="field">
-                <label>First name:</label>
-                <input type="text" @bind="_newPrisoner.FirstName"/>
-            </div>
-
-            <div class="field">
-                <label style="text-align: center">Last name:</label>
-                <input type="text" @bind="_newPrisoner.LastName"/>
-            </div>
-            
-            <div class="field">
-                <label style="text-align: center">Crime comitted:</label>
-                <input type="text" @bind="_newPrisoner.CrimeCommitted"/>
-            </div>
-            
-            <div class="field">
-                <label style="text-align: center">Note:</label>
-                <input type="text" @bind="_newPrisoner.Note"/>
-            </div>
-
-
-            @if (!string.IsNullOrEmpty(_errorLabel))
-            {
-                <div class="field">
-                    <label style="color: red">
-                        @_errorLabel
-                    </label>
-                </div>
-            }
-            @if (!string.IsNullOrEmpty(_successLabel))
-            {
-                <div class="field">
-                    <label style="color: green">
-                        @_successLabel
-                    </label>
-                </div>
-            }
-            
-            <div class="field">
-                <button class="btn btn-primary" @onclick="AddPrisonerAsync">Add prisoner</button>
-            </div>
+<div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
+    <EditForm Model="@_newPrisoner" OnValidSubmit="@AddPrisonerAsync">
+        <DataAnnotationsValidator/> 
+        <ValidationSummary/>
+        <h3>Add Prisoner:</h3>
+        <div class="row">
+            <div class="col-md-6"><InputText @bind-Value="_newPrisoner.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
+            <div class="col-md-6"><InputText @bind-Value="_newPrisoner.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>
         </div>
-    </Authorized>
-</AuthorizeView>
+        <br/>
+        <InputNumber @bind-Value="_newPrisoner.Ssn" class="form-control" placeholder="SSN" />
+        <br/>  
+        <InputText @bind-Value="_newPrisoner.CrimeCommitted" class="form-control" placeholder="Crime committed" rows="4"/>
+        <br/>
+        <InputText @bind-Value="_newPrisoner.Note" class="form-control" placeholder="Note" rows="4"/>
+        <br/>
+        @if (!string.IsNullOrEmpty(errorLabel))
+        {
+            <div class="field">
+                <label style="color: red">
+                    @errorLabel
+                </label>
+            </div>
+        }
+        <button class="btn btn-white" type="submit">Add New Prisoner</button>
+    </EditForm>
+</div>
 
 @code {
-    private string _errorLabel = "", _successLabel="";
-    private Prisoner? _newPrisoner = new Prisoner();
+    private string errorLabel = "";
+    private Prisoner _newPrisoner = new Prisoner();
     
     
     private async Task AddPrisonerAsync()
     {
-        _errorLabel = "";
-        _successLabel = "";
-        
+        errorLabel = "";
+
         if (_newPrisoner.Ssn < 100)
         {
-            _errorLabel += "-invalid SSN [<100???]!\n";
+            errorLabel += "-invalid SSN [<100???]!\n";
         }
         if (string.IsNullOrEmpty(_newPrisoner.FirstName))
         {
-            _errorLabel += "-field 'First name' must not be empty!\n";
+            errorLabel += "-field 'First name' must not be empty!\n";
         }
         if (string.IsNullOrEmpty(_newPrisoner.LastName))
         {
-            _errorLabel += "-field 'Last name' must not be empty!\n";
+            errorLabel += "-field 'Last name' must not be empty!\n";
         }
         if (string.IsNullOrEmpty(_newPrisoner.CrimeCommitted))
         {
-            _errorLabel += "-field 'Crime committed' must not be empty!\n";
+            errorLabel += "-field 'Crime committed' must not be empty!\n";
         }
         if (string.IsNullOrEmpty(_newPrisoner.Note))
         {
             _newPrisoner.Note = "";
         }
 
-        if (string.IsNullOrEmpty(_errorLabel))
+        if (string.IsNullOrEmpty(errorLabel))
         {
             try
             {
-                await _prisonerService.CreatePrisonerAsync(_newPrisoner);
-                _navMgr.NavigateTo("/PrisonersOverview");
+                await prisonerService.CreatePrisonerAsync(_newPrisoner);
+                navMgr.NavigateTo("/PrisonersOverview");
             }
             catch (Exception e)
             {                
-                _errorLabel = e.Message;
+                errorLabel = e.Message;
             }
         }
     }
