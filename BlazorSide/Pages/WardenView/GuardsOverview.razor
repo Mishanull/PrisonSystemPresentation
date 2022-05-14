@@ -4,6 +4,7 @@
 @using Microsoft.Extensions.Options
 @inject IGuardService _guardService
 @inject NavigationManager _navMgr
+@attribute [Authorize(Policy = "WardenAccess")]
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.DropDowns
 <div class="row container"><h5>Choose how you want to see the guards: </h5></div>

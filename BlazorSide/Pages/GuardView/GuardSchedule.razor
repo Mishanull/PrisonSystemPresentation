@@ -1,5 +1,6 @@
 ﻿@page "/GuardSchedule"
 <h3>GuardSchedule</h3>
+@attribute [Authorize(Policy = "GuardAccess")]
 
 @code {
     

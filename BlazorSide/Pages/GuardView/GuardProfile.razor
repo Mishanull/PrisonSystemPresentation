@@ -1,0 +1,91 @@
+﻿@inject IGuardService guardService
+@inject IModalService modalService
+@inject NavigationManager navMgr
+@page "/GuardProfile/{id:long}"
+@using Entities
+@using Contracts
+@using BlazorSide.UIComponents
+@attribute [Authorize(Policy = "GuardAccess")]
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="p-5 text-white mb-5  bg-info  " style="border-radius: 5px;">
+            <h1 class="mb-3">Hello, @loggedGuard.FirstName</h1>
+            <h4 class="mb-3">This is your profile</h4>
+        </div>
+    </div>
+    <div class="col-md-9">
+    <div class="container-fluid">
+            <EditForm Model="loggedGuard" OnValidSubmit="ChangeGuardDetails">
+                <DataAnnotationsValidator/>
+                <ValidationSummary/>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Your First Name:</label>
+                        <InputText @bind-Value="loggedGuard.FirstName" class="form-control " type="text" readonly/>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Your Last Name:</label>
+                        <InputText @bind-Value="loggedGuard.LastName" class="form-control " type="text" readonly/>
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Your Username: </label>
+                        <InputText @bind-Value="loggedGuard.Username" class="form-control " type="text" readonly/>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Your Password:</label>
+                        <InputText @bind-Value="loggedGuard.Password" class="form-control " type="password" readonly/>
+                    </div>
+                </div>
+                <br/>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Your Email: </label>
+                        <InputText @bind-Value="loggedGuard.Email" class="form-control " type="text"/>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Your Phone Number: </label>
+                        <InputText @bind-Value="loggedGuard.PhoneNumber" class="form-control " type="tel"/>
+                    </div>
+                </div>
+                <br/>
+                <button class="d-flex btn btn-primary " type="submit">Submit Changes</button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+@code {
+    [Parameter] public virtual long? Id { get; set; }
+    private Guard loggedGuard= new Guard();
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        loggedGuard = await guardService.GetGuardByIdAsync(Id.Value);
+    }
+
+    private async Task ChangeGuardDetails()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to modify your personal information?");
+        var modalRef=modalService.Show<ActionConfirm>("Success",parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
+        {
+            try
+            {
+                await guardService.UpdateGuardAsync(loggedGuard);
+            }
+            catch (Exception e)
+            {
+                parameters.Add(nameof(ActionConfirm.Message),e.Message);
+                modalService.Show<ActionConfirm>("Failure", parameters);
+            }
+            
+        }
+    }
+
+}

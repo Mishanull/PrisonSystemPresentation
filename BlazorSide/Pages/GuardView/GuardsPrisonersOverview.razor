@@ -1,5 +1,6 @@
 ﻿@page "/GuardsPrisonersOverview"
 <h3>GuardsPrisonersOverview</h3>
+@attribute [Authorize(Policy = "GuardAccess")]
 
 @code {
     

@@ -5,6 +5,7 @@
 
 @inject NavigationManager _navMgr
 @inject IPrisonerService _prisonerService
+@attribute [Authorize(Policy = "WardenAccess")]
 
 <div>
     @if (!string.IsNullOrEmpty(_errorLabel))

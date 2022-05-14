@@ -6,56 +6,36 @@
 @inject NavigationManager _navMgr
 @inject IAuthService _authService
 @inject IPrisonerService _prisonerService
+@attribute [Authorize(Policy = "WardenAccess")]
 
 
-<AuthorizeView>
-    <Authorized>
-        @if (!string.IsNullOrEmpty(_errorLabel))
-        {
-            <div class="field">
-                <label style="color: red">
-                    @_errorLabel
-                </label>
-            </div>
-        }
-        
-        @if (!string.IsNullOrEmpty(_successLabel))
-        {
-            <div class="field">
-                <label style="color: green">
-                    @_successLabel
-                </label>
-            </div>
-        }
-        @if (_prisonersToShow == null)
-        {
-            <div class="spinner-border text-info" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-        
-        }
-        else if (_prisonersToShow.Count == 0)
-        {
-            <p>no prisoners; (empty)</p>
-        }
-        else
-        {
-            <div>
+<div class="row container"><h5>Choose how you want to see the prisoners: </h5></div>
+<br/>
+<div class="row container w-25">
+    <SfDropDownList  TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
+        <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
+    </SfDropDownList>
+</div>
+<div class="row container mt-5">
+    @if (currentOption == OptionsValues.Table)
+    {
+        <div class="container-fluid m-0 p-0 w-50">
                 <table class="table align-middle mb-0 bg-white">
                     <thead class="bg-light">
                     <tr>
-                        <th scope="col">ID</th>
                         <th scope="col">First name</th>
                         <th scope="col">Last name</th>
-                        <th scope="col">SSN</th>
+                        <th scope="col">Ssn</th>
+                        <th scope="col">Crime commited</th>
+                        <th scope="col">Sector</th>
+                        <th scope="col">Status</th>
                         <th scope="col">Actions</th>
                     </tr>
                     </thead>
         
                     <tbody>
-                    @foreach (var p in _prisonersToShow)
+                    @foreach (var p in prisoners )
                     {
-                        
                         <tr>
                             
                             <td>
@@ -67,14 +47,7 @@
                                       style="width: 45px; height: 45px"
                                       />
                                     <div class="ms-3">
-                                        <p class="fw-bold mb-1">@p.Id</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@p.FirstName</p>
+                                        <p class="fw-bold mb-1">@p.FirstName</p>
                                     </div>
                                 </div>
                             </td>
@@ -93,7 +66,25 @@
                                 </div>
                             </td>
                             <td>
-                                <a @onclick="@((() => PrisonerDetail(p.Id)))">
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@p.CrimeCommitted</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">####</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
+                            </td>
+                           
+                            <td>
+                                <a @onclick="@(()=>{_navMgr.NavigateTo("/PrisonerDetail/"+@p.Id);})">
                                 <button
                                     type="button"
                                     class="btn btn-link btn-rounded btn-sm fw-bold"
@@ -107,36 +98,62 @@
                     </tbody>
                 </table>
             </div>
-            
-        } 
-        
-       
-
-    </Authorized>
-</AuthorizeView>
-
-@code {
-    private string _errorLabel = "", _successLabel="";
-
-    private ICollection<Prisoner>? _allPrisoners, _prisonersToShow;
-
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            _allPrisoners = await _prisonerService.GetPrisonersAsync();
-            _prisonersToShow = _allPrisoners;
-        }
-        catch (Exception e)
-        {
-            _errorLabel = e.Message;
-        }
     }
-    
-
-    private void PrisonerDetail(long pId)
+    else if (currentOption == OptionsValues.Grid)
     {
-        _navMgr.NavigateTo($"PrisonerDetail/{pId}");
-    }
+        <div class="row row-cols-1 row-cols-md-3">
+            @foreach (var p in prisoners)
+            {
+                <div class="col mx-3">
+                    <div class="card mt-3 ">
+                        <div class="card-header text-white" style="background-color: #41B3D3 !important">@p.FirstName @p.LastName</div>
+                        <div class="card-body text-center">
+                            <img 
+                          src="img/download.png"
+                          class="rounded-circle"
+                          alt=""
+                          style="width: 100px; height: 100px"
+                          />
+                            <ul class="list-group list-group-light">
+                                <li class="list-group-item px-3">SSN: @p.Ssn</li>
+                                <li class="list-group-item px-3">Crime: @p.CrimeCommitted</li>
+                                <li class="list-group-item px-3">Status: <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span> </li>
+                                <li class="list-group-item px-3">Sector: ### </li>
+                            </ul>
+                            <br/>
+                            <a @onclick="@(()=>{_navMgr.NavigateTo("/PrisonerDetail/"+@p.Id);})"  class="btn btn-primary">Edit</a>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+            }
 
+        </div>
+    }
+    @if (prisoners == null && !prisoners.Any())
+    {
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
+</div>
+@code{
+    private OptionsValues currentOption { get; set; }=OptionsValues.Table;
+    private ICollection<Prisoner>? prisoners;
+    protected  override async Task OnInitializedAsync()
+    {
+        prisoners = await _prisonerService.GetPrisonersAsync();
+    }
+    public string[] Options = Enum.GetNames(typeof(OptionsValues));
+
+    public enum OptionsValues
+    {
+        Table,
+        Grid
+    }
+    private void OnDropdownSelected()
+    {
+        Console.WriteLine(currentOption);
+
+    }
 }

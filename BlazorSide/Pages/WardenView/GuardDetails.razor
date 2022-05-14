@@ -6,6 +6,8 @@
 @inject IGuardService _guardService
 @inject IModalService _modalService
 @inject NavigationManager _navMgr
+@attribute [Authorize(Policy = "WardenAccess")]
+
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
     <EditForm Model="@editedGuard" OnValidSubmit="@EditGuard">
         <DataAnnotationsValidator/> 

@@ -8,21 +8,27 @@
 @inject IGuardService _guardService
 @inject IModalService _modalService
 @inject NavigationManager _navMgr
+@attribute [Authorize(Policy = "WardenAccess")]
+
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
     <EditForm Model="@newGuard" OnValidSubmit="@AddNewGuard">
         <DataAnnotationsValidator/> 
         <ValidationSummary/>
         <h3>Add Guard:</h3>
         <div class="row">
-            <div class="col-md-6"><InputText @bind-Value="newGuard.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
-            <div class="col-md-6"><InputText @bind-Value="newGuard.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>
+            <div class="col-md-6">
+                <label class="text-white"> First Name:</label> <InputText @bind-Value="newGuard.FirstName" class="form-control " type="text" />
+            </div>
+            <div class="col-md-6">
+                <label class="text-white">Last Name:</label> <InputText @bind-Value="newGuard.LastName" class="form-control " type="text" />
+            </div>
         </div>
         <br/>
-        <InputText @bind-Value="newGuard.Email" class="form-control" type="email" placeholder="Email" />
+        <label class="text-white">Email:</label> <InputText @bind-Value="newGuard.Email" class="form-control" type="email" />
         <br/>  
-        <InputText @bind-Value="newGuard.PhoneNumber" class="form-control" placeholder="Phone Number" rows="4"/>
+        <label class="text-white">Phone Number:</label> <InputText @bind-Value="newGuard.PhoneNumber" class="form-control" type="tel"  />
         <br/>
-        <InputText @bind-Value="newGuard.Username" class="form-control" placeholder="Username" rows="4"/>
+        <label class="text-white">Username:</label><InputText @bind-Value="newGuard.Username" class="form-control"  />
         <br/>
         <button class="btn btn-white" type="submit">Add New Guard</button>
     </EditForm>

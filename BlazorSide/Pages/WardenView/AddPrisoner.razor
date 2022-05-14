@@ -2,79 +2,106 @@
 
 @using Entities
 @using Contracts
+@using Utilities
+@using BlazorSide.UIComponents
 
-@inject IPrisonerService prisonerService
-@inject NavigationManager navMgr
+@inject IPrisonerService _prisonerService
+@inject IModalService modalService
+@inject NavigationManager _navMgr
+@attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
-    <EditForm Model="@_newPrisoner" OnValidSubmit="@AddPrisonerAsync">
+    <EditForm Model="@newPrisoner" OnValidSubmit="@AddNewPrisoner">
         <DataAnnotationsValidator/> 
         <ValidationSummary/>
-        <h3>Add Prisoner:</h3>
         <div class="row">
-            <div class="col-md-6"><InputText @bind-Value="_newPrisoner.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
-            <div class="col-md-6"><InputText @bind-Value="_newPrisoner.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>
+            <div class="col-md-6">
+                <label class="text-white"> First Name:</label> <InputText @bind-Value="newPrisoner.FirstName" class="form-control " type="text" />
+            </div>
+            <div class="col-md-6">
+                <label class="text-white">Last Name:</label> <InputText @bind-Value="newPrisoner.LastName" class="form-control " type="text" />
+            </div>
         </div>
         <br/>
-        <InputNumber @bind-Value="_newPrisoner.Ssn" class="form-control" placeholder="SSN" />
+        <label class="text-white">SSN: </label> <InputNumber @bind-Value="newPrisoner.Ssn" class="form-control"  />
         <br/>  
-        <InputText @bind-Value="_newPrisoner.CrimeCommitted" class="form-control" placeholder="Crime committed" rows="4"/>
+        <label class="text-white">Crime Commited: </label> <InputText @bind-Value="newPrisoner.CrimeCommitted" class="form-control" type="text"  />
         <br/>
-        <InputText @bind-Value="_newPrisoner.Note" class="form-control" placeholder="Note" rows="4"/>
+        <label class="text-white">Note: </label><InputText @bind-Value="newPrisoner.Note" class="form-control"  />
         <br/>
-        @if (!string.IsNullOrEmpty(errorLabel))
-        {
-            <div class="field">
-                <label style="color: red">
-                    @errorLabel
-                </label>
-            </div>
-        }
         <button class="btn btn-white" type="submit">Add New Prisoner</button>
     </EditForm>
 </div>
-
+@if (!string.IsNullOrEmpty(errorLabel))
+        {
+            <label style="color: red;">Error: @errorLabel</label>
+        }
 @code {
-    private string errorLabel = "";
-    private Prisoner _newPrisoner = new Prisoner();
-    
-    
-    private async Task AddPrisonerAsync()
+    private Prisoner newPrisoner=new Prisoner();
+    private string errorLabel=String.Empty;
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
+    private async Task AddNewPrisoner()
     {
-        errorLabel = "";
-
-        if (_newPrisoner.Ssn < 100)
-        {
-            errorLabel += "-invalid SSN [<100???]!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.FirstName))
-        {
-            errorLabel += "-field 'First name' must not be empty!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.LastName))
-        {
-            errorLabel += "-field 'Last name' must not be empty!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.CrimeCommitted))
-        {
-            errorLabel += "-field 'Crime committed' must not be empty!\n";
-        }
-        if (string.IsNullOrEmpty(_newPrisoner.Note))
-        {
-            _newPrisoner.Note = "";
-        }
-
-        if (string.IsNullOrEmpty(errorLabel))
-        {
+        
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ChoiceModal.Message),"Prisoner added successfully");
+            parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
+            parameters.Add(nameof(ChoiceModal.SecondButton),"Go to Prisoners Overview");
+            parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Prisoner");
             try
             {
-                await prisonerService.CreatePrisonerAsync(_newPrisoner);
-                navMgr.NavigateTo("/PrisonersOverview");
+                
+                
+                await _prisonerService.CreatePrisonerAsync(newPrisoner);
+                newPrisoner = new Prisoner();
+                var modalRef=modalService.Show<ChoiceModal>("Success",parameters);
+                var result = await modalRef.Result;
+                if (!result.Cancelled)
+                {
+                    string? message;
+                    message = result.Data?.ToString() ?? string.Empty;
+                    switch (message)
+                    {
+                        case "Go back":
+                        {
+                            await BackToOptions();
+                            break;
+                        }
+                        case "Go to Prisoners Overview":
+                        {
+                            await GoToOverview();
+                            break;
+                        }
+                        case "Add Another Prisoner":
+                        {
+                            await BackToAdd();
+                            break;
+                        }
+                    }
+                }
             }
             catch (Exception e)
-            {                
+            {
                 errorLabel = e.Message;
             }
+            
         }
+    
+
+    private async Task BackToAdd()
+    {
+        StateHasChanged();
     }
+
+    private async Task GoToOverview()
+    {
+        _navMgr.NavigateTo("/PrisonersOverview");
+    }
+
+    private async Task BackToOptions()
+    {
+        _navMgr.NavigateTo("/PrisonersOptions");
+    }
+
 }

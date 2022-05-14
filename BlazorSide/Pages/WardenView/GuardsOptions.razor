@@ -5,6 +5,7 @@
 @inject IAuthService _authService
 @inject IGuardService _prisonerService
 
+@attribute [Authorize(Policy = "WardenAccess")]
 
 
 <AuthorizeView>
