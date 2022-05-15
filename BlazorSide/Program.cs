@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using RabbitMQClient;
 using RabbitMqClients;
 using Blazored.Modal;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 using Syncfusion.Blazor;
 var builder = WebApplication.CreateBuilder(args);
 
