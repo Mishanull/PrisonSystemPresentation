@@ -1,13 +1,13 @@
 ﻿@using BlazorSide.Pages
 @using BlazorLoginApp.Authentication
 @using BlazorSide.UIComponents
+@using Contracts
+@using Entities
 @using StateContainer
 @inherits LayoutComponentBase
 @inject NavigationManager navMgr;
 @inject IAuthService _authService;
-@inject StateContainer state
-@inject IModalService _modalService
-@implements IDisposable
+@inject  IUserService _userService
 <PageTitle>BlazorSide</PageTitle>
 <AuthorizeView>
   <Authorized Context="Auth">
@@ -62,37 +62,26 @@
     private string errorLabel;
     private bool modal;
     private bool isGuard;
-    [CascadingParameter]
-    private IModalService Modal { get; set; }
+    
     private async Task LoginAsync()
     {
         errorLabel = "";
         try
         {
             await _authService.LoginAsync(userName, password);
-            navMgr.NavigateTo("/");
+            User? loggedUser = await _userService.GetUserAsync(userName);
+            if (loggedUser.Role == "guard")
+            {
+                navMgr.NavigateTo("/GuardIndex");
+            }
+            else{navMgr.NavigateTo("/");}
         }
         catch (Exception e)
         {
-            errorLabel = $"Error: {e.Message}";
+            errorLabel = $"Error:"+e.Message;
         }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        state.OnChange += ShowModal;
-    }
-    
-    private  void ShowModal()
-    {
-        ModalParameters parameters = new ModalParameters();
-        parameters.Add(nameof(ActionConfirm.Message),"WARNING:"+state.Property.text);
-        _modalService.Show<ActionConfirm>("Warning", parameters);
-    }
-    public void Dispose()
-    {
-        state.OnChange -= StateHasChanged;
-    }
-
+   
     
 }

@@ -56,7 +56,7 @@ public class AlertClient : IAlertService
     
         Console.WriteLine("message published alert");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
-        String response =  tcs.Task.Result;
+        String response = await tcs.Task;
         Console.WriteLine(response);
         if (response.Equals("fail"))
         {

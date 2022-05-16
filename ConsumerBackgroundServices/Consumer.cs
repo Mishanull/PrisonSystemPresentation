@@ -12,7 +12,7 @@ public class Consumer: BackgroundService
     private ConnectionFactory _factory;
     private IConnection _connection;
     private IModel _channel;
-
+    private string replyQueueName;
     public Consumer(IServiceProvider sp)
     {
         Console.WriteLine("Service started");
@@ -20,8 +20,8 @@ public class Consumer: BackgroundService
         _factory = new ConnectionFactory() {HostName = "localhost", UserName = "guest", Password = "guest"};
         _connection = _factory.CreateConnection();
         _channel = _connection.CreateModel();
-        
-
+        replyQueueName=_channel.QueueDeclare("").QueueName;
+        _channel.QueueBind(replyQueueName,"guard.listen","");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -56,6 +56,6 @@ public class Consumer: BackgroundService
             }
             Console.WriteLine(" [x] Received {0}", message);
         };
-        _channel.BasicConsume(queue:"guards.listen.alert", autoAck: true, consumer: consumer);
+        _channel.BasicConsume(queue:replyQueueName, autoAck: true, consumer: consumer);
     }
 }
