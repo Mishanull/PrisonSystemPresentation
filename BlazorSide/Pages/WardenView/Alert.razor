@@ -1,0 +1,28 @@
+﻿@using Entities
+@using Contracts
+@page "/Alert"
+@inject IAlertService _alertService
+<div class="card">
+  <h5 class="card-header bg-light">Alert</h5>
+  <div class="card-body">
+    <h5 class="card-title">Broadcast an alert to all guards</h5>
+      <EditForm Model="@alert" OnValidSubmit="@SendAlert">
+          <DataAnnotationsValidator/>
+          <ValidationSummary/>
+          <InputText @bind-Value="alert.text" class="form-control w-50" type="text"></InputText>
+          <br/>
+          <button class="btn btn-primary" type="submit">Go somewhere</button>
+      </EditForm>
+  </div>
+</div>
+@code {
+    private Entities.Alert alert = new Entities.Alert();
+
+    public async Task SendAlert()
+    {
+        alert.priority = Entities.Alert.Priority.Low;
+        alert.dateTime = new DateTime(2022, 10, 21);
+        await _alertService.SendAlert(alert);
+        alert = new Entities.Alert();
+    }
+}
