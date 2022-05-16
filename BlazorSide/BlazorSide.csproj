@@ -4,6 +4,7 @@
         <TargetFramework>net6.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <UseRazorSourceGenerator>false</UseRazorSourceGenerator>
     </PropertyGroup>
 
     <ItemGroup>
@@ -22,6 +23,7 @@
 
     <ItemGroup>
       <PackageReference Include="Blazored.Modal" Version="6.0.1" />
+      <PackageReference Include="Syncfusion.Blazor.Calendars" Version="20.1.0.55" />
       <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="20.1.0.52" />
       <PackageReference Include="Syncfusion.Blazor.Themes" Version="20.1.0.52" />
     </ItemGroup>

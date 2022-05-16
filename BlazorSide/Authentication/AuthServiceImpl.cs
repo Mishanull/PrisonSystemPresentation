@@ -3,17 +3,21 @@ using System.Text.Json;
 using Contracts;
 using Entities;
 using Microsoft.JSInterop;
+using Utilities;
 
 
 namespace BlazorLoginApp.Authentication;
 
 public class AuthServiceImpl : IAuthService
 {
-    public Action<ClaimsPrincipal> OnAuthStateChanged { get; set; } = null!; // assigning to null! to suppress null warning.
+    public Action<ClaimsPrincipal> OnAuthStateChanged { get; set; } =
+        null!; // assigning to null! to suppress null warning.
+
     private readonly IUserService userService;
     private readonly IJSRuntime jsRuntime;
 
     private User? _loggedUser = null;
+
     public User getLoggedUser()
     {
         return _loggedUser!;
@@ -47,9 +51,10 @@ public class AuthServiceImpl : IAuthService
         OnAuthStateChanged?.Invoke(principal); // notify about change in authentication state
     }
 
-    public async Task<ClaimsPrincipal> GetAuthAsync() // this method is called by the authentication framework, whenever user credentials are reguired
+    public async Task<ClaimsPrincipal>
+        GetAuthAsync() // this method is called by the authentication framework, whenever user credentials are reguired
     {
-        User? user =  await GetUserFromCacheAsync(); // retrieve cached user, if any
+        User? user = await GetUserFromCacheAsync(); // retrieve cached user, if any
 
         ClaimsPrincipal principal = CreateClaimsPrincipal(user); // create ClaimsPrincipal
 
@@ -71,7 +76,15 @@ public class AuthServiceImpl : IAuthService
             throw new Exception("Username not found");
         }
 
-        if (!string.Equals(password,user.Password))
+        if (user.Role.Equals("warden"))
+        {
+            if (!string.Equals(password, user.Password))
+            {
+                throw new Exception("Password incorrect");
+            }
+        }
+        
+        else if (!Security.VerifyPassword(password, user.Password))
         {
             throw new Exception("Password incorrect");
         }
@@ -105,9 +118,9 @@ public class AuthServiceImpl : IAuthService
         // this is (probably) the only method, which needs modifying for your own user type
         List<Claim> claims = new()
         {
-            new Claim(ClaimTypes.Name, user.FirstName+" "+user.LastName),
+            new Claim(ClaimTypes.Name, user.FirstName + " " + user.LastName),
             new Claim("UserName", user.Username),
-            new Claim(ClaimTypes.Role,user.Role)
+            new Claim(ClaimTypes.Role, user.Role)
         };
 
         return new ClaimsIdentity(claims, "apiauth_type");

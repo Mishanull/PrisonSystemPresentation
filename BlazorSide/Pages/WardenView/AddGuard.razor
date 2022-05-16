@@ -52,13 +52,6 @@
             parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Guard");
             try
             {
-                // string newPassword = Security.GeneratePassword(8);
-                // Console.WriteLine($"Generated password: {newPassword}");
-                // string securePassword = Security.HashPassword(newPassword);
-                // Console.WriteLine($"Hashed password: {securePassword}");
-                // newGuard.Password = securePassword;
-                
-                newGuard.Password = Security.HashPassword(Security.GeneratePassword(8));
                 await _guardService.CreateGuardAsync(newGuard);
                 newGuard = new Guard();
                 var modalRef=_modalService.Show<ChoiceModal>("Success",parameters);
