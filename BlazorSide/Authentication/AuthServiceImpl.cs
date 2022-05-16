@@ -37,14 +37,16 @@ public class AuthServiceImpl : IAuthService
         ValidateLoginCredentials(password, user); // Validate input data against data from database
         // validation success
         await CacheUserAsync(user!); // Cache the user object in the browser 
-
         ClaimsPrincipal principal = CreateClaimsPrincipal(user); // convert user object to ClaimsPrincipal
         OnAuthStateChanged?.Invoke(principal); // notify interested classes in the change of authentication state
+        
     }
 
     public async Task LogoutAsync()
     {
+        long id = GetUserFromCacheAsync().Id;
         await ClearUserFromCacheAsync(); // remove the user object from browser cache
+       
         ClaimsPrincipal principal = CreateClaimsPrincipal(null); // create a new ClaimsPrincipal with nothing.
         OnAuthStateChanged?.Invoke(principal); // notify about change in authentication state
     }

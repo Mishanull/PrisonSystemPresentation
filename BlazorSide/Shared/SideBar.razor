@@ -20,6 +20,7 @@
           class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
           <img src="img/prisoner.png" height="20" class="ms-2 icon-sidebar"/><span>Inmates</span>
         </NavLink>
+
         <NavLink
           href="GuardsSchedules"
           class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
@@ -33,11 +34,30 @@
         class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
         <img src="img/schedule.png" height="20" class="ms-2  icon-sidebar"/><span>Schedule</span>
       </NavLink>
+
       <NavLink
-        href="PrisonersInSector"
-        class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
-        <img src="img/prisoner.png" height="20" class="ms-2 icon-sidebar"/><span>Inmates in your Sector</span>
+        href="Alert"
+        id="alert-link"
+        class=" nav-link list-group-item list-group-item-action py-2  mb-3 " >
+        <img src="img/alert.png" height="20" class="ms-2 icon-sidebar "/><span>Send An Alert</span>
       </NavLink>
+  </AuthorizeView>
+      <AuthorizeView Policy="GuardAccess">
+        <NavLink
+                href="GuardIndex"
+                class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+                <i class="fas fa-tachometer-alt  ms-2"></i><span>Overview</span>
+          </NavLink>
+        <NavLink
+          href="GuardsSchedule"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+          <img src="img/schedule.png" height="20" class="ms-2  icon-sidebar"/><span>Schedule</span>
+        </NavLink>
+        <NavLink
+          href="GuardsPrisonersOverview"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+          <img src="img/prisoner.png" height="20" class="ms-2 icon-sidebar"/><span>Inmates in your Sector</span>
+        </NavLink>
       </AuthorizeView>
     </div>
     

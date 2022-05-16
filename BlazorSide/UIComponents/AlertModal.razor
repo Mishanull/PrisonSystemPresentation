@@ -1,0 +1,25 @@
+﻿<div class="modal  fade show d-block mt-5" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog text-black" style="z-index: 1050"> 
+        <div class="modal-content ">
+            <div class="modal-header bg-dark text-warning">
+                <h1>Alert!!!</h1>
+            </div>
+            <div class="modal-body bg-light">
+                <p>@Message</p>
+            </div>
+            <div class="modal-footer bg-dark">
+                <button type="button" class="btn btn-warning" @onclick="Close">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+
+    [CascadingParameter]
+    BlazoredModalInstance BlazoredModal { get; set; }=default! ;
+
+  [Parameter] public String? Message { get; set; }
+    async Task Close() => await BlazoredModal.CloseAsync(ModalResult.Ok(true));
+    async Task Cancel() => await BlazoredModal.CancelAsync();
+}

@@ -1,0 +1,24 @@
+﻿@page "/GuardIndex"
+@using StateContainer
+@using BlazorSide.Pages.WardenView
+@using BlazorSide.UIComponents
+@using Alert = Entities.Alert
+@inject IModalService modalService
+@inject NavigationManager navMgr
+@inject StateContainer stateContainer
+@inject IModalService _modalService
+@code {
+    private Alert? Alert { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        stateContainer.OnChange += ShowModal;
+    }
+
+    public void ShowModal()
+    {
+        var parameters = new ModalParameters();
+        Alert = stateContainer.Property;
+        parameters.Add(nameof(AlertModal.Message),Alert?.text);
+        modalService.Show<AlertModal>("Alert", parameters);
+    }
+}

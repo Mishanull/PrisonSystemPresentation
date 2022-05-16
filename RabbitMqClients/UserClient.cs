@@ -49,18 +49,36 @@ public class UserClient : IUserService
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: "sep3.prison", routingKey: "prison.users", basicProperties: props, body: messageBytes);
-    
-                Console.WriteLine("message published login");
-                cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
-                String response =  tcs.Task.Result;
-                Console.WriteLine(response);
-                 User u = JsonSerializer.Deserialize<User>(response, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                })!;
-            return u;
+        Console.WriteLine("message published login");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+         User u = JsonSerializer.Deserialize<User>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+         return u;
 
 
     }
-    
+
+    public async Task SendLogInConfirmation(long id)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "sep3.prison", routingKey: "login.confirm", basicProperties: props, body: messageBytes);
+        Console.WriteLine("message published login");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+    }
+
+    public Task SendLogOutConfirmation(long id)
+    {
+        throw new NotImplementedException();
+    }
 }

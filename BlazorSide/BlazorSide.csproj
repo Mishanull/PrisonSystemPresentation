@@ -8,9 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ConsumerBackgroundServices\ConsumerBackgroundServices.csproj" />
       <ProjectReference Include="..\Contracts\Contracts.csproj" />
       <ProjectReference Include="..\Entities\Entities.csproj" />
       <ProjectReference Include="..\RabbitMqClients\RabbitMqClients.csproj" />
+      <ProjectReference Include="..\StateContainer\StateContainer.csproj" />
       <ProjectReference Include="..\Utilities\Utilities.csproj" />
     </ItemGroup>
 

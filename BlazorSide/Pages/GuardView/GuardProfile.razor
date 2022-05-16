@@ -62,6 +62,7 @@
     private Guard loggedGuard= new Guard();
     [CascadingParameter]
     private IModalService Modal { get; set; }
+    
     protected override async Task OnInitializedAsync()
     {
         loggedGuard = await guardService.GetGuardByIdAsync(Id.Value);
@@ -87,5 +88,6 @@
             
         }
     }
+    
 
 }

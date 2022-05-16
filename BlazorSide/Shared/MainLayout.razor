@@ -1,58 +1,67 @@
 ﻿@using BlazorSide.Pages
 @using BlazorLoginApp.Authentication
+@using BlazorSide.UIComponents
+@using Contracts
+@using Entities
+@using StateContainer
 @inherits LayoutComponentBase
 @inject NavigationManager navMgr;
 @inject IAuthService _authService;
+@inject  IUserService _userService
 <PageTitle>BlazorSide</PageTitle>
 <AuthorizeView>
-  <Authorized>
+  <Authorized Context="Auth">
     <NavMenu/>
     <div class="row h-100 ">
-      <div class="mt-5  h-100  col-md-3 col-sm-2">
-        <SideBar></SideBar>
-      </div>
-      <div class="col-md-9" style="margin-top:6rem; ">
-        @Body
-      </div>
+        <div class="mt-5  h-100  col-md-3 col-sm-2">
+            <SideBar></SideBar>
+        </div>
+        <div class="col-md-9" style="margin-top:6rem; ">
+            @Body
+        </div>
     </div>
+  
   </Authorized>
-  <NotAuthorized>
-    <div class="d-flex  flex-column align-content-center flex-wrap" style="margin-top: 10rem;">
-      <h3 class="align-self-center">Log into the prison system</h3>
-      <br/>
-      <img class="align-self-center " src="img/logo.png" height="100" width="100"/>
-      <hr/>
-      <br/>
-      <div class="col-6 align-self-center  ">
-        <div class="form mb-4">
-          <label class="form-label" for="form2Example2">Username</label>
-          <input type="text" @bind="userName" id="form2Example1" class="form-control"/>
-        </div>
+    <NotAuthorized>
+        
+        <div class="d-flex  flex-column align-content-center flex-wrap" style="margin-top: 10rem;">
+            <h3 class="align-self-center">Log into the prison system</h3>
+            <br/>
+            <img class="align-self-center " src="img/logo.png" height="100" width="100"/>
+            <hr/>
+            <br/>
+            <div class="col-6 align-self-center  ">
+                <div class="form mb-4">
+                    <label class="form-label" for="form2Example2">Username</label>
+                    <input type="text" @bind="userName" id="form2Example1" class="form-control"/>
+                </div>
 
-        <div class="form mb-4">
-          <label class="form-label" for="form2Example2">Password</label>
-            <input type="password"  @bind="password" id="form2Example2" class="form-control"/>
-        </div>
+                <div class="form mb-4">
+                    <label class="form-label" for="form2Example2">Password</label>
+                    <input type="password" @bind="password" id="form2Example2" class="form-control"/>
+                </div>
 
-        @if (!string.IsNullOrEmpty(errorLabel))
-        {
-            <div >
-                <label style="color: red">
-                    @errorLabel
-                </label>
+                @if (!string.IsNullOrEmpty(errorLabel))
+                {
+                    <div >
+                        <label style="color: red">
+                            @errorLabel
+                        </label>
+                    </div>
+                }
+                <!-- Submit button -->
+                <button type="submit" @onclick="LoginAsync" class="btn btn-primary btn-block mb-4">Sign in</button>
             </div>
-        }
-        <!-- Submit button -->
-        <button type="submit" @onclick="LoginAsync" class="btn btn-primary btn-block mb-4">Sign in</button>
-      </div>
-    </div>
-  </NotAuthorized>
+        </div>
+    </NotAuthorized>
     
 </AuthorizeView>
 @code {
     private string userName;
     private string password;
     private string errorLabel;
+    private bool modal;
+    private bool isGuard;
     
     private async Task LoginAsync()
     {
@@ -60,12 +69,19 @@
         try
         {
             await _authService.LoginAsync(userName, password);
-            navMgr.NavigateTo("/");
+            User? loggedUser = await _userService.GetUserAsync(userName);
+            if (loggedUser.Role == "guard")
+            {
+                navMgr.NavigateTo("/GuardIndex");
+            }
+            else{navMgr.NavigateTo("/");}
         }
         catch (Exception e)
         {
-            errorLabel = $"Error: {e.Message}";
+            errorLabel = $"Error:"+e.Message;
         }
     }
+
+   
     
 }

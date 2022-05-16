@@ -82,3 +82,8 @@ button{
 .custom-position-modal{
     margin-top: 8rem;
 }
+#alert-link.active{
+    background-color:#ea9218 !important;
+    border-color: #ea9218 !important;
+    color: white !important;
+}
