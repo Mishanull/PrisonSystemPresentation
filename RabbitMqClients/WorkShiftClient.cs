@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
 using Contracts;
@@ -6,17 +6,19 @@ using Entities;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace RabbitMQClients;
+namespace RabbitMqClients;
 
-public class GuardClient : IGuardService
+public class WorkShiftClient : IWorkShiftService
 {
     private readonly IConnection connection;
     private readonly IModel channel;
     private readonly EventingBasicConsumer consumer;
     private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> callbackMapper = new();
     private readonly string replyQueueName;
+    
+    private const string Exchange = "workShift.exchange";
 
-    public GuardClient()
+    public WorkShiftClient()
     {
         var factory = new ConnectionFactory() { HostName = "localhost" };
 
@@ -38,140 +40,98 @@ public class GuardClient : IGuardService
             consumer: consumer,
             queue: replyQueueName,
             autoAck: true);
+    }
+    public async Task<ICollection<WorkShift>> GetWorkShifts()
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
         
-           
-    }
-
-    public async Task<Guard> GetGuardByIdAsync(long id)
-    {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
-        var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
+        
+        var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getById", basicProperties: props,
-            body: messageBytes);
-    
-        Console.WriteLine("message published");
+        channel.BasicPublish(exchange: Exchange, routingKey: "workShift.get", basicProperties: props, body: messageBytes);
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
         String response =  tcs.Task.Result;
-        Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Failed to fetch guard.");
+            throw new Exception("Failed to load workshifts");
         }
-        Guard g = JsonSerializer.Deserialize<Guard>(response, new JsonSerializerOptions
+    
+        ICollection<WorkShift> ws = JsonSerializer.Deserialize<ICollection<WorkShift>>(response, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         })!;
-        return g;
+        return ws;
     }
 
-    public async Task<ICollection<Guard>> GetGuardsAsync(int number)
+    public async Task CreateWorkShiftAsync(WorkShift workShift)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
-        var messageBytes = Encoding.UTF8.GetBytes(number.ToString());
+        
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(workShift));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guards.get", basicProperties: props,
-            body: messageBytes);
-    
-        Console.WriteLine("message published");
+        channel.BasicPublish(exchange: Exchange, routingKey: "workShift.add", basicProperties: props, body: messageBytes);
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        Console.WriteLine("message published workshift/add");
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Failed to fetch guards.");
-        }
-        ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        })!;
-        return g;
-    }
-
-    public async Task CreateGuardAsync(Guard guard)
-    {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
-        String guardToSend = JsonSerializer.Serialize(guard,new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        });
-        Console.WriteLine(guardToSend);
-        var messageBytes = Encoding.UTF8.GetBytes(guardToSend);
-        var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.add", basicProperties: props,
-            body: messageBytes);
-    
-        Console.WriteLine("message published guard/add");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
-        String response =  tcs.Task.Result;
-        if (response.Equals("fail"))
-        {
-            throw new Exception("Failed to create guard.");
-        }
-    }
-
-    public async Task RemoveGuardAsync(long id)
-    {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
-        var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
-        var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.remove", basicProperties: props,
-            body: messageBytes);
-    
-        Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
-        String response =  tcs.Task.Result;
-        Console.WriteLine(response);
-        if (response.Equals("fail"))
-        {
-            throw new Exception("Failed to remove guard.");
+            throw new Exception("Failed to create a workshift");
         }
         
     }
 
-    public async Task UpdateGuardAsync(Guard guard)
+    public async Task RemoveWorkShiftAsync(long id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
-        string guardToSend = JsonSerializer.Serialize(guard);
-        var messageBytes = Encoding.UTF8.GetBytes(guardToSend);
+        
+        var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.update", basicProperties: props,
-            body: messageBytes);
-    
-        Console.WriteLine("message published");
+        channel.BasicPublish(exchange: Exchange, routingKey: "workShift.remove", basicProperties: props, body: messageBytes);
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
         String response =  tcs.Task.Result;
-        Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Failed to update guard.");
+            throw new Exception($"Failed to remove workshift n.-{id}");
         }
     }
 
- 
+    public async Task UpdateWorkShiftAsync(WorkShift workShift)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(workShift));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs); 
+        
+        channel.BasicPublish(exchange: Exchange, routingKey: "workShift.update", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception($"Failed to update workshift n.-{workShift.Id}");
+        }
+    }
 }

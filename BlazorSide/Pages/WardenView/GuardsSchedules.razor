@@ -1,0 +1,80 @@
+﻿@page "/GuardsSchedules"
+@using Entities
+@using Syncfusion.Blazor
+@using Contracts
+@inject IWorkShiftService _workShiftService
+@attribute [Authorize(Policy = "WardenAccess")]
+
+<div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
+    <EditForm Model="@newWorkShift" OnValidSubmit="@AddNewWorkShift">
+        <DataAnnotationsValidator/> 
+        <ValidationSummary/>
+        <h3>Create a workshift:</h3>
+        <br/>
+        <label class="text-white">Day of the week:
+            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px"  @bind-Value="@dayValue" DataSource="DaysOfTheWeek">
+                <DropDownListFieldSettings Text="Day" Value="Day"/>
+            </SfDropDownList>
+        </label> 
+        <p></p>
+        <br/>
+        <div class="row">
+            <br/>
+            <div class="col-md-6">
+                <label for="start-time" class="text-white"> Start time:</label>
+                <SfTimePicker ID="start-time" @bind-Value="@StartTime" Step=60 Format="HH:mm"></SfTimePicker>
+
+            </div>
+            <div class="col-md-6">
+                <label for="end-time" class="text-white">End time: </label>
+                <SfTimePicker ID="end-time" @bind-Value="@EndTime" Step=60 Format="HH:mm"></SfTimePicker>
+            </div>
+        </div>
+        <br/>
+        <p></p>
+        <label class="text-white">Sector:
+            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px"  @bind-Value="@sectorValue" DataSource="sectors">
+                <DropDownListFieldSettings Text="id" Value="id"/>
+                </SfDropDownList>
+        </label> 
+        <br/>
+        <br/>
+        <button class="btn btn-white" type="submit">Add New WorkShift</button>
+        
+    </EditForm>
+</div>
+
+@code {
+
+    private WorkShift newWorkShift = new ();
+    
+    private DateTime? StartTime { get; set; } = DateTime.Now;
+    private DateTime? EndTime { get; set; } = DateTime.Now + TimeSpan.FromHours(2);
+    
+    private string dayValue = "fail";
+    private ICollection<string> DaysOfTheWeek = new DaysOfTheWeek().Days;
+    
+    // todo different solution for sectors
+    
+    private string sectorValue = "fail";
+    private ICollection<string> sectors = new[] {"1", "2", "3"};
+
+    // todo error handling, input checking 
+    
+    private async Task AddNewWorkShift()
+    {
+        newWorkShift.Start = $"{dayValue} {StartTime?.ToString("HH:mm")}";
+        newWorkShift.End = $"{dayValue} {EndTime?.ToString("HH:mm")}";
+        newWorkShift.Sector = new Sector(int.Parse(sectorValue), 500);
+        try
+        {
+            await _workShiftService.CreateWorkShiftAsync(newWorkShift);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+}

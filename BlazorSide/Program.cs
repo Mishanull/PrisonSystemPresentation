@@ -10,6 +10,7 @@ using RabbitMQClient;
 using RabbitMqClients;
 using Blazored.Modal;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using RabbitMQClients;
 using Syncfusion.Blazor;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,7 @@ builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthenticationStat
 builder.Services.AddScoped<IUserService, UserClient >();
 builder.Services.AddScoped<IPrisonerService, PrisonerClient >();
 builder.Services.AddScoped<IGuardService, GuardClient >();
+builder.Services.AddScoped<IWorkShiftService, WorkShiftClient >();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("WardenAccess", pb => pb.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "warden"));
