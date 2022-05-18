@@ -1,0 +1,122 @@
+﻿@page "/AddWorkshift"
+@using Entities
+@using Syncfusion.Blazor
+@using Contracts
+@using BlazorSide.UIComponents
+@inject IWorkShiftService _workShiftService
+@inject IModalService _modalService
+@inject NavigationManager _navMgr
+@attribute [Authorize(Policy = "WardenAccess")]
+
+<div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
+    <EditForm Model="@newWorkShift" OnValidSubmit="@AddNewWorkShift">
+        <DataAnnotationsValidator/> 
+        <ValidationSummary/>
+        <h3>Create a workshift:</h3>
+        <br/>
+        <label class="text-white">Day of the week:
+            <SfMultiSelect  TItem="string" TValue="string[]" PopupHeight="200px"  @bind-Value="@dayValue" DataSource="DaysOfTheWeek">
+                <MultiSelectFieldSettings  Text="Day" Value="Day"/>
+            </SfMultiSelect>
+        </label> 
+        <p></p>
+        <br/>
+        <div class="row">
+            <br/>
+            <div class="col-md-6">
+                <label for="start-time" class="text-white"> Start time:</label>
+                <SfTimePicker ID="start-time" @bind-Value="@StartTime" Step=60 Format="HH:mm"></SfTimePicker>
+
+            </div>
+            <div class="col-md-6">
+                <label for="end-time" class="text-white">End time: </label>
+                <SfTimePicker ID="end-time" @bind-Value="@EndTime" Step=60 Format="HH:mm"></SfTimePicker>
+            </div>
+        </div>
+        <br/>
+        <p></p>
+        <label class="text-white">Sector:
+            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px"  @bind-Value="@sectorValue" DataSource="sectors">
+                <DropDownListFieldSettings   Text="id" Value="id"/>
+            </SfDropDownList>
+        </label> 
+        <br/>
+        <br/>
+        <button class="btn btn-white" type="submit">Add New WorkShift</button>
+        
+    </EditForm>
+</div>
+
+@if (!string.IsNullOrEmpty(errorLabel))
+        {
+            <label style="color: red;">Error: @errorLabel</label>
+        }
+
+@code {
+
+    private WorkShift newWorkShift = new ();
+    private string errorLabel = String.Empty;
+    private DateTime? StartTime { get; set; } = DateTime.Now;
+    private DateTime? EndTime { get; set; } = DateTime.Now + TimeSpan.FromHours(4);
+    private string[] dayValue = {};
+    private ICollection<string> DaysOfTheWeek = new DaysOfTheWeek().Days;
+    
+    // todo different solution for sectors
+    
+    private string sectorValue = "fail";
+    private ICollection<string> sectors = new[] {"1", "2", "3"};
+
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
+    
+    private async Task AddNewWorkShift()
+    {
+        newWorkShift.Start = StartTime?.ToString("HH:mm");
+        newWorkShift.End = EndTime?.ToString("HH:mm");
+        newWorkShift.Sector = new Sector(int.Parse(sectorValue), 500);
+        newWorkShift.DaysOfWeek = string.Join(", ", dayValue);
+        
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ChoiceModal.Message),"Workshift added successfully");
+        parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
+        parameters.Add(nameof(ChoiceModal.SecondButton),"Add another workshift");
+        try
+        {
+            await _workShiftService.CreateWorkShiftAsync(newWorkShift);
+            var modalRef=_modalService.Show<ChoiceModal>("Success",parameters);
+            var result = await modalRef.Result;
+            if (!result.Cancelled)
+            {
+                string? message;
+                message = result.Data?.ToString() ?? string.Empty;
+                switch (message)
+                {
+                    case "Go back":
+                    {
+                        await BackToHome();
+                        break;
+                    }
+                    case "Add another workshift":
+                    {
+                        await BackToAdd();
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            errorLabel = e.Message;
+        }
+    }
+    
+    private async Task BackToAdd()
+        {
+            StateHasChanged();
+        }
+
+    private async Task BackToHome()
+        {
+            _navMgr.NavigateTo("/");
+        }
+}

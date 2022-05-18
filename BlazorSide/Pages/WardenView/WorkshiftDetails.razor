@@ -1,0 +1,139 @@
+﻿@page "/WorkshiftDetails/{id:long}"
+@using Entities
+@using Syncfusion.Blazor
+@using Contracts
+@using BlazorSide.UIComponents
+@inject IWorkShiftService _workShiftService
+@inject IModalService _modalService
+@inject NavigationManager _navMgr
+@attribute [Authorize(Policy = "WardenAccess")]
+
+<div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
+    <EditForm Model="@editedWorkshift" OnValidSubmit="@EditWorkShift">
+        <DataAnnotationsValidator/> 
+        <ValidationSummary/>
+        <h3>Edit a workshift n(@editedWorkshift.Id)</h3>
+        <br/>
+        <label class="text-white">Day of the week:
+            <SfMultiSelect  TItem="string" TValue="string[]" PopupHeight="200px"  @bind-Value="@dayValue" DataSource="DaysOfTheWeek">
+                <MultiSelectFieldSettings  Text="Day" Value="Day"/>
+            </SfMultiSelect>
+        </label> 
+        <p></p>
+        <br/>
+        <div class="row">
+            <br/>
+            <div class="col-md-6">
+                <label for="start-time" class="text-white"> Start time:</label>
+                <SfTimePicker ID="start-time" @bind-Value="@StartTime" Step=60 Format="HH:mm"></SfTimePicker>
+
+            </div>
+            <div class="col-md-6">
+                <label for="end-time" class="text-white">End time: </label>
+                <SfTimePicker ID="end-time" @bind-Value="@EndTime" Step=60 Format="HH:mm"></SfTimePicker>
+            </div>
+        </div>
+        <br/>
+        <p></p>
+        <label class="text-white">Sector:
+            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px"  @bind-Value="@sectorValue" DataSource="sectors">
+                <DropDownListFieldSettings   Text="id" Value="id"/>
+            </SfDropDownList>
+        </label> 
+        <br/>
+        <br/>
+    <div class="row">
+        <div class="col-md-6"><button class="btn btn-white" >Update Workshift</button></div>
+        <div class="col-md-6"><button class="btn btn-white" @onclick="DeleteWorkShift">Delete this workshift</button></div>
+    </div> 
+        </EditForm>
+</div>
+
+@if (!string.IsNullOrEmpty(errorLabel))
+        {
+            <label style="color: red;">Error: @errorLabel</label>
+        }
+
+@code {
+    [Parameter]
+    public virtual long? Id { get; set; }
+    public virtual WorkShift editedWorkshift { get; set; }
+    private string errorLabel = String.Empty;
+    private string[] dayValue = {};
+    private ICollection<string> DaysOfTheWeek = new DaysOfTheWeek().Days;
+    private string sectorValue = "fail";
+    private ICollection<string> sectors = new[] {"1", "2", "3"};
+    private DateTime? StartTime { get; set; } 
+    private DateTime? EndTime { get; set; } 
+   
+    
+    // todo different solution for sectors
+    
+    
+
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id.HasValue)
+        {
+            editedWorkshift = await _workShiftService.GetWorkShiftById(Id.Value);
+            StartTime = DateTime.Parse(editedWorkshift.Start);
+            EndTime = DateTime.Parse(editedWorkshift.End);
+            sectorValue = editedWorkshift.Id.ToString();
+            dayValue = editedWorkshift.DaysOfWeek.Split(", ");
+        }
+        await base.OnParametersSetAsync();
+    }
+    
+    private async Task EditWorkShift()
+    {
+        editedWorkshift.Start = StartTime?.ToString("HH:mm");
+        editedWorkshift.End = EndTime?.ToString("HH:mm");
+        editedWorkshift.Sector = new Sector(int.Parse(sectorValue), 500);
+        editedWorkshift.DaysOfWeek = string.Join(", ", dayValue);
+        
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to update the workshift?");
+        var modalRef=_modalService.Show<ActionConfirm>("Success",parameters);
+        var result = await modalRef.Result;
+        try
+        {
+            if (!result.Cancelled)
+            {
+                await _workShiftService.UpdateWorkShiftAsync(editedWorkshift);
+                _navMgr.NavigateTo("/WorkShiftsOverview");
+            }
+        }
+        catch (Exception e)
+        {
+            parameters.Add(nameof(ActionConfirm.Message),e.Message);
+            _modalService.Show<ActionConfirm>("Failure", parameters);
+        }
+    }
+    
+    // todo fix modal fuckery
+
+    private async Task DeleteWorkShift()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message), "Are you sure you want to delete the workshift?");
+        var modalRef = _modalService.Show<ActionConfirm>("Delete", parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
+        {
+            try
+            {
+                await _workShiftService.RemoveWorkShiftAsync(editedWorkshift.Id);
+                _navMgr.NavigateTo("/WorkshiftsOverview");
+            }
+            catch (Exception e)
+            {
+                parameters.Add(nameof(ActionConfirm.Message), e.Message);
+                _modalService.Show<ActionConfirm>("Failure", parameters);
+            }
+        }
+    }
+
+}
