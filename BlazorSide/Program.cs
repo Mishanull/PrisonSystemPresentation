@@ -10,7 +10,6 @@ using RabbitMQClient;
 using RabbitMqClients;
 using Blazored.Modal;
 using ConsumerBackgroundServices;
-
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RabbitMQClients;
 using Syncfusion.Blazor;
@@ -28,16 +27,20 @@ builder.Services.AddScoped<IUserService, UserClient >();
 builder.Services.AddScoped<IPrisonerService, PrisonerClient >();
 builder.Services.AddScoped<IGuardService, GuardClient >();
 builder.Services.AddScoped<IAlertService, AlertClient>();
+builder.Services.AddScoped<IWorkShiftService, WorkShiftClient >();
+builder.Services.AddScoped<ISectorService, SectorClient >();
+
 builder.Services.AddSingleton<StateContainer.StateContainer>();
 builder.Services.AddSingleton<Consumer>();
 builder.Services.AddHostedService(sp=>sp.GetService<Consumer>());
 
-builder.Services.AddScoped<IWorkShiftService, WorkShiftClient >();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("WardenAccess", pb => pb.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "warden"));
     options.AddPolicy("GuardAccess", pb => pb.RequireAuthenticatedUser().RequireClaim(ClaimTypes.Role, "guard"));
 });
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

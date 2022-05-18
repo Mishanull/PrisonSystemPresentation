@@ -2,12 +2,15 @@
 
 @using Entities
 @using Contracts
-@using Utilities
 @using BlazorSide.UIComponents
+@using Syncfusion.Blazor
+@using System.ComponentModel.DataAnnotations
 
 @inject IPrisonerService _prisonerService
+@inject ISectorService _sectorService
 @inject IModalService modalService
 @inject NavigationManager _navMgr
+
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
@@ -24,37 +27,59 @@
         </div>
         <br/>
         <label class="text-white">SSN: </label> <InputNumber @bind-Value="newPrisoner.Ssn" class="form-control"  />
-        <br/>  
+        <br/>
+        <label class="text-white">Entry date: </label> <InputDate @bind-Value="entryDate" class="form-control"/>
+        <br/>
+        <label class="text-white">Custody duration (months): </label> <InputNumber @bind-Value="newPrisoner.DurationInMonths" class="form-control"/>
+        <br/>
         <label class="text-white">Crime Commited: </label> <InputText @bind-Value="newPrisoner.CrimeCommitted" class="form-control" type="text"  />
+        <br/>
+        <label class="text-white">Sector:
+            <SfDropDownList TItem="Sector" TValue="Sector" PopupHeight="200px"  @bind-Value="@newPrisoner.Sector" DataSource="sectors">
+                <DropDownListFieldSettings   Text="Id" Value="Id"/>
+            </SfDropDownList>
+        </label> 
         <br/>
         <label class="text-white">Note: </label><InputText @bind-Value="newPrisoner.Note" class="form-control"  />
         <br/>
+
         <button class="btn btn-white" type="submit">Add New Prisoner</button>
     </EditForm>
 </div>
+
 @if (!string.IsNullOrEmpty(errorLabel))
-        {
-            <label style="color: red;">Error: @errorLabel</label>
-        }
+{
+    <label style="color: red;">Error: @errorLabel</label>
+}
+
 @code {
     private Prisoner newPrisoner=new Prisoner();
+    [Required]
+    private DateTime entryDate; //workaround for the date as string
+    
     private string errorLabel=String.Empty;
     [CascadingParameter]
     private IModalService Modal { get; set; }
+
+    private ICollection<Sector> sectors;
+    protected async override Task OnInitializedAsync()
+    {
+        sectors = await _sectorService.GetSectorsAsync();
+    }
+    
     private async Task AddNewPrisoner()
     {
-        
-            var parameters = new ModalParameters();
+        var parameters = new ModalParameters();
             parameters.Add(nameof(ChoiceModal.Message),"Prisoner added successfully");
             parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
             parameters.Add(nameof(ChoiceModal.SecondButton),"Go to Prisoners Overview");
             parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Prisoner");
             try
             {
-                
-                
+                newPrisoner.EntryDate = entryDate.Date.ToString("d");
                 await _prisonerService.CreatePrisonerAsync(newPrisoner);
                 newPrisoner = new Prisoner();
+                
                 var modalRef=modalService.Show<ChoiceModal>("Success",parameters);
                 var result = await modalRef.Result;
                 if (!result.Cancelled)
@@ -79,6 +104,7 @@
                             break;
                         }
                     }
+                    StateHasChanged();
                 }
             }
             catch (Exception e)
