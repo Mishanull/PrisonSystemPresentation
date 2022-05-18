@@ -3,7 +3,8 @@
 public class Visit
 {
     public long Id { get; set; }
-    public DateTime DateTime { get; set; }
+    public DateTime VisitDate { get; set; }
+    public DateTime VisitTime { get; set; }
     public Status Status0 { get; set; }
     public string AccessCode { get; set; }
     public string  FirstName { get; set; }

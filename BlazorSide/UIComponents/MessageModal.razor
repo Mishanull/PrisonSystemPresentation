@@ -1,0 +1,28 @@
+﻿
+<div class="modal fade show d-block mt-5 w-75" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050"> 
+        <div class="modal-content">
+            <div class="modal-body">
+                <p>@Message</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" @onclick="OkPressed">@OkButton</button>
+            </div>
+        </div>
+    </div>
+</div>
+@code {
+    [CascadingParameter]
+    BlazoredModalInstance BlazoredModal { get; set; }=default! ;
+    string? Choice { get; set; }
+    [Parameter] public String? Message { get; set; }
+    [Parameter] public String? OkButton { get; set; }
+    async Task Cancel() => await BlazoredModal.CancelAsync();
+    
+    private async Task OkPressed()
+    {
+        Choice = OkButton;
+        await BlazoredModal.CloseAsync(ModalResult.Ok(Choice));
+    }
+}

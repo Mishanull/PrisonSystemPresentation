@@ -3,6 +3,8 @@
 @using BlazorSide.UIComponents
 @using Contracts
 @using Entities
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Calendars
 @using StateContainer
 @inherits LayoutComponentBase
 @inject NavigationManager navMgr;
@@ -13,27 +15,28 @@
 
 <PageTitle>BlazorSide</PageTitle>
 <AuthorizeView>
-  <Authorized Context="Auth">
-    <NavMenu/>
-    <div class="row h-100 ">
-        <div class="mt-5  h-100  col-md-3 col-sm-2">
-            <SideBar></SideBar>
+    <Authorized Context="Auth">
+        <NavMenu/>
+        <div class="row h-100 ">
+            <div class="mt-5  h-100  col-md-3 col-sm-2">
+                <SideBar></SideBar>
+            </div>
+            <div class="col-md-9" style="margin-top:6rem; ">
+                @Body
+            </div>
         </div>
-        <div class="col-md-9" style="margin-top:6rem; ">
-            @Body
-        </div>
-    </div>
-  
-  </Authorized>
-    <NotAuthorized>
         
+  
+    </Authorized>
+    <NotAuthorized>
+
         <div class="d-flex  flex-column align-content-center flex-wrap" style="margin-top: 1rem;">
             <h3 class="align-self-center">Prison System</h3>
             <br/>
             <img class="align-self-center " src="img/logo.png" height="100" width="100"/>
             <hr/>
             <br/>
-            
+
             <!-- Pills navs -->
             <ul class="nav nav-pills nav-justified mb-3" id="ex1" role="tablist">
                 <li class="nav-item" role="presentation">
@@ -44,8 +47,7 @@
                         href="#pills-login"
                         role="tab"
                         aria-controls="pills-login"
-                        aria-selected="true"
-                    >Login</a>
+                        aria-selected="true">Login</a>
                 </li>
                 <li class="nav-item" role="presentation">
                     <a
@@ -55,8 +57,7 @@
                         href="#pills-visit"
                         role="tab"
                         aria-controls="pills-register"
-                        aria-selected="false"
-                    >Visitors</a>
+                        aria-selected="false">Visitors</a>
                 </li>
             </ul>
             <!-- Pills navs -->
@@ -89,44 +90,48 @@
                             <a href="#!">Forgot password?</a>
                         </div>
                     </div>
-
-                    @if (!string.IsNullOrEmpty(errorLabel))
-                    {
-                        <div >
-                            <label style="color: red">
-                                @errorLabel
-                            </label>
-                        </div>
-                    }
+                    
                     <!-- Submit button -->
                     <button type="submit" @onclick="LoginAsync" class="btn btn-primary btn-block mb-4">Sign in</button>
                 </div>
-                
+
                 <div class="tab-pane fade" id="pills-visit" role="tabpanel" aria-labelledby="tab-visit">
                     <div class="text-center mb-3">
                         <pre>_____________________________________________</pre>
                     </div>
-                    
+
                     <div class="form mb-4">
-                        <input type="text" @bind="newVisit.FirstName"  id="FirstName" class="form-control" />
+                        <input type="text" @bind="newVisit.FirstName" id="FirstName" class="form-control"/>
                         <label class="form-label" for="FirstName">First Name</label>
                     </div>
-                    
+
                     <div class="form mb-4">
-                        <input type="text" @bind="newVisit.LastName" id="LastName" class="form-control" />
+                        <input type="text" @bind="newVisit.LastName" id="LastName" class="form-control"/>
                         <label class="form-label" for="LastName">Last Name</label>
                     </div>
-                    
+
                     <div class="form mb-4">
-                        <input type="email" @bind="newVisit.Email" id="Email" class="form-control" />
+                        <input type="email" @bind="newVisit.Email" id="Email" class="form-control"/>
                         <label class="form-label" for="Email">Email</label>
                     </div>
-                    
+
                     <div class="form- mb-4">
-                        <input type="text" @bind="newVisit.PrisonerSsn" id="Ssn" class="form-control" />
+                        <input type="text" @bind="newVisit.PrisonerSsn" id="Ssn" class="form-control"/>
                         <label class="form-label" for="Ssn">Inmate Social Security Number:</label>
                     </div>
-                    
+
+                    <div class="form- mb-4">
+                        <SfDatePicker ID="Date-visit" TValue="DateTime?" Placeholder="Choose a Date" ShowClearButton="true" @bind-Value="@SelectedDate">
+                            <DatePickerEvents TValue="DateTime?" OnRenderDayCell="@DisableDays"></DatePickerEvents>
+                        </SfDatePicker>
+                        <label for="Date-visit" class="text-white"> Visit Date</label>
+                    </div>
+
+                    <div class="form- mb-4">
+                        <SfTimePicker ID="visit-time" TValue="DateTime?" @bind-value="@SelectedTime" Min="@MinVal" Max="@MaxVal" Step=30 Format="HH:mm"></SfTimePicker>
+                        <label for="visit-time" class="text-white"> Visit Time</label>
+                    </div>
+
                     <div class="form-check d-flex justify-content-center mb-4">
                         <input
                             class="form-check-input me-2"
@@ -134,14 +139,21 @@
                             value=""
                             id="registerCheck"
                             checked
-                            aria-describedby="registerCheckHelpText"
-                        />
+                            aria-describedby="registerCheckHelpText"/>
                         <label class="form-check-label" for="registerCheck">
                             I have read and agree to the terms
                         </label>
                     </div>
-                             
-                    @if (!string.IsNullOrEmpty(errorLabel))
+                    
+                    <!-- Submit button -->
+                    <button type="submit" @onclick="VisitRequest" class="btn btn-primary btn-block mb-3">Request visit</button>
+                </div>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@if (!string.IsNullOrEmpty(errorLabel))
                     {
                         <div >
                             <label style="color: red">
@@ -149,15 +161,7 @@
                             </label>
                         </div>
                     }
-                             
-                    <!-- Submit button -->
-                    <button type="submit" @onclick="VisitRequest" class="btn btn-primary btn-block mb-3">Request visit</button>
-                </div>
-            </div>
-        </div>
-    </NotAuthorized>
-    
-</AuthorizeView>
+
 @code {
     private string userName;
     private string password;
@@ -184,6 +188,11 @@
         }
     }
     
+    private DateTime? SelectedDate { get; set; }
+    private DateTime MinVal { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 15, 15, 00, 00);
+    private DateTime MaxVal { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 15, 18, 30, 00);
+    private DateTime? SelectedTime { get; set; } = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 15, 15, 00, 00);
+
     private Visit newVisit = new Visit();
     [CascadingParameter]
     private IModalService Modal { get; set; }
@@ -191,15 +200,17 @@
     private async Task VisitRequest()
     {
         var parameters = new ModalParameters();
-        parameters.Add(nameof(ChoiceModal.Message),"Visit requested successfully. You will receive an e-mail confirmation within 48hs");
-        parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
+        parameters.Add(nameof(MessageModal.Message),"Visit requested successfully. You will receive an e-mail confirmation within 48hs");
+        parameters.Add(nameof(MessageModal.OkButton),"Ok");
         
         try
         {
             Console.Write(newVisit);
+            newVisit.VisitDate = (DateTime) SelectedDate;
+            newVisit.VisitTime = (DateTime) SelectedTime;
             await _VisitService.CreateVisitAsync(newVisit);
             newVisit = new Visit();
-            var modalRef = _modalService.Show<ChoiceModal>("Success",parameters);
+            var modalRef = _modalService.Show<MessageModal>("Success",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
@@ -207,7 +218,7 @@
                 message = result.Data?.ToString() ?? string.Empty;
                 switch (message)
                 {
-                    case "Go back":
+                    case "Ok":
                     {
                         navMgr.NavigateTo("/");
                         break;
@@ -220,7 +231,11 @@
             errorLabel = e.Message;
         }
     }
-}
-   
     
+    private static void DisableDays(RenderDayCellEventArgs args) { 
+        if ((int)args.Date.DayOfWeek == 0 || (int)args.Date.DayOfWeek == 2 ||
+            (int)args.Date.DayOfWeek == 4 || (int)args.Date.DayOfWeek == 6) { 
+            args.IsDisabled = true; 
+        } 
+    }
 }
