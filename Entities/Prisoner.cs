@@ -15,4 +15,6 @@ public class Prisoner
     public int Points { get; set; }
     
     public string Note { get; set; }
+    public DateOnly Start { get; set; }
+    public int DurationInMonths { get; set; }
 }
