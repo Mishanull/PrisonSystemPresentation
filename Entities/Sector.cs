@@ -4,6 +4,10 @@ public class Sector
 {
     public long Id { get; set; }
     public int Capacity { get; set; }
+    public int OccupiedCells { get; set; }
+    
+    public int FreeCells => Capacity - OccupiedCells;
+
 
     public Sector(long id, int capacity)
     {
@@ -13,7 +17,8 @@ public class Sector
 
     public override string ToString()
     {
-        return $"{Id}";
+        return $"S-{Id} [{OccupiedCells}/{Capacity}]";
     }
+    
     
 }
