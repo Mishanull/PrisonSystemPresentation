@@ -10,7 +10,7 @@ using RabbitMQClient;
 using RabbitMqClients;
 using Blazored.Modal;
 using ConsumerBackgroundServices;
-=======
+
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using RabbitMQClients;
 using Syncfusion.Blazor;
@@ -28,10 +28,11 @@ builder.Services.AddScoped<IUserService, UserClient >();
 builder.Services.AddScoped<IPrisonerService, PrisonerClient >();
 builder.Services.AddScoped<IGuardService, GuardClient >();
 builder.Services.AddScoped<IAlertService, AlertClient>();
+builder.Services.AddScoped<IVisitService, VisitClient>();
 builder.Services.AddSingleton<StateContainer.StateContainer>();
 builder.Services.AddSingleton<Consumer>();
 builder.Services.AddHostedService(sp=>sp.GetService<Consumer>());
-=======
+
 builder.Services.AddScoped<IWorkShiftService, WorkShiftClient >();
 builder.Services.AddAuthorization(options =>
 {

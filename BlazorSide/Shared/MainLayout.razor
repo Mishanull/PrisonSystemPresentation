@@ -8,6 +8,9 @@
 @inject NavigationManager navMgr;
 @inject IAuthService _authService;
 @inject  IUserService _userService
+@inject IVisitService _VisitService
+@inject IModalService _modalService
+
 <PageTitle>BlazorSide</PageTitle>
 <AuthorizeView>
   <Authorized Context="Auth">
@@ -24,33 +27,132 @@
   </Authorized>
     <NotAuthorized>
         
-        <div class="d-flex  flex-column align-content-center flex-wrap" style="margin-top: 10rem;">
-            <h3 class="align-self-center">Log into the prison system</h3>
+        <div class="d-flex  flex-column align-content-center flex-wrap" style="margin-top: 1rem;">
+            <h3 class="align-self-center">Prison System</h3>
             <br/>
             <img class="align-self-center " src="img/logo.png" height="100" width="100"/>
             <hr/>
             <br/>
-            <div class="col-6 align-self-center  ">
-                <div class="form mb-4">
-                    <label class="form-label" for="form2Example2">Username</label>
-                    <input type="text" @bind="userName" id="form2Example1" class="form-control"/>
-                </div>
+            
+            <!-- Pills navs -->
+            <ul class="nav nav-pills nav-justified mb-3" id="ex1" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <a
+                        class="nav-link active"
+                        id="tab-login"
+                        data-mdb-toggle="pill"
+                        href="#pills-login"
+                        role="tab"
+                        aria-controls="pills-login"
+                        aria-selected="true"
+                    >Login</a>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <a
+                        class="nav-link"
+                        id="tab-register"
+                        data-mdb-toggle="pill"
+                        href="#pills-visit"
+                        role="tab"
+                        aria-controls="pills-register"
+                        aria-selected="false"
+                    >Visitors</a>
+                </li>
+            </ul>
+            <!-- Pills navs -->
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="pills-login" role="tabpanel" aria-labelledby="tab-login">
+                    <div class="text-center mb-3">
+                        <pre>_____________________________________________</pre>
+                    </div>
+                    <div class="form-outline mb-4">
+                        <input type="text" @bind="userName" id="userName" class="form-control"/>
+                        <label class="form-label" for="userName">Username</label>
+                    </div>
+                    <div class="form-outline mb-4">
+                        <input type="password" @bind="password" id="Pass" class="form-control"/>
+                        <label class="form-label" for="Pass">Password</label>
+                    </div>
 
-                <div class="form mb-4">
-                    <label class="form-label" for="form2Example2">Password</label>
-                    <input type="password" @bind="password" id="form2Example2" class="form-control"/>
-                </div>
+                    <!-- 2 column grid layout -->
+                    <div class="row mb-3">
+                        <div class="col-md-6 d-flex justify-content-center">
+                            <!-- Checkbox -->
+                            <div class="form-check mb-3 mb-md-0">
+                                <input class="form-check-input" type="checkbox" value="" id="loginCheck" checked/>
+                                <label class="form-check-label" for="loginCheck">Remember me</label>
+                            </div>
+                        </div>
 
-                @if (!string.IsNullOrEmpty(errorLabel))
-                {
-                    <div >
-                        <label style="color: red">
-                            @errorLabel
+                        <div class="col-md-6 d-flex justify-content-center">
+                            <!-- Simple link -->
+                            <a href="#!">Forgot password?</a>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(errorLabel))
+                    {
+                        <div >
+                            <label style="color: red">
+                                @errorLabel
+                            </label>
+                        </div>
+                    }
+                    <!-- Submit button -->
+                    <button type="submit" @onclick="LoginAsync" class="btn btn-primary btn-block mb-4">Sign in</button>
+                </div>
+                
+                <div class="tab-pane fade" id="pills-visit" role="tabpanel" aria-labelledby="tab-visit">
+                    <div class="text-center mb-3">
+                        <pre>_____________________________________________</pre>
+                    </div>
+                    
+                    <div class="form mb-4">
+                        <input type="text" @bind="newVisit.FirstName"  id="FirstName" class="form-control" />
+                        <label class="form-label" for="FirstName">First Name</label>
+                    </div>
+                    
+                    <div class="form mb-4">
+                        <input type="text" @bind="newVisit.LastName" id="LastName" class="form-control" />
+                        <label class="form-label" for="LastName">Last Name</label>
+                    </div>
+                    
+                    <div class="form mb-4">
+                        <input type="email" @bind="newVisit.Email" id="Email" class="form-control" />
+                        <label class="form-label" for="Email">Email</label>
+                    </div>
+                    
+                    <div class="form- mb-4">
+                        <input type="text" @bind="newVisit.PrisonerSsn" id="Ssn" class="form-control" />
+                        <label class="form-label" for="Ssn">Inmate Social Security Number:</label>
+                    </div>
+                    
+                    <div class="form-check d-flex justify-content-center mb-4">
+                        <input
+                            class="form-check-input me-2"
+                            type="checkbox"
+                            value=""
+                            id="registerCheck"
+                            checked
+                            aria-describedby="registerCheckHelpText"
+                        />
+                        <label class="form-check-label" for="registerCheck">
+                            I have read and agree to the terms
                         </label>
                     </div>
-                }
-                <!-- Submit button -->
-                <button type="submit" @onclick="LoginAsync" class="btn btn-primary btn-block mb-4">Sign in</button>
+                             
+                    @if (!string.IsNullOrEmpty(errorLabel))
+                    {
+                        <div >
+                            <label style="color: red">
+                                @errorLabel
+                            </label>
+                        </div>
+                    }
+                             
+                    <!-- Submit button -->
+                    <button type="submit" @onclick="VisitRequest" class="btn btn-primary btn-block mb-3">Request visit</button>
+                </div>
             </div>
         </div>
     </NotAuthorized>
@@ -81,7 +183,44 @@
             errorLabel = $"Error:"+e.Message;
         }
     }
-
+    
+    private Visit newVisit = new Visit();
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
+    
+    private async Task VisitRequest()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ChoiceModal.Message),"Visit requested successfully. You will receive an e-mail confirmation within 48hs");
+        parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
+        
+        try
+        {
+            Console.Write(newVisit);
+            await _VisitService.CreateVisitAsync(newVisit);
+            newVisit = new Visit();
+            var modalRef = _modalService.Show<ChoiceModal>("Success",parameters);
+            var result = await modalRef.Result;
+            if (!result.Cancelled)
+            {
+                string? message;
+                message = result.Data?.ToString() ?? string.Empty;
+                switch (message)
+                {
+                    case "Go back":
+                    {
+                        navMgr.NavigateTo("/");
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            errorLabel = e.Message;
+        }
+    }
+}
    
     
 }
