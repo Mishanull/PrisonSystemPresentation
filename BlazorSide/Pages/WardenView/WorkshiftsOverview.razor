@@ -63,7 +63,13 @@
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="ms-3">
-                                <p class=" mb-1">@w.Guards</p>
+                                <p class=" mb-1">
+                                    @foreach (var guard in w.Guards)
+                                    {
+                                        string temp = $"{guard.FirstName} {guard.LastName}, " + Environment.NewLine; 
+                                        @temp
+                                    }
+                                </p>
                             </div>
                         </div>
                     </td>
@@ -83,20 +89,35 @@
             </tbody>
         </table>
     </div>
-     @if (workShifts == null && !workShifts.Any())
-        {
-            <div class="spinner-border text-info" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        }
+    @if (workShifts == null && !workShifts.Any())
+    {
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
 </div>
+
+@if (!string.IsNullOrEmpty(errorLabel))
+{
+    <label style="color: red">Error: @errorLabel</label>
+}
 
 @code {
     private ICollection<WorkShift>? workShifts;
+    private string errorLabel = String.Empty;
+
 
     protected override async Task OnInitializedAsync()
     {
-        workShifts = await workShiftService.GetWorkShifts();
+        try
+        {
+            workShifts = await workShiftService.GetWorkShifts();
+        }
+        catch (Exception e)
+        {
+            errorLabel = e.Message;
+        }
+        
     }
 
 }

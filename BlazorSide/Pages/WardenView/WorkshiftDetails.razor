@@ -3,8 +3,11 @@
 @using Syncfusion.Blazor
 @using Contracts
 @using BlazorSide.UIComponents
+@using Syncfusion.Blazor.Lists
+@using System.Linq
 @inject IWorkShiftService _workShiftService
 @inject IModalService _modalService
+@inject IGuardService _guardService
 @inject NavigationManager _navMgr
 @attribute [Authorize(Policy = "WardenAccess")]
 
@@ -42,6 +45,58 @@
         </label> 
         <br/>
         <br/>
+         <div id="container">
+                    <div class="sample flex">
+                        <div class="flex">
+                            <div class="padding">
+        
+                                @* <SfTextBox Placeholder="Filter" Input="@(e => OnInput(e, 1))"></SfTextBox> *@
+                                <SfListView DataSource="@currentGuards" ShowHeader="true">
+                                    <ListViewFieldSettings TValue="Guard" Id="Id" Text="FirstName"></ListViewFieldSettings>
+                                    <ListViewTemplates TValue="Guard">
+                                        <HeaderTemplate>
+                                            <div class="headerContainer">
+                                                <span class="header">Guards to be added</span>
+                                            </div>
+                                        </HeaderTemplate>
+                                    </ListViewTemplates>
+                                    <ListViewEvents TValue="Guard" Clicked="@(e => OnSelected(e, 1))"></ListViewEvents>
+                                </SfListView>
+        
+        
+                            </div>
+                            <div class="flex vertical vertical__center flex__center padding">
+                                <div class="padding">
+                                    <button disabled="@(!currentGuards.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(1))">@(">>")</button>
+                                </div>
+                                <div class="padding">
+                                    <button disabled="@(FirstSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(2))">@(">")</button>
+                                </div>
+                                <div class="padding">
+                                    <button disabled="@(SecondSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(3))">@("<")</button>
+                                </div>
+                                <div class="padding">
+                                    <button disabled="@(!availableGuards.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(4))">@("<<")</button>
+                                </div>
+                            </div>
+                            <div class="padding">
+                                @* <SfTextBox Placeholder="Filter" Input="@(e => OnInput(e, 2))"></SfTextBox> *@
+                                <SfListView DataSource="@availableGuards" ShowHeader="true">
+                                    <ListViewFieldSettings Id="Id" Text="FirstName" TValue="Guard"></ListViewFieldSettings>
+                                    <ListViewTemplates TValue="Guard">
+                                        <HeaderTemplate>
+                                            <div class="headerContainer">
+                                                <span class="header">Available guards</span>
+                                            </div>
+                                        </HeaderTemplate>
+                                    </ListViewTemplates>
+                                    <ListViewEvents TValue="Guard" Clicked="@(e => OnSelected(e, 2))"></ListViewEvents>
+                                </SfListView>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        <br/>
     <div class="row">
         <div class="col-md-6"><button class="btn btn-white" >Update Workshift</button></div>
         <div class="col-md-6"><button class="btn btn-white" @onclick="DeleteWorkShift">Delete this workshift</button></div>
@@ -64,9 +119,12 @@
     private string sectorValue = "fail";
     private ICollection<string> sectors = new[] {"1", "2", "3"};
     private DateTime? StartTime { get; set; } 
-    private DateTime? EndTime { get; set; } 
-   
-    
+    private DateTime? EndTime { get; set; }
+    List<Guard> currentGuards;
+    List<Guard> availableGuards;
+    Guard FirstSelected { get; set; }
+    Guard SecondSelected { get; set; }
+
     // todo different solution for sectors
     
     
@@ -83,8 +141,131 @@
             EndTime = DateTime.Parse(editedWorkshift.End);
             sectorValue = editedWorkshift.Id.ToString();
             dayValue = editedWorkshift.DaysOfWeek.Split(", ");
+            await FetchGuards(Id);
         }
         await base.OnParametersSetAsync();
+    }
+    
+    private async Task FetchGuards(long? workshiftID)
+    {
+        WorkShift currentWorkshift = await _workShiftService.GetWorkShiftById(workshiftID);
+        currentGuards = (List<Guard>) currentWorkshift.Guards;
+        try
+        {
+            ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
+            ICollection<Guard> takenGuards = new List<Guard>();
+            foreach (var workShift in tempWorkshifts)
+            {
+                if (workShift.Guards != null)
+                {
+                    foreach (var workShiftGuard in workShift.Guards)
+                        takenGuards.Add(workShiftGuard);
+                }
+            }
+
+            availableGuards = (List<Guard>) await _guardService.GetGuardsAsync(20);
+
+            foreach (var takenGuard in takenGuards)
+            {
+                try
+                {
+                    if (availableGuards.Contains(availableGuards.Find(g => g.Id == takenGuard.Id))) 
+                        availableGuards.Remove(availableGuards.Find(g => g.Id == takenGuard.Id));
+                }
+                catch (Exception e)
+                {
+                    errorLabel = e.Message;
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            errorLabel = e.Message;
+        }
+    }
+    
+    // private async Task UpdateGuards()
+    // {
+    //     
+    //     try
+    //     {
+    //         ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
+    //         ICollection<Guard> takenGuards = new List<Guard>();
+    //         foreach (var workShift in tempWorkshifts)
+    //         {
+    //             if (workShift.Guards != null)
+    //             {
+    //                 foreach (var workShiftGuard in workShift.Guards)
+    //                 {
+    //                     if (workShift.Guards.)
+    //                     {
+    //                         
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         foreach (var takenGuard in takenGuards)
+    //         {
+    //             try
+    //             {
+    //                 if (availableGuards.Contains(availableGuards.Find(g => g.Id == takenGuard.Id))) 
+    //                     availableGuards.Remove(availableGuards.Find(g => g.Id == takenGuard.Id));
+    //             }
+    //             catch (Exception e)
+    //             {
+    //                 errorLabel = e.Message;
+    //             }
+    //         }
+    //     }
+    //     catch (Exception e)
+    //     {
+    //         errorLabel = e.Message;
+    //     }
+    // }
+    
+    private void OnButtonClick(int buttonIndex)
+    {
+        switch (buttonIndex)
+        {
+            case 1:
+                currentGuards.ForEach(e => availableGuards.Add(e));
+                currentGuards.Clear();
+                break;
+            case 2:
+                if (FirstSelected != null)
+                {
+                    availableGuards.Add(FirstSelected);
+                    currentGuards.RemoveAt(currentGuards.FindIndex(e => e.Id == FirstSelected.Id));
+                    FirstSelected = null;
+                }
+                break;
+            case 3:
+                if (SecondSelected != null)
+                {
+                    currentGuards.Add(SecondSelected);
+                    availableGuards.RemoveAt(availableGuards.FindIndex(e => e.Id == SecondSelected.Id));
+                    SecondSelected = null;
+                }
+                break;
+            case 4:
+                availableGuards.ForEach(e => currentGuards.Add(e));
+                availableGuards.Clear();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void OnSelected(ClickEventArgs<Guard> eventArgs, int listviewIndex)
+    {
+        if (listviewIndex == 1)
+        {
+            FirstSelected = eventArgs.ItemData;
+        }
+        else
+        {
+            SecondSelected = eventArgs.ItemData;
+        }
     }
     
     private async Task EditWorkShift()
@@ -93,6 +274,8 @@
         editedWorkshift.End = EndTime?.ToString("HH:mm");
         editedWorkshift.Sector = new Sector(int.Parse(sectorValue), 500);
         editedWorkshift.DaysOfWeek = string.Join(", ", dayValue);
+        editedWorkshift.Guards = currentGuards;
+        // todo remove guards from the list
         
         var parameters = new ModalParameters();
         parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to update the workshift?");
@@ -137,3 +320,100 @@
     }
 
 }
+
+
+<style>
+    .e-listview.e-lib {
+        box-shadow: 0 1px 4px #ddd;
+        border-bottom: 1px solid #ddd;
+        width: 250px;
+    }
+    
+    .header {
+        font-weight: bold;
+        font-size: larger;
+        /*color: black;*/
+    }
+
+    .sample {
+        justify-content: center;
+        min-height: 280px;
+    }
+
+    .padding {
+        padding: 4px;
+        background: white;
+    }
+
+    .right__align {
+        text-align: right;
+        margin-right: 8px;
+        padding-right: 8px;
+    }
+
+    .left__align {
+        margin-left: 8px;
+        padding-left: 8px;
+    }
+
+    .content__container {
+        background-color: aliceblue;
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .flex__center {
+        justify-content: center;
+    }
+
+    .vertical__center {
+        align-items: center;
+    }
+
+    .vertical {
+        flex-direction: column;
+    }
+
+    .flex__order__1 {
+        order: 1;
+    }
+
+    .flex__order__2 {
+        order: 2;
+    }
+
+    .flex__1 {
+        flex: 1;
+    }
+
+    .flex__2 {
+        flex: 2;
+    }
+
+    .flex__3 {
+        flex: 3;
+    }
+
+    .flex__5 {
+        flex: 5;
+    }
+
+    .flex__8 {
+        flex: 8;
+    }
+
+    .bold {
+        font-weight: 500;
+    }
+
+    .margin {
+        margin: 10px;
+    }
+
+    .small__font {
+        font-size: 13px;
+        margin: 2px 0;
+    }
+</style>

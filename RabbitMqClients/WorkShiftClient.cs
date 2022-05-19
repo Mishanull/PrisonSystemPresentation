@@ -135,7 +135,7 @@ public class WorkShiftClient : IWorkShiftService
         }
     }
 
-    public async Task<WorkShift> GetWorkShiftById(long id)
+    public async Task<WorkShift> GetWorkShiftById(long? id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

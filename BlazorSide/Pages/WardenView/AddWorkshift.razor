@@ -1,30 +1,36 @@
 ﻿@page "/AddWorkshift"
 @using Entities
 @using Syncfusion.Blazor
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Lists
 @using Contracts
 @using BlazorSide.UIComponents
+@using System.Linq
 @inject IWorkShiftService _workShiftService
 @inject IModalService _modalService
+@inject IGuardService _guardService
 @inject NavigationManager _navMgr
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
     <EditForm Model="@newWorkShift" OnValidSubmit="@AddNewWorkShift">
-        <DataAnnotationsValidator/> 
+        <DataAnnotationsValidator/>
         <ValidationSummary/>
         <h3>Create a workshift:</h3>
         <br/>
-        <label class="text-white">Day of the week:
-            <SfMultiSelect  TItem="string" TValue="string[]" PopupHeight="200px"  @bind-Value="@dayValue" DataSource="DaysOfTheWeek">
-                <MultiSelectFieldSettings  Text="Day" Value="Day"/>
+        <label class="text-white">
+            Day of the week:
+            <SfMultiSelect TItem="string" TValue="string[]" PopupHeight="200px" @bind-Value="@dayValue" DataSource="DaysOfTheWeek">
+                <MultiSelectFieldSettings Text="Day" Value="Day"/>
             </SfMultiSelect>
-        </label> 
+        </label>
         <p></p>
         <br/>
         <div class="row">
             <br/>
             <div class="col-md-6">
-                <label for="start-time" class="text-white"> Start time:</label>
+                <label for="start-time" class="text-white"> Start time: </label>
                 <SfTimePicker ID="start-time" @bind-Value="@StartTime" Step=60 Format="HH:mm"></SfTimePicker>
 
             </div>
@@ -35,55 +41,121 @@
         </div>
         <br/>
         <p></p>
-        <label class="text-white">Sector:
-            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px"  @bind-Value="@sectorValue" DataSource="sectors">
-                <DropDownListFieldSettings   Text="id" Value="id"/>
+        <label class="text-white">
+            Sector:
+            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px" @bind-Value="@sectorValue" DataSource="sectors">
+                <DropDownListFieldSettings Text="id" Value="id"/>
             </SfDropDownList>
-        </label> 
+        </label>
         <br/>
+        <br/>
+
+        <div id="container">
+            <div class="sample flex">
+                <div class="flex">
+                    <div class="padding">
+
+                        @* <SfTextBox Placeholder="Filter" Input="@(e => OnInput(e, 1))"></SfTextBox> *@
+                        <SfListView DataSource="@guardsToBeAdded" ShowHeader="true">
+                            <ListViewFieldSettings TValue="Guard" Id="Id" Text="FirstName"></ListViewFieldSettings>
+                            <ListViewTemplates TValue="Guard">
+                                <HeaderTemplate>
+                                    <div class="headerContainer">
+                                        <span class="header">Guards to be added</span>
+                                    </div>
+                                </HeaderTemplate>
+                            </ListViewTemplates>
+                            <ListViewEvents TValue="Guard" Clicked="@(e => OnSelected(e, 1))"></ListViewEvents>
+                        </SfListView>
+
+
+                    </div>
+                    <div class="flex vertical vertical__center flex__center padding">
+                        <div class="padding">
+                            <button disabled="@(!guardsToBeAdded.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(1))">@(">>")</button>
+                        </div>
+                        <div class="padding">
+                            <button disabled="@(FirstSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(2))">@(">")</button>
+                        </div>
+                        <div class="padding">
+                            <button disabled="@(SecondSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(3))">@("<")</button>
+                        </div>
+                        <div class="padding">
+                            <button disabled="@(!availableGuards.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(4))">@("<<")</button>
+                        </div>
+                    </div>
+                    <div class="padding">
+                        @* <SfTextBox Placeholder="Filter" Input="@(e => OnInput(e, 2))"></SfTextBox> *@
+                        <SfListView DataSource="@availableGuards" ShowHeader="true">
+                            <ListViewFieldSettings Id="Id" Text="FirstName" TValue="Guard"></ListViewFieldSettings>
+                            <ListViewTemplates TValue="Guard">
+                                <HeaderTemplate>
+                                    <div class="headerContainer">
+                                        <span class="header">Available guards</span>
+                                    </div>
+                                </HeaderTemplate>
+                            </ListViewTemplates>
+                            <ListViewEvents TValue="Guard" Clicked="@(e => OnSelected(e, 2))"></ListViewEvents>
+                        </SfListView>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <br/>
         <button class="btn btn-white" type="submit">Add New WorkShift</button>
-        
+
     </EditForm>
+
+
 </div>
 
+
 @if (!string.IsNullOrEmpty(errorLabel))
-        {
-            <label style="color: red;">Error: @errorLabel</label>
-        }
+{
+    <label style="color: red">Error: @errorLabel</label>
+}
+
+
 
 @code {
+    List<Guard> guardsToBeAdded;
+    List<Guard> availableGuards;
+    Guard FirstSelected { get; set; }
+    Guard SecondSelected { get; set; }
 
-    private WorkShift newWorkShift = new ();
+    private WorkShift newWorkShift = new();
     private string errorLabel = String.Empty;
     private DateTime? StartTime { get; set; } = DateTime.Now;
     private DateTime? EndTime { get; set; } = DateTime.Now + TimeSpan.FromHours(4);
     private string[] dayValue = {};
     private ICollection<string> DaysOfTheWeek = new DaysOfTheWeek().Days;
-    
+
     // todo different solution for sectors
-    
+
     private string sectorValue = "fail";
     private ICollection<string> sectors = new[] {"1", "2", "3"};
 
     [CascadingParameter]
     private IModalService Modal { get; set; }
-    
+
+
     private async Task AddNewWorkShift()
     {
         newWorkShift.Start = StartTime?.ToString("HH:mm");
         newWorkShift.End = EndTime?.ToString("HH:mm");
         newWorkShift.Sector = new Sector(int.Parse(sectorValue), 500);
         newWorkShift.DaysOfWeek = string.Join(", ", dayValue);
+        newWorkShift.Guards = guardsToBeAdded;
         
         var parameters = new ModalParameters();
-        parameters.Add(nameof(ChoiceModal.Message),"Workshift added successfully");
-        parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
-        parameters.Add(nameof(ChoiceModal.SecondButton),"Add another workshift");
+        parameters.Add(nameof(ChoiceModal.Message), "Workshift added successfully");
+        parameters.Add(nameof(ChoiceModal.FirstButton), "Go back");
+        parameters.Add(nameof(ChoiceModal.SecondButton), "Add another workshift");
         try
         {
             await _workShiftService.CreateWorkShiftAsync(newWorkShift);
-            var modalRef=_modalService.Show<ChoiceModal>("Success",parameters);
+            var modalRef = _modalService.Show<ChoiceModal>("Success", parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
@@ -109,14 +181,213 @@
             errorLabel = e.Message;
         }
     }
-    
+
     private async Task BackToAdd()
-        {
-            StateHasChanged();
-        }
+    {
+        await FetchGuards();
+        StateHasChanged();
+    }
 
     private async Task BackToHome()
+    {
+        _navMgr.NavigateTo("/");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchGuards();
+    }
+
+    private async Task FetchGuards()
+    {
+        guardsToBeAdded = new List<Guard>();
+        try
         {
-            _navMgr.NavigateTo("/");
+            ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
+            ICollection<Guard> takenGuards = new List<Guard>();
+            foreach (var workShift in tempWorkshifts)
+            {
+                if (workShift.Guards != null)
+                {
+                    foreach (var workShiftGuard in workShift.Guards)
+                        takenGuards.Add(workShiftGuard);
+                }
+            }
+
+            availableGuards = (List<Guard>) await _guardService.GetGuardsAsync(20);
+
+            foreach (var takenGuard in takenGuards)
+            {
+                try
+                {
+                    if (availableGuards.Contains(availableGuards.Find(g => g.Id == takenGuard.Id))) 
+                            availableGuards.Remove(availableGuards.Find(g => g.Id == takenGuard.Id));
+                }
+                catch (Exception e)
+                {
+                    errorLabel = e.Message;
+                }
+            }
         }
+        catch (Exception e)
+        {
+            errorLabel = e.Message;
+        }
+    }
+
+    private void OnButtonClick(int buttonIndex)
+    {
+        switch (buttonIndex)
+        {
+            case 1:
+                guardsToBeAdded.ForEach(e => availableGuards.Add(e));
+                guardsToBeAdded.Clear();
+                break;
+            case 2:
+                if (FirstSelected != null)
+                {
+                    availableGuards.Add(FirstSelected);
+                    guardsToBeAdded.RemoveAt(guardsToBeAdded.FindIndex(e => e.Id == FirstSelected.Id));
+                    FirstSelected = null;
+                }
+                break;
+            case 3:
+                if (SecondSelected != null)
+                {
+                    guardsToBeAdded.Add(SecondSelected);
+                    availableGuards.RemoveAt(availableGuards.FindIndex(e => e.Id == SecondSelected.Id));
+                    SecondSelected = null;
+                }
+                break;
+            case 4:
+                availableGuards.ForEach(e => guardsToBeAdded.Add(e));
+                availableGuards.Clear();
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void OnSelected(ClickEventArgs<Guard> eventArgs, int listviewIndex)
+    {
+        if (listviewIndex == 1)
+        {
+            FirstSelected = eventArgs.ItemData;
+        }
+        else
+        {
+            SecondSelected = eventArgs.ItemData;
+        }
+    }
+
+    // void OnInput(InputEventArgs eventArgs, int listviewIndex)
+    // {
+    //     if (listviewIndex == 1)
+    //     {
+    //         FirstData = FirstData.FindAll(e => e.FirstName.ToLower().Contains(eventArgs.Value.ToLower()));
+    //     }
+    //     else
+    //     {
+    //         SecondData = SecondData.FindAll(e => e.FirstName.ToLower().Contains(eventArgs.Value.ToLower()));
+    //     }
+    // }
+
+
 }
+
+
+<style>
+    .e-listview.e-lib {
+        box-shadow: 0 1px 4px #ddd;
+        border-bottom: 1px solid #ddd;
+        width: 250px;
+    }
+    
+    .header {
+        font-weight: bold;
+        font-size: larger;
+        /*color: black;*/
+    }
+
+    .sample {
+        justify-content: center;
+        min-height: 280px;
+    }
+
+    .padding {
+        padding: 4px;
+        background: white;
+    }
+
+    .right__align {
+        text-align: right;
+        margin-right: 8px;
+        padding-right: 8px;
+    }
+
+    .left__align {
+        margin-left: 8px;
+        padding-left: 8px;
+    }
+
+    .content__container {
+        background-color: aliceblue;
+    }
+
+    .flex {
+        display: flex;
+    }
+
+    .flex__center {
+        justify-content: center;
+    }
+
+    .vertical__center {
+        align-items: center;
+    }
+
+    .vertical {
+        flex-direction: column;
+    }
+
+    .flex__order__1 {
+        order: 1;
+    }
+
+    .flex__order__2 {
+        order: 2;
+    }
+
+    .flex__1 {
+        flex: 1;
+    }
+
+    .flex__2 {
+        flex: 2;
+    }
+
+    .flex__3 {
+        flex: 3;
+    }
+
+    .flex__5 {
+        flex: 5;
+    }
+
+    .flex__8 {
+        flex: 8;
+    }
+
+    .bold {
+        font-weight: 500;
+    }
+
+    .margin {
+        margin: 10px;
+    }
+
+    .small__font {
+        font-size: 13px;
+        margin: 2px 0;
+    }
+</style>
