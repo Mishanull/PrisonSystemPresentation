@@ -116,7 +116,7 @@ public class VisitClient : IVisitService
         return visit;
     }
 
-    public Task UpdateVisitStatusAsync(long id, Visit.Status status)
+    public Task UpdateVisitStatusAsync(long id, Status status)
     {
         throw new NotImplementedException();
     }
