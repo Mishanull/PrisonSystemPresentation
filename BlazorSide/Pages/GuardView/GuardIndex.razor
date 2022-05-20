@@ -7,18 +7,24 @@
 @inject NavigationManager navMgr
 @inject StateContainer stateContainer
 @inject IModalService _modalService
+
 @code {
     private Alert? Alert { get; set; }
+    public string text { get; set; }
     protected override async Task OnInitializedAsync()
     {
         stateContainer.OnChange += ShowModal;
     }
-
+    
     public void ShowModal()
     {
         var parameters = new ModalParameters();
         Alert = stateContainer.Property;
-        parameters.Add(nameof(AlertModal.Message),Alert?.text);
+        text = Alert.Text;
+        parameters.Add(nameof(AlertModal.Message),Alert?.Text);
+        parameters.Add(nameof(AlertModal.dateTime),Alert?.DateTime);
+        parameters.Add(nameof(AlertModal.duration),Alert?.DurationInMinutes);
         modalService.Show<AlertModal>("Alert", parameters);
     }
+    
 }

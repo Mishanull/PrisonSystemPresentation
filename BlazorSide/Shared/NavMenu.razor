@@ -5,12 +5,14 @@
 @using System.Security.Claims
 @using Contracts
 @using Microsoft.AspNetCore.SignalR
+@using StateContainer
 @inject IAuthService authService
 @inject IModalService _modalService
 @inject NavigationManager navMgr
 @inject IUserService _userService
-
-  <nav
+@inject StateContainer stateContainer
+@implements IDisposable
+<nav
        id="main-navbar"
        class="navbar navbar-expand-lg navbar-light bg-white fixed-top"
        >
@@ -44,33 +46,35 @@
             </a>
 
       <!-- Right links -->
-      <ul class="navbar-nav ms-0 d-flex flex-row">
+      <ul class="navbar-nav ms-0 d-flex flex-row" style="margin-right: 10px">
         <!-- Notification dropdown -->
-        <li class="nav-item dropdown">
-          <a
-             class="nav-link me-3 me-lg-0 dropdown-toggle hidden-arrow"
-             id="navbarDropdownMenuLink"
-             role="button"
-             data-mdb-toggle="dropdown"
-             aria-expanded="false"
-             >
-            <i class="fas fa-bell"></i>
-            @* <span class="badge rounded-pill badge-notification bg-danger">1</span> *@
-          </a>
-          <ul
-              class="dropdown-menu dropdown-menu-end"
-              aria-labelledby="navbarDropdownMenuLink"
-              >
-            <li><a class="dropdown-item" href="#">Some news</a></li>
-            <li><a class="dropdown-item" href="#">Another news</a></li>
-            <li>
-              <a class="dropdown-item" href="#">Something else here</a>
-            </li>
-          </ul>
-        </li>
-
         <AuthorizeView Policy="GuardAccess">
-        <!-- Icon -->
+        @if (elapsedTime <= notificationDuration)
+        {
+          <li class="nav-item dropdown">
+            <a
+              class="nav-link me-3 me-lg-0 dropdown-toggle hidden-arrow"
+              id="navbarDropdownMenuLink"
+              role="button"
+              data-mdb-toggle="dropdown"
+              aria-expanded="false">
+              <i class="fas fa-bell"></i>
+
+              <span class="badge rounded-pill badge-notification bg-danger">Alert!</span>
+
+              
+            </a>
+            <ul
+              class="dropdown-menu dropdown-menu-start"
+              aria-labelledby="navbarDropdownMenuLink">
+              <li><a class="dropdown-item" @onclick="ShowAlert">@Alert.Text</a></li>
+            </ul>
+          </li>
+        }
+        else
+        {
+        timerDone?.Invoke();
+        }
         <li class="nav-item me-3 me-lg-0">
           <a class="nav-link" onclick="@GoToProfile">
             <i class="fa solid fa-user" style="cursor: pointer;"></i>
@@ -96,10 +100,37 @@
     private bool collapseNavMenu = true;
     private string? NavBarCssClass => collapseNavMenu ? null : "show";
     private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
+    private ClaimsPrincipal? user;
     [CascadingParameter]
     public IModalService Modal { get; set; }
+    private static Timer? timer;
+    private Alert? Alert { get; set; }
+    private int elapsedTime=0;
+    private int? notificationDuration;
+    public string text { get; set; }
+    public event Action? timerDone;
+    protected override async Task OnInitializedAsync()
+    {
+      AuthenticationState authState = await AuthState;
+      user = authState.User;
+      Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
+      User? u = await _userService.GetUserAsync(userName.Value);
+      if (u.Role.Equals("guard"))
+      {
+        stateContainer.OnChange += ReceiveNotifications;
+        timerDone += StopTimer;
+      }
+    }
 
-    private void ToggleNavMenu()
+  private void ReceiveNotifications()
+  {
+    Alert = stateContainer.Property;
+    StartTimer();
+    text = Alert.Text;
+    notificationDuration = Alert.DurationInMinutes;
+  }
+
+  private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
     }
@@ -127,5 +158,34 @@
       User? u = await _userService.GetUserAsync(userName.Value);
       navMgr.NavigateTo("/GuardProfile/"+u.Id);
     }
+    public void StartTimer()
+    {
+      elapsedTime = 0;
+      timer = new Timer(async _ =>
+      {
+        await InvokeAsync(StateHasChanged);
+        elapsedTime++;
+        Console.WriteLine(elapsedTime);
+      }, null, 0, 1000);
+    }
 
+    public void StopTimer()
+    {
+      timer?.Dispose();
+      timer = null;
+    }
+
+    public void Dispose()
+    {
+      timer?.Dispose();
+    }
+
+  public void ShowAlert()
+  {
+    var parameters = new ModalParameters();
+    parameters.Add(nameof(AlertModal.Message),Alert?.Text);
+    parameters.Add(nameof(AlertModal.dateTime),Alert?.DateTime);
+    parameters.Add(nameof(AlertModal.duration),Alert?.DurationInMinutes);
+    _modalService.Show<AlertModal>("Alert", parameters);
+  }
 }

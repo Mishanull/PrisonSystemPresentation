@@ -1,14 +1,16 @@
-﻿<div class="modal  fade show d-block mt-5" tabindex="-1" role="dialog">
+﻿@using System.Reflection.Metadata
+<div class="modal  fade show d-block mt-5" tabindex="-1" role="dialog">
     <div class="modal-backdrop fade show" @onclick="Cancel"></div>
     <div class="modal-dialog text-black" style="z-index: 1050"> 
         <div class="modal-content ">
-            <div class="modal-header bg-dark text-warning">
+            <div class="modal-header bg-warning text-white">
                 <h1>Alert!!!</h1>
+                <br/>
             </div>
-            <div class="modal-body bg-light">
-                <p>@Message</p>
-            </div>
-            <div class="modal-footer bg-dark">
+            <div class="modal-body bg-white text-white">
+                <h2><span class="badge bg-warning">Issued At: @dateTime!.Value.Hour : @dateTime.Value.Minute</span></h2>
+                <h2><span class="badge bg-warning">Duration: @duration minutes </span></h2>
+                <h3><span class="badge bg-warning">Message: @Message </span></h3>
                 <button type="button" class="btn btn-warning" @onclick="Close">Close</button>
             </div>
         </div>
@@ -18,8 +20,9 @@
 
     [CascadingParameter]
     BlazoredModalInstance BlazoredModal { get; set; }=default! ;
-
-  [Parameter] public String? Message { get; set; }
+    [Parameter]public int duration { get; set; }
+    [Parameter]public DateTime? dateTime { get; set; }
+    [Parameter] public String? Message { get; set; }
     async Task Close() => await BlazoredModal.CloseAsync(ModalResult.Ok(true));
     async Task Cancel() => await BlazoredModal.CancelAsync();
 }
