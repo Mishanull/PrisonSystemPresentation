@@ -1,6 +1,163 @@
 ﻿@page "/Visits"
-<h3>Visits</h3>
-
+@using Entities
+@using Contracts
+@using BlazorSide.UIComponents
+@inject IVisitService visitService
+@inject IModalService modalService
+<div class="row mt-5">
+    
+    <div class="d-flex flex-column col-md-7 align-items-center" >
+        <div class="card text-center ">
+            <h5 class="card-header bg-info text-white">An Overview of Visit Requests</h5>
+            <div class="card-body overflow-y-scroll " style="height: 16rem">
+                <table class="table align-middle bg-white ">
+                    <thead class="bg-info">
+                    <tr>
+                        <th scope="col">Visitor Name </th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @if (!visits.Any() )
+                    {
+                        <div class="spinner-border text-info" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        @for (int i=visits.ToList().Count-1; i>=0;i--)
+                        {
+                            Visit? visit = visits.ToList()[i];
+                            <tr>
+                                <td >@visit.FirstName @visit.LastName
+                                </td>
+                                <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
+                                <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+                                <td>
+                                     @switch (visit.Status)
+                                    {
+                                        case Status.Approved:
+                                             <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                         case Status.Denied:
+                                              <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
+                                             break;
+                                        case Status.Waiting:
+                                            <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                    }
+                                    
+                                </td>
+                                <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
+                            </tr>
+                        }
+                    }
+                    </tbody>
+                </table>
+                    
+            </div>
+        </div>
+    </div>
+    @if (isSelected)
+    {
+        <div class="col-md-4">
+            <div class="card ">
+                <h5 class="card-header bg-info text-white">Selected Visit</h5>
+                <div class="card-body font-normal">
+                    <h6>Visitor's Name: @selectedVisit!.FirstName @selectedVisit.LastName</h6>
+                    <h6>Email: @selectedVisit.Email</h6>
+                    <h6>Desired date for visit: @selectedVisit.VisitDate.Day/@selectedVisit.VisitDate.Month/@selectedVisit.VisitDate.Year</h6>
+                    <h6>Desired time for visit: @selectedVisit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</h6>
+                    <h6>Prisoner to be visited: @selectedVisit.PrisonerSsn</h6>
+                    <br/>
+                    @if (selectedVisit.Status == Status.Waiting)
+                    {
+                        <button class="btn btn-info" @onclick="Approve">Approve Visit</button>
+                        <button class="btn btn-danger" @onclick="Deny">Deny Visit</button>
+                    }
+                    else
+                    {
+                        @switch (selectedVisit.Status)
+                        {
+                            case Status.Approved:
+                                <h6>Status: <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@selectedVisit.Status</span></h6>
+                                break;
+                             case Status.Denied:
+                                 <h6>Status: <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@selectedVisit.Status</span></h6>
+                                 break;
+                        }
+                        
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
 @code {
+    private ICollection<Visit> visits;
+    private bool isSelected;
+    private Visit? selectedVisit;
+    protected override async Task OnInitializedAsync()
+    {
+        visits = await visitService.GetVisitsAsync();
+    }
+
+    public void SeeMore(Visit v)
+    {
+        isSelected = true;
+        selectedVisit = v;
+    }
+
+    public async Task Approve()
+    {
+        try
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ActionConfirm.Message),"Are you sure that you want to approve this visit?");
+            var modalRef=modalService.Show<ActionConfirm>();
+            var result = await modalRef.Result;
+            if (!result.Cancelled)
+            {
+                await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Approved);
+                selectedVisit = null;
+                isSelected = false;
+            }
+            modalRef.Close(result);
+        }
+        catch (Exception e)
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ErrorModal.Message),e.Message);
+            modalService.Show<ErrorModal>();
+        }
+    } 
+    
+    public async Task Deny()
+    {
+        try
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ActionConfirm.Message),"Are you sure that you want to deny this visit?");
+            var modalRef=modalService.Show<ActionConfirm>();
+            var result = await modalRef.Result;
+            if (!result.Cancelled)
+            { 
+                await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Denied);
+                selectedVisit = null;
+                isSelected = false;
+            }
+            modalRef.Close(result);
+        }
+        catch (Exception e)
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ErrorModal.Message),e.Message);
+            modalService.Show<ErrorModal>();
+        }
+    }
     
 }

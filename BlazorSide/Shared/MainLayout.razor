@@ -207,8 +207,9 @@
         try
         {
             Console.Write(newVisit);
-            newVisit.VisitDate = (DateTime) SelectedDate;
-            newVisit.VisitTime = (DateTime) SelectedTime;
+            newVisit.VisitDate =  (DateTime)SelectedDate!;
+            TimeSpan timeOfVisit =  SelectedTime.Value.TimeOfDay;
+            newVisit.VisitDate=newVisit.VisitDate.Add(timeOfVisit);
             await _VisitService.CreateVisitAsync(newVisit);
             newVisit = new Visit();
             var modalRef = _modalService.Show<MessageModal>("Success",parameters);

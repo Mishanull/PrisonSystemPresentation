@@ -116,8 +116,25 @@ public class VisitClient : IVisitService
         return visit;
     }
 
-    public Task UpdateVisitStatusAsync(long id, Status status)
+    public async Task UpdateVisitStatusAsync(long id, Status status)
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        String[] array = new[] {id.ToString(), status.ToString()};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "visit.update", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to update the visit");
+        }
     }
 }
