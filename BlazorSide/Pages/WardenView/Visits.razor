@@ -101,6 +101,8 @@
     private ICollection<Visit> visits;
     private bool isSelected;
     private Visit? selectedVisit;
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
     protected override async Task OnInitializedAsync()
     {
         visits = await visitService.GetVisitsAsync();
@@ -118,11 +120,13 @@
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ActionConfirm.Message),"Are you sure that you want to approve this visit?");
-            var modalRef=modalService.Show<ActionConfirm>();
+            var modalRef=modalService.Show<ActionConfirm>("Confirm",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
                 await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Approved);
+                visits = await visitService.GetVisitsAsync();
+                await InvokeAsync(StateHasChanged);
                 selectedVisit = null;
                 isSelected = false;
             }
@@ -142,11 +146,13 @@
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ActionConfirm.Message),"Are you sure that you want to deny this visit?");
-            var modalRef=modalService.Show<ActionConfirm>();
+            var modalRef=modalService.Show<ActionConfirm>("Confirm",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             { 
                 await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Denied);
+                visits = await visitService.GetVisitsAsync();
+                await InvokeAsync(StateHasChanged);
                 selectedVisit = null;
                 isSelected = false;
             }
