@@ -20,9 +20,9 @@
     @if (currentOption == OptionsValues.Table)
     {
         <div class="container-fluid m-0 p-0 w-50">
-                <table class="table align-middle mb-0 bg-white">
-                    <thead class="bg-light">
-                    <tr>
+                <table class="table table-hover align-middle mb-0 bg-white">
+                    <thead class="bg-info">
+                    <tr class="text-uppercase text-white">
                         <th scope="col">First name</th>
                         <th scope="col">Last name</th>
                         <th scope="col">Ssn</th>
@@ -75,7 +75,7 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="ms-3">
-                                        <p class=" mb-1">S-@p.Sector.Id</p>
+                                        <p class=" mb-1">S: @p.Sector?.Id</p>
                                     </div>
                                 </div>
                             </td>
@@ -130,7 +130,7 @@
 
         </div>
     }
-    @if (prisoners == null && !prisoners.Any())
+    @if (prisoners == null && !prisoners!.Any())
     {
         <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">Loading...</span>

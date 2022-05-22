@@ -89,7 +89,7 @@ public class VisitClient : IVisitService
         return visits;
     }
 
-    public async Task<Visit> GetVisitByAccessCodeAsync(string code)
+    public async Task<Visit> GetAccessCodeConfirmation(string code)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -98,7 +98,7 @@ public class VisitClient : IVisitService
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
         
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(code));
+        var messageBytes = Encoding.UTF8.GetBytes(code);
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "visit.getByCode", basicProperties: props, body: messageBytes);

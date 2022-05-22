@@ -87,3 +87,16 @@ button{
     border-color: #ea9218 !important;
     color: white !important;
 }
+
+table td,
+table th {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    
+}
+
+tbody td {
+    font-weight: 500;
+    color: #999999;
+}

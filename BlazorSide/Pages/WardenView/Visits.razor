@@ -2,17 +2,19 @@
 @using Entities
 @using Contracts
 @using BlazorSide.UIComponents
+@using System.Globalization
 @inject IVisitService visitService
 @inject IModalService modalService
+@inject IPrisonerService prisonerService
+@inject NavigationManager navMgr
 <div class="row mt-5">
     
     <div class="d-flex flex-column col-md-7 align-items-center" >
-        <div class="card text-center ">
-            <h5 class="card-header bg-info text-white">An Overview of Visit Requests</h5>
-            <div class="card-body overflow-y-scroll " style="height: 16rem">
-                <table class="table align-middle bg-white ">
-                    <thead class="bg-info">
-                    <tr>
+        <div class="card text-center overflow-y-scroll" style="height: 30rem;">
+            <h5 class="card-header bg-info text-white" >An Overview of Visit Requests</h5>
+                <table class="table table-hover  align-middle bg-white "  style="position: relative; ">
+                    <thead class="bg-info sticky-top" >
+                    <tr class="text-uppercase text-white ">
                         <th scope="col">Visitor Name </th>
                         <th scope="col">Date</th>
                         <th scope="col">Time</th>
@@ -29,41 +31,69 @@
                     }
                     else
                     {
-                        @for (int i=visits.ToList().Count-1; i>=0;i--)
+                        @for (int i = visits.ToList().Count - 1; i >= 0; i--)
                         {
                             Visit? visit = visits.ToList()[i];
-                            <tr>
-                                <td >@visit.FirstName @visit.LastName
-                                </td>
-                                <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
-                                <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
-                                <td>
-                                     @switch (visit.Status)
-                                    {
-                                        case Status.Approved:
-                                             <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
-                                            break;
-                                         case Status.Denied:
-                                              <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
-                                             break;
-                                        case Status.Waiting:
-                                            <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
-                                            break;
-                                    }
-                                    
-                                </td>
-                                <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
-                            </tr>
+                            @if (selectedVisit!=null && selectedVisit!.Equals(visit) )
+                            {
+                                <tr class="table-active">
+                                    <td >@visit.FirstName @visit.LastName
+                                    </td>
+                                    <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
+                                    <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+                                    <td>
+                                        @switch (visit.Status)
+                                        {
+                                            case Status.Approved:
+                                                <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                            case Status.Denied:
+                                                <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                            case Status.Waiting:
+                                                <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                        }
+
+                                    </td>
+                                    <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
+                                </tr>
+                            }
+                            else
+                            {
+                                <tr >
+                                    <td >@visit.FirstName @visit.LastName
+                                    </td>
+                                    <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
+                                    <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+                                    <td>
+                                        @switch (visit.Status)
+                                        {
+                                            case Status.Approved:
+                                                <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                            case Status.Denied:
+                                                <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                            case Status.Waiting:
+                                                <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                        }
+
+                                    </td>
+                                    <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
+                                </tr>
+                            }
                         }
                     }
                     </tbody>
                 </table>
                     
-            </div>
         </div>
     </div>
-    @if (isSelected)
+    @if (isSelected && currentPrisonerInVisit!=null)
     {
+        long id = currentPrisonerInVisit.Id;
         <div class="col-md-4">
             <div class="card ">
                 <h5 class="card-header bg-info text-white">Selected Visit</h5>
@@ -72,7 +102,7 @@
                     <h6>Email: @selectedVisit.Email</h6>
                     <h6>Desired date for visit: @selectedVisit.VisitDate.Day/@selectedVisit.VisitDate.Month/@selectedVisit.VisitDate.Year</h6>
                     <h6>Desired time for visit: @selectedVisit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</h6>
-                    <h6>Prisoner to be visited: @selectedVisit.PrisonerSsn</h6>
+                    <h6>Prisoner to be visited: <a style="cursor: pointer; text-decoration: underline;"@onclick=@(() => GoToPrisoner(id))>@currentPrisonerInVisit!.FirstName @currentPrisonerInVisit.LastName </a></h6>
                     <br/>
                     @if (selectedVisit.Status == Status.Waiting)
                     {
@@ -100,7 +130,8 @@
 @code {
     private ICollection<Visit> visits;
     private bool isSelected;
-    private Visit? selectedVisit;
+    private Visit? selectedVisit { get; set; } = null;
+    private Prisoner? currentPrisonerInVisit;
     [CascadingParameter]
     private IModalService Modal { get; set; }
     protected override async Task OnInitializedAsync()
@@ -108,10 +139,20 @@
         visits = await visitService.GetVisitsAsync();
     }
 
-    public void SeeMore(Visit v)
+    public async void SeeMore(Visit v)
     {
-        isSelected = true;
-        selectedVisit = v;
+        try
+        {
+            isSelected = true;
+            selectedVisit = v;
+            currentPrisonerInVisit = await prisonerService.GetPrisonerBySSN(v.PrisonerSsn.ToString());
+        }
+        catch (Exception e)
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ErrorModal.Message),e.Message);
+            modalService.Show<ErrorModal>("Error",parameters);
+        }
     }
 
     public async Task Approve()
@@ -136,10 +177,14 @@
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ErrorModal.Message),e.Message);
-            modalService.Show<ErrorModal>();
+            modalService.Show<ErrorModal>("Error",parameters);
         }
-    } 
-    
+    }
+
+    public void GoToPrisoner(long id)
+    {
+        navMgr.NavigateTo($"/PrisonerDetail/{id}");
+    }
     public async Task Deny()
     {
         try
@@ -165,5 +210,6 @@
             modalService.Show<ErrorModal>();
         }
     }
-    
+
+   
 }

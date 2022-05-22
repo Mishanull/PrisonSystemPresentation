@@ -18,5 +18,5 @@ public class Prisoner
     // public DateTime EntryDate { get; set; }
     public String EntryDate { get; set; }
     public int DurationInMonths { get; set; }
-    public Sector Sector { get; set; }
+    public Sector? Sector { get; set; }
 }
