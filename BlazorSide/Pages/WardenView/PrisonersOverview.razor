@@ -32,6 +32,7 @@
                         <th scope="col">Crime commited</th>
                         <th scope="col">Sector</th>
                         <th scope="col">Status</th>
+                        <th scope="col">Notes</th>
                         <th scope="col">Actions</th>
                     </tr>
                     </thead>
@@ -85,6 +86,17 @@
                             <td>
                                 <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
                             </td>
+                            
+                            <td>
+                                <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerNotes/" + @p.Id); })">
+                                    <button
+                                        type="button"
+                                        class="btn btn-link btn-rounded btn-sm fw-bold"
+                                        data-mdb-ripple-color="dark">
+                                        Notes
+                                    </button>
+                                </a>
+                            </td>
 
                             <td>
                                 <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
@@ -105,7 +117,7 @@
     }
     else if (currentOption == OptionsValues.Grid && prisoners!=null){
         <div class="row row-cols-1 row-cols-md-3">
-            @foreach (var p in prisoners!)
+            @foreach (var p in prisoners)
             {
                 <div class="col mx-3">
                     <div class="card mt-3 ">

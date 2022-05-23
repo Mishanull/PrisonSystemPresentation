@@ -46,19 +46,23 @@ public class NoteClient : INotesService
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
+        
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
-        var messageBytes = Encoding.UTF8.GetBytes(prisonerId.ToString());
+        
+        String[] array = new[] {prisonerId.ToString(), text};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);
         channel.BasicPublish(exchange: "note.exchange", routingKey: "note.add", basicProperties: props, body: messageBytes);
         Console.WriteLine("message published");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Failed to remove guard.");
+            throw new Exception("Failed to add note.");
         }
     }
 
@@ -81,7 +85,7 @@ public class NoteClient : INotesService
         Console.WriteLine(response);
         if (response.Equals("fail"))
         {
-            throw new Exception("Failed to add note.");
+            throw new Exception("Failed to remove note.");
         }
     }
 

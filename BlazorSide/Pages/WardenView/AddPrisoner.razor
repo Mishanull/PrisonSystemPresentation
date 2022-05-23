@@ -28,21 +28,27 @@
         <br/>
         <label class="text-white">SSN: </label> <InputNumber @bind-Value="newPrisoner.Ssn" class="form-control"  />
         <br/>
-        <label class="text-white">Entry date: </label> <InputDate @bind-Value="entryDate" class="form-control"/>
-        <br/>
-        <label class="text-white">Custody duration (months): </label> <InputNumber @bind-Value="newPrisoner.DurationInMonths" class="form-control"/>
-        <br/>
+        <div class="form- mb-4">
+            <label for="Date-Entry" class="text-white"> Entry Date</label>
+            <SfDatePicker ID="Date-Entry" TValue="DateTime" Placeholder="Choose a Date" ShowClearButton="true" @bind-Value="@_entryDate">
+                <DatePickerEvents TValue="DateTime"></DatePickerEvents>
+            </SfDatePicker>
+        </div>
+        <div class="form- mb-4">
+            <label for="Date-Entry" class="text-white"> Release Date</label>
+            <SfDatePicker ID="Date-Release" TValue="DateTime" Placeholder="Choose a Date" ShowClearButton="true" @bind-Value="@_releaseDate">
+                <DatePickerEvents TValue="DateTime"></DatePickerEvents>
+            </SfDatePicker>
+        </div>
         <label class="text-white">Crime Commited: </label> <InputText @bind-Value="newPrisoner.CrimeCommitted" class="form-control" type="text"  />
         <br/>
         <label class="text-white">Sector:
             <SfDropDownList TItem="Sector" TValue="Sector" PopupHeight="200px"  @bind-Value="@newPrisoner.Sector" Placeholder="Select a sector: " DataSource=@(sectors)>
                 <DropDownListFieldSettings   Text="Id" Value="Id"></DropDownListFieldSettings>
             </SfDropDownList>
-        </label> 
+        </label>
         <br/>
-        <label class="text-white">Note: </label><InputText @bind-Value="newPrisoner.Note" class="form-control"  />
         <br/>
-
         <button class="btn btn-white" type="submit">Add New Prisoner</button>
     </EditForm>
 </div>
@@ -55,7 +61,8 @@
 @code {
     private Prisoner newPrisoner=new Prisoner();
     [Required]
-    private DateTime entryDate; //workaround for the date as string
+    private DateTime _entryDate = DateTime.Now;
+    private DateTime _releaseDate = DateTime.Now;
     
     private string errorLabel=String.Empty;
     [CascadingParameter]
@@ -76,7 +83,8 @@
             parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Prisoner");
             try
             {
-                newPrisoner.EntryDate = entryDate.Date.ToString("d");
+                newPrisoner.EntryDate = _entryDate;
+                newPrisoner.ReleaseDate = _releaseDate;
                 await _prisonerService.CreatePrisonerAsync(newPrisoner);
                 newPrisoner = new Prisoner();
                 

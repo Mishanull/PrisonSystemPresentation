@@ -1,0 +1,136 @@
+﻿@page "/PrisonerNotes/{Id:long}"
+@using Entities
+@using Contracts
+@using BlazorLoginApp.Authentication
+@using BlazorSide.UIComponents
+@using System.ComponentModel.DataAnnotations
+
+@inject NavigationManager _navMgr
+@inject IAuthService _authService
+@inject INotesService _NotesService
+@inject IPrisonerService _prisonerService
+@inject IModalService _modalService
+@attribute [Authorize(Policy = "GuardAccess")]
+
+<div class="container-fluid w-50 align-self-center p- mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
+    <br/>
+    <label class="text-white"> Notes:</label>
+    <br/>
+        @if (!notes!.Any() || notes == null)
+            {
+                <p>Not existing notes</p>
+            }
+            else
+            {
+                @foreach (var n in notes!)
+                {
+                    <div class="d-flex align-items-center">
+                        <div class="ms-3">
+                            <p type="text"> > @n.Text </p>
+                        </div>
+                    </div>
+                    <hr/>
+                }
+            }
+        <EditForm Model="@newNote" OnValidSubmit="@AddNote">
+        <DataAnnotationsValidator/>
+        <ValidationSummary/>
+        <div class="row">
+            <div class="col-md-9">
+                <label class="text-white"> Add note:</label> <InputTextArea @bind-Value="newNote.Text" class="form-control" type="text"/>
+            </div>
+        </div>
+        <br/>
+        <button class="btn btn-white" type="submit">Add Note</button>
+        <br/>
+        <hr/>
+        </EditForm>
+</div>
+ 
+
+
+@code{
+    [Parameter]
+    public long Id { get; set; }
+    ICollection<Note>? notes;
+    [Required]
+    Note newNote = new Note();
+    Prisoner prisoner = new Prisoner();
+    private string _errorLabel="";
+    
+    [CascadingParameter]
+    private IModalService Modal { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        prisoner = await _prisonerService.GetPrisonerByIdAsync(Id);
+        notes = prisoner.Notes;
+    }
+
+    private async Task AddNote()
+    {
+        var parameters = new ModalParameters();
+            parameters.Add(nameof(ChoiceModal.Message),"Note added successfully");
+            parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
+            parameters.Add(nameof(ChoiceModal.SecondButton),"Go to Prisoners Overview");
+            parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Note");
+            try
+            {
+                await _NotesService.AddNoteAsync(Id,newNote.Text);
+                newNote = new Note();
+                
+                var modalRef = _modalService.Show<ChoiceModal>("Success",parameters);
+                var result = await modalRef.Result;
+                if (!result.Cancelled)
+                {
+                    string? message;
+                    message = result.Data?.ToString() ?? string.Empty;
+                    switch (message)
+                    {
+                        case "Go back":
+                        {
+                            await BackToOptions();
+                            break;
+                        }
+                        case "Go to Prisoners Overview":
+                        {
+                            await GoToOverview();
+                            break;
+                        }
+                        case "Add Another Note":
+                        {
+                            await BackToAdd();
+                            break;
+                        }
+                    }
+                    StateHasChanged();
+                }
+            }
+            catch (Exception e)
+            {
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                _modalService.Show<ErrorModal>("Error",paramet);
+            }
+            
+        }
+    
+
+    private async Task BackToAdd()
+    {
+        prisoner = await _prisonerService.GetPrisonerByIdAsync(Id);
+        notes = prisoner.Notes;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task GoToOverview()
+    {
+        _navMgr.NavigateTo("/PrisonersOverview");
+    }
+
+    private async Task BackToOptions()
+    {
+        _navMgr.NavigateTo("/PrisonersOptions");
+    }
+
+}

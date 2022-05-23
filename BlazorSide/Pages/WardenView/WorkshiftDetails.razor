@@ -137,8 +137,8 @@
         if (Id.HasValue)
         {
             editedWorkshift = await _workShiftService.GetWorkShiftById(Id.Value);
-            StartTime = DateTime.Parse(editedWorkshift.Start);
-            EndTime = DateTime.Parse(editedWorkshift.End);
+            StartTime = editedWorkshift.Start;
+            EndTime = editedWorkshift.End;
             sectorValue = editedWorkshift.Id.ToString();
             dayValue = editedWorkshift.DaysOfWeek.Split(", ");
             await FetchGuards(Id);
@@ -274,8 +274,8 @@
     
     private async Task EditWorkShift()
     {
-        editedWorkshift.Start = StartTime?.ToString("HH:mm");
-        editedWorkshift.End = EndTime?.ToString("HH:mm");
+        editedWorkshift.Start = (DateTime) StartTime;
+        editedWorkshift.End = (DateTime) EndTime;
         editedWorkshift.Sector = new Sector(int.Parse(sectorValue), 500);
         editedWorkshift.DaysOfWeek = string.Join(", ", dayValue);
         editedWorkshift.Guards = currentGuards;

@@ -142,8 +142,8 @@
 
     private async Task AddNewWorkShift()
     {
-        newWorkShift.Start = StartTime?.ToString("HH:mm");
-        newWorkShift.End = EndTime?.ToString("HH:mm");
+        newWorkShift.Start = (DateTime) StartTime!;
+        newWorkShift.End = (DateTime) EndTime!;
         newWorkShift.Sector = new Sector(int.Parse(sectorValue), 500);
         newWorkShift.DaysOfWeek = string.Join(", ", dayValue);
         newWorkShift.Guards = guardsToBeAdded;
@@ -206,6 +206,7 @@
         try
         {
             ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
+            Console.Write(tempWorkshifts);
             ICollection<Guard> takenGuards = new List<Guard>();
             foreach (var workShift in tempWorkshifts)
             {
