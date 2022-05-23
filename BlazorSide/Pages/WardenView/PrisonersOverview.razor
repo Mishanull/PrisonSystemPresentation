@@ -2,10 +2,12 @@
 @using Entities
 @using Contracts
 @using BlazorLoginApp.Authentication
+@using BlazorSide.UIComponents
 
 @inject NavigationManager _navMgr
 @inject IAuthService _authService
 @inject IPrisonerService _prisonerService
+@inject IModalService _modalService
 @attribute [Authorize(Policy = "WardenAccess")]
 
 
@@ -16,13 +18,14 @@
         <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
     </SfDropDownList>
 </div>
-<div class="row container mt-5">
+<div class="row  mt-5">
     @if (currentOption == OptionsValues.Table)
     {
-        <div class="container-fluid m-0 p-0 w-50">
-                <table class="table align-middle mb-0 bg-white">
-                    <thead class="bg-light">
-                    <tr>
+        <div class="d-flex flex-column col-md-7 align-items-center">
+            <div class="card text-center overflow-y-scroll" style="height: 30rem;"><h5 class="card-header bg-info text-white" >Inmates Overview</h5>
+                <table class="table table-hover align-middle mb-0 bg-white">
+                    <thead class="bg-info sticky-top">
+                    <tr class="text-uppercase text-white">
                         <th scope="col">First name</th>
                         <th scope="col">Last name</th>
                         <th scope="col">Ssn</th>
@@ -32,20 +35,20 @@
                         <th scope="col">Actions</th>
                     </tr>
                     </thead>
-        
+
                     <tbody>
-                    @foreach (var p in prisoners )
+                    @foreach (var p in prisoners!)
                     {
                         <tr>
-                            
+
                             <td>
                                 <div class="d-flex align-items-center">
                                     <img
-                                      src="img/download.png"
-                                      class="rounded-circle"
-                                      alt=""
-                                      style="width: 45px; height: 45px"
-                                      />
+                                        src="img/download.png"
+                                        class="rounded-circle"
+                                        alt=""
+                                        style="width: 45px; height: 45px"/>
+                                    <br/>
                                     <div class="ms-3">
                                         <p class="fw-bold mb-1">@p.FirstName</p>
                                     </div>
@@ -75,22 +78,22 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="ms-3">
-                                        <p class=" mb-1">S-@p.Sector.Id</p>
+                                        <p class=" mb-1">S: @p.Sector?.Id</p>
                                     </div>
                                 </div>
                             </td>
                             <td>
                                 <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
                             </td>
-                           
+
                             <td>
-                                <a @onclick="@(()=>{_navMgr.NavigateTo("/PrisonerDetail/"+@p.Id);})">
-                                <button
-                                    type="button"
-                                    class="btn btn-link btn-rounded btn-sm fw-bold"
-                                    data-mdb-ripple-color="dark">
-                                    Edit
-                                </button>
+                                <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
+                                    <button
+                                        type="button"
+                                        class="btn btn-link btn-rounded btn-sm fw-bold"
+                                        data-mdb-ripple-color="dark">
+                                        Edit
+                                    </button>
                                 </a>
                             </td>
                         </tr>
@@ -98,11 +101,11 @@
                     </tbody>
                 </table>
             </div>
+        </div>
     }
-    else if (currentOption == OptionsValues.Grid)
-    {
+    else if (currentOption == OptionsValues.Grid && prisoners!=null){
         <div class="row row-cols-1 row-cols-md-3">
-            @foreach (var p in prisoners)
+            @foreach (var p in prisoners!)
             {
                 <div class="col mx-3">
                     <div class="card mt-3 ">
@@ -118,7 +121,7 @@
                                 <li class="list-group-item px-3">SSN: @p.Ssn</li>
                                 <li class="list-group-item px-3">Crime: @p.CrimeCommitted</li>
                                 <li class="list-group-item px-3">Status: <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span> </li>
-                                <li class="list-group-item px-3">Sector: ### </li>
+                                <li class="list-group-item px-3">Sector: @p.Sector!.Id </li>
                             </ul>
                             <br/>
                             <a @onclick="@(()=>{_navMgr.NavigateTo("/PrisonerDetail/"+@p.Id);})"  class="btn btn-primary">Edit</a>
@@ -127,10 +130,9 @@
                 </div>
                 <br/>
             }
-
         </div>
     }
-    @if (prisoners == null && !prisoners.Any())
+    @if (prisoners == null && !prisoners!.Any())
     {
         <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -140,9 +142,20 @@
 @code{
     private OptionsValues currentOption { get; set; }=OptionsValues.Table;
     private ICollection<Prisoner>? prisoners;
-    protected  override async Task OnInitializedAsync()
+
+    protected override async Task OnInitializedAsync()
     {
-        prisoners = await _prisonerService.GetPrisonersAsync();
+        try
+        {
+            prisoners = await _prisonerService.GetPrisonersAsync();
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
+        
     }
     public string[] Options = Enum.GetNames(typeof(OptionsValues));
 

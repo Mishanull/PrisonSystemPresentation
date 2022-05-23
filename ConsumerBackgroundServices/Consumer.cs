@@ -13,6 +13,7 @@ public class Consumer: BackgroundService
     private IConnection _connection;
     private IModel _channel;
     private string replyQueueName;
+
     public Consumer(IServiceProvider sp)
     {
         Console.WriteLine("Service started");
@@ -23,7 +24,6 @@ public class Consumer: BackgroundService
         replyQueueName=_channel.QueueDeclare("").QueueName;
         _channel.QueueBind(replyQueueName,"guard.listen","");
     }
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Console.WriteLine("ExecuteAsync");
@@ -46,13 +46,11 @@ public class Consumer: BackgroundService
             {
                 PropertyNameCaseInsensitive = true
             })!;
-            Console.WriteLine(a.text);
             var message = Encoding.UTF8.GetString(body);
             using (var scope = _sp.CreateScope())
             {
                 var state = scope.ServiceProvider.GetService<StateContainer.StateContainer>();
                 state!.Property = a;
-                
             }
             Console.WriteLine(" [x] Received {0}", message);
         };

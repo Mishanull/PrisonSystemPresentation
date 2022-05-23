@@ -18,5 +18,5 @@ public class Prisoner
     // public DateTime EntryDate { get; set; }
     public DateTime EntryDate { get; set; }
     public DateTime ReleaseDate { get; set; }
-    public Sector Sector { get; set; }
+    public Sector? Sector { get; set; }
 }

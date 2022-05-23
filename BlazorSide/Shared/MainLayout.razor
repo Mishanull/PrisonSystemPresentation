@@ -184,6 +184,7 @@
         }
         catch (Exception e)
         {
+            
             errorLabel = $"Error:"+e.Message;
         }
     }
@@ -206,8 +207,9 @@
         try
         {
             Console.Write(newVisit);
-            newVisit.VisitDate = (DateTime) SelectedDate;
-            newVisit.VisitTime = (DateTime) SelectedTime;
+            newVisit.VisitDate =  (DateTime)SelectedDate!;
+            TimeSpan timeOfVisit =  SelectedTime.Value.TimeOfDay;
+            newVisit.VisitDate=newVisit.VisitDate.Add(timeOfVisit);
             await _VisitService.CreateVisitAsync(newVisit);
             newVisit = new Visit();
             var modalRef = _modalService.Show<MessageModal>("Success",parameters);
@@ -228,7 +230,9 @@
         }
         catch (Exception e)
         {
-            errorLabel = e.Message;
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
     

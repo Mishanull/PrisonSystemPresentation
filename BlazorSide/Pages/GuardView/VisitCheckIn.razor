@@ -1,0 +1,132 @@
+﻿@page "/VisitCheckIn"
+@using Entities
+@using Contracts
+@using BlazorSide.UIComponents
+@using Microsoft.AspNetCore.Components
+@using BlazorSide.Pages.WardenView
+@using Blazored.Modal
+@using BlazorSide.UIComponents
+@using Entities
+
+
+@inject IVisitService visitService
+@inject IModalService modalService
+@inject IPrisonerService prisonerService
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card ">
+            <h5 class="card-header bg-info text-white">Alert</h5>
+            <div class="card-body">
+                <h5 class="card-title ">Input the visitor's access code: </h5>
+
+                <input @bind="Code" class="form-control " type="text" required/>
+                <br/>
+                <button class="btn btn-info" @onclick=@(() =>CheckAccessCode(Code) )>Check Access Code</button>
+            </div>
+        </div>
+    </div>
+    @if (isChecked && checkedVisit != null && VisitedPrisoner != null)
+{
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <ul class="list-group  list-group-light">
+                    <li class="list-group-item hover-shadow px-3">Visitor First Name: @checkedVisit.FirstName</li>
+                    <li class="list-group-item hover-shadow px-3">Visitor Last Name: @checkedVisit.LastName</li>
+                    <li class="list-group-item hover-shadow px-3">Prisoner to be visited: @VisitedPrisoner.FirstName @VisitedPrisoner.LastName</li>
+                </ul>
+                <div class="card-body text-danger">
+                    <h4>REMEMBER: <br/> Check the visitor's identity before letting them in.<br/> Click the confirm button after doing so.</h4>
+                    <br/>
+                    <button class="btn btn-info" @onclick="ConfirmVisitor">Confirm Identity Check</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+    @if (!Visits!.Any() || Visits == null)
+{
+    
+}
+else
+{
+    @for (int i = Visits.ToList().Count - 1; i >= 0; i--)
+    {
+        Visit? visit = Visits.ToList()[i];
+        <div class="col-md-8">
+            <div class="d-flex flex-column col-md-7 align-items-center">
+                <div class="card text-center overflow-y-scroll" style="height: 30rem;">
+                    <h5 class="card-header bg-info text-white">An Overview of Visit Requests</h5>
+                    <table class="table table-hover  align-middle bg-white " style="position: relative; ">
+                        <thead class="bg-info sticky-top">
+                        <tr class="text-uppercase text-white ">
+                            <th scope="col">Visitor Name </th>
+                            <th scope="col">Time</th>
+                            <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr >
+                            <td >@visit.FirstName @visit.LastName
+                            </td>
+                            <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+
+                            <td><button class="btn btn-outline-info" @onclick=@(() => CheckVisitorOut(visit))>Check visitor out</button></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}
+    </div>
+@code {
+    public string? Code { get; set; }
+    private bool isChecked;
+    public Visit? checkedVisit { get; set; } 
+    public Prisoner? VisitedPrisoner { get; set; }
+    public ICollection<Visit>? Visits { get; set; } = new List<Visit>();
+    private async Task CheckAccessCode(string code)
+    {
+        try
+        {
+            checkedVisit = await visitService.GetAccessCodeConfirmation(code);
+            VisitedPrisoner = await prisonerService.GetPrisonerBySSN(checkedVisit.PrisonerSsn.ToString());
+            isChecked = true;
+        }
+        catch (Exception e)
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ErrorModal.Message),e.Message);
+            modalService.Show<ErrorModal>("Error",parameters);
+            Code=String.Empty;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ConfirmVisitor()
+    {
+        Visits.Add(checkedVisit!);
+        isChecked = false;
+        Code=String.Empty;
+        checkedVisit = null;
+        VisitedPrisoner = null;
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task CheckVisitorOut(Visit visit)
+    {
+        try
+        {
+            Visits!.Remove(visit);
+            await visitService.UpdateVisitStatusAsync(visit.Id, Status.Fulfilled);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var parameters = new ModalParameters();
+            parameters.Add(nameof(ErrorModal.Message),e.Message);
+            modalService.Show<ErrorModal>("Error",parameters);
+        }
+    }
+}

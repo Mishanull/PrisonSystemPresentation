@@ -2,9 +2,11 @@
 
 @using Entities
 @using Contracts
+@using BlazorSide.UIComponents
 
 @inject NavigationManager _navMgr
 @inject IPrisonerService _prisonerService
+@inject IModalService _modalService
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div>
@@ -67,71 +69,54 @@
         }
         catch (Exception e)
         {
-            _errorLabel = e.Message;
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
     private async void EditPrisoner()
     {
-        if (_prisoner == null)
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to edit the information about the guard?");
+        var modalRef=_modalService.Show<ActionConfirm>("Success",parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
         {
-            _errorLabel = "unable to edit prisoner's data";
-        }
-        else
-        {
-            _errorLabel = "";
+            try
+            {
+                await _prisonerService.UpdatePrisonerAsync(_prisoner!);
+                _navMgr.NavigateTo("/GuardsOverview");
 
-            if (_prisoner!.Ssn < 100)
-            {
-                _errorLabel += "-invalid SSN [<100???]!\n";
             }
-            if (string.IsNullOrEmpty(_prisoner.FirstName))
+            catch (Exception e)
             {
-                _errorLabel += "-field 'First name' must not be empty!\n";
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                _modalService.Show<ErrorModal>("Error",paramet);
             }
-            if (string.IsNullOrEmpty(_prisoner.LastName))
-            {
-                _errorLabel += "-field 'Last name' must not be empty!\n";
-            }
-            if (string.IsNullOrEmpty(_prisoner.CrimeCommitted))
-            {
-                _errorLabel += "-field 'Crime committed' must not be empty!\n";
-            }
-            if (string.IsNullOrEmpty(_prisoner.Note))
-            {
-                _prisoner.Note = "";
-            }
-
-            if (string.IsNullOrEmpty(_errorLabel))
-            {
-                try
-                {
-                    await _prisonerService.UpdatePrisonerAsync(_prisoner);
-                    _navMgr.NavigateTo($"/PrisonersOverview");
-                }
-                catch(Exception e){
-                    _errorLabel = e.Message;
-                }
-            }
+            
         }
     }
 
     private async Task DeletePrisoner()
     {
-        if (_prisoner == null)
-        {
-            _errorLabel = "unable to retrieve prisoner's data";
-        }
-        else
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to delete the information about the guard? WARNING: You cannot undo this action");
+        var modalRef=_modalService.Show<ActionConfirm>("Delete",parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
         {
             try
             {
-                await _prisonerService.RemovePrisonerAsync(PId);
-                _navMgr.NavigateTo("/PrisonersOverview");
+                await _prisonerService.RemovePrisonerAsync(_prisoner!.Id);
+                _navMgr.NavigateTo("/GuardsOverview");
             }
             catch (Exception e)
             {
-                _errorLabel = e.Message;
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                _modalService.Show<ErrorModal>("Error",paramet);
             }
         }
     }

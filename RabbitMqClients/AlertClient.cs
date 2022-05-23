@@ -23,7 +23,6 @@ public class AlertClient : IAlertService
         connection = factory.CreateConnection();
         channel = connection.CreateModel();
         replyQueueName = channel.QueueDeclare(queue: "").QueueName;
-        Console.WriteLine(replyQueueName);
         consumer = new EventingBasicConsumer(channel);
         consumer.Received += (model, ea) =>
         {
@@ -48,13 +47,13 @@ public class AlertClient : IAlertService
         IBasicProperties props = channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
+       
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(alert));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.broadcast" , basicProperties: props,
             body: messageBytes);
     
-        Console.WriteLine("message published alert");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response = await tcs.Task;
         Console.WriteLine(response);
@@ -62,5 +61,32 @@ public class AlertClient : IAlertService
         {
             throw new Exception("Failed to send alert.");
         }
+    }
+
+    public async Task<ICollection<Alert>> GetAlerts()
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.get", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail") || response==null)
+        {
+            throw new Exception("Failed to load alerts");
+        }
+    
+        ICollection<Alert> alerts = JsonSerializer.Deserialize<ICollection<Alert>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return alerts;
     }
 }

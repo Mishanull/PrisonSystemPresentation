@@ -31,10 +31,10 @@
     <ItemGroup>
       <AdditionalFiles Include="Pages\WardenView\AddGuard.razor" />
       <AdditionalFiles Include="Pages\WardenView\AddPrisoner.razor" />
-      <AdditionalFiles Include="Pages\WardenView\EditPrisoner.razor" />
       <AdditionalFiles Include="Pages\WardenView\GuardDetails.razor" />
       <AdditionalFiles Include="Pages\WardenView\GuardsOptions.razor" />
       <AdditionalFiles Include="Pages\WardenView\GuardsOverview.razor" />
+        <AdditionalFiles Include="Pages\WardenView\AlertsOverview.razor" />
       <AdditionalFiles Include="Pages\WardenView\Index.razor" />
       <AdditionalFiles Include="Pages\WardenView\PrisonerDetail.razor" />
       <AdditionalFiles Include="Pages\WardenView\PrisonersOptions.razor" />

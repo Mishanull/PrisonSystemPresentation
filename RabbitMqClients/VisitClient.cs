@@ -89,7 +89,7 @@ public class VisitClient : IVisitService
         return visits;
     }
 
-    public async Task<Visit> GetVisitByAccessCodeAsync(string code)
+    public async Task<Visit> GetAccessCodeConfirmation(string code)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -98,26 +98,70 @@ public class VisitClient : IVisitService
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
         
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(code));
+        var messageBytes = Encoding.UTF8.GetBytes(code);
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "visit.getByCode", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Visit visit = new Visit();
+        if (response.Equals("fail"))
+        {
+            throw new Exception($"Failed to load visit code: {code}");
+        }
+
+        if (response.Equals("no"))
+        {
+            throw new Exception("Invalid");
+        }
+
+        if (response.Equals("fulfilled"))
+        {
+            throw new Exception("Visit has already been completed.");
+        }
+        visit = JsonSerializer.Deserialize<Visit>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+         
+         if (visit.VisitDate.Date == DateTime.Today.Date && visit.VisitDate.TimeOfDay > DateTime.Now.TimeOfDay)
+         {
+             throw new Exception("Visitor is too early. Please try again at " + visit.VisitDate.Hour + ":" +
+                                 visit.VisitDate.Minute);
+         }
+         if (visit.VisitDate.Date != DateTime.Today)
+         {
+             throw new Exception("This visit is not booked for today.");
+         }
+
+         if (visit.VisitDate.Date == DateTime.Today.Date &&
+             visit.VisitDate.TimeOfDay.Add(new TimeSpan(0, 30, 0)) < DateTime.Now.TimeOfDay)
+         {
+             throw new Exception("The visitor is 30 min late. Access is denied.");
+         }
+         
+        return visit;
+    }
+
+    public async Task UpdateVisitStatusAsync(long id, Status status)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        String[] array = new[] {id.ToString(), status.ToString()};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "visit.update", basicProperties: props, body: messageBytes);
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
         {
-            throw new Exception($"Failed to load visit code: {code}");
+            throw new Exception("Failed to update the visit");
         }
-        Visit visit = JsonSerializer.Deserialize<Visit>(response, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        })!;
-        return visit;
-    }
-
-    public Task UpdateVisitStatusAsync(long id, Visit.Status status)
-    {
-        throw new NotImplementedException();
     }
 }
