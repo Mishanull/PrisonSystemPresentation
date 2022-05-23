@@ -3,6 +3,7 @@
 @using Contracts
 @using BlazorSide.UIComponents
 @using System.Globalization
+@using Microsoft.AspNetCore.Components.Server
 @inject IVisitService visitService
 @inject IModalService modalService
 @inject IPrisonerService prisonerService
@@ -53,6 +54,9 @@
                                             case Status.Waiting:
                                                 <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
                                                 break;
+                                            case Status.Fulfilled:
+                                                <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
+                                                break;
                                         }
 
                                     </td>
@@ -77,6 +81,9 @@
                                                 break;
                                             case Status.Waiting:
                                                 <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                            case Status.Fulfilled:
+                                                <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
                                                 break;
                                         }
 
@@ -119,6 +126,9 @@
                              case Status.Denied:
                                  <h6>Status: <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@selectedVisit.Status</span></h6>
                                  break;
+                            case Status.Fulfilled:
+                                <h6>Status:<span class="badge rounded-pill badge-success" style="margin-left: 2px">@selectedVisit.Status</span></h6>
+                                break;
                         }
                         
                     }

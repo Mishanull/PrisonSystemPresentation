@@ -3,10 +3,12 @@
 @using Contracts
 @using Microsoft.Extensions.Options
 @inject IGuardService _guardService
+@inject IModalService _modalService
 @inject NavigationManager _navMgr
 @attribute [Authorize(Policy = "WardenAccess")]
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.DropDowns
+@using BlazorSide.UIComponents
 <div class="row container"><h5>Choose how you want to see the guards: </h5></div>
 <br/>
 <div class="row container w-25">
@@ -17,85 +19,87 @@
 <div class="row container mt-5">
     @if (currentOption == OptionsValues.Table)
     {
-        <div class="container-fluid m-0 p-0 w-50">
-                <table class="table table-hover align-middle mb-0 bg-white">
-                    <thead class=" bg-info">
-                    <tr class="text-uppercase text-white">
-                        <th scope="col">First name</th>
-                        <th scope="col">Last name</th>
-                        <th scope="col">Username</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Sector</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Actions</th>
-                    </tr>
-                    </thead>
-        
-                    <tbody>
-                    @foreach (var g in guards )
-                    {
-                        <tr>
-                            
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img
-                                      src="img/officer.jpg"
-                                      class="rounded-circle"
-                                      alt=""
-                                      style="width: 45px; height: 45px"
-                                      />
-                                    <div class="ms-3">
-                                        <p class="fw-bold mb-1">@g.FirstName</p>
-                                    </div>
+        <div class="d-flex flex-column col-md-7 align-items-center">
+            <div class="card text-center overflow-y-scroll" style="height: 30rem;"><h5 class="card-header bg-info text-white" >Guards Overview</h5>
+            <table class="table table-hover align-middle mb-0 bg-white">
+
+                <thead class=" bg-info sticky-top">
+                <tr class="text-uppercase text-white">
+                    <th scope="col">First name</th>
+                    <th scope="col">Last name</th>
+                    <th scope="col">Username</th>
+                    <th scope="col">Email</th>
+                    <th scope="col">Sector</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Actions</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                @foreach (var g in guards)
+                {
+                    <tr>
+
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <img
+                                    src="img/officer.jpg"
+                                    class="rounded-circle"
+                                    alt=""
+                                    style="width: 45px; height: 45px"/>
+                                <div class="ms-3">
+                                    <p class="fw-bold mb-1">@g.FirstName</p>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@g.LastName</p>
-                                    </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="ms-3">
+                                    <p class=" mb-1">@g.LastName</p>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@g.Username</p>
-                                    </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="ms-3">
+                                    <p class=" mb-1">@g.Username</p>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@g.Email</p>
-                                    </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="ms-3">
+                                    <p class=" mb-1">@g.Email</p>
                                 </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">#</p>
-                                    </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="ms-3">
+                                    <p class=" mb-1">#</p>
                                 </div>
-                            </td>
-                            <td>
-                                <span class="badge badge-success rounded-pill d-inline">Working</span>
-                            </td>
-                           
-                            <td>
-                                <a @onclick="@(()=>{_navMgr.NavigateTo("/GuardDetails/"+@g.Id);})">
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge badge-success rounded-pill d-inline">Working</span>
+                        </td>
+
+                        <td>
+                            <a @onclick="@(() => { _navMgr.NavigateTo("/GuardDetails/" + @g.Id); })">
                                 <button
                                     type="button"
                                     class="btn btn-link btn-rounded btn-sm fw-bold"
                                     data-mdb-ripple-color="dark">
                                     Edit
                                 </button>
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        </div>
     }
     else if (currentOption == OptionsValues.Grid)
     {
@@ -140,7 +144,16 @@
     private ICollection<Guard>? guards;
     protected  override async Task OnInitializedAsync()
     {
-        guards = await _guardService.GetGuardsAsync(20);
+        try
+        {
+            guards = await _guardService.GetGuardsAsync(20);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
     public string[] Options = Enum.GetNames(typeof(OptionsValues));
 

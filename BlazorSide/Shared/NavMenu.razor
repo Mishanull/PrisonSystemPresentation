@@ -151,12 +151,21 @@
 
     private async Task GoToProfile()
     {
-      AuthenticationState authState = await AuthState;
-      if (authState.User.Identity == null) return;
-      ClaimsPrincipal user = authState.User;
-      Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
-      User? u = await _userService.GetUserAsync(userName.Value);
-      navMgr.NavigateTo("/GuardProfile/"+u.Id);
+      try
+      {
+        AuthenticationState authState = await AuthState;
+        if (authState.User.Identity == null) return;
+        ClaimsPrincipal user = authState.User;
+        Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
+        User? u = await _userService.GetUserAsync(userName.Value);
+        navMgr.NavigateTo("/GuardProfile/" + u.Id);
+      }
+      catch (Exception e)
+      {
+        var paramet = new ModalParameters();
+        paramet.Add(nameof(ErrorModal.Message),e.Message);
+        _modalService.Show<ErrorModal>("Error",paramet);
+      }
     }
     public void StartTimer()
     {

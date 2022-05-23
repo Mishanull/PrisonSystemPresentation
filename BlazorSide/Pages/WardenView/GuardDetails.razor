@@ -70,8 +70,9 @@
                 }
                 catch (Exception e)
                 {
-                    parameters.Add(nameof(ActionConfirm.Message),e.Message);
-                    _modalService.Show<ActionConfirm>("Failure", parameters);
+                    var paramet = new ModalParameters();
+                    paramet.Add(nameof(ErrorModal.Message),e.Message);
+                    _modalService.Show<ErrorModal>("Error",paramet);
                 }
             
             }
@@ -94,8 +95,9 @@
                 }
                 catch (Exception e)
                 {
-                    parameters.Add(nameof(ActionConfirm.Message),e.Message);
-                    _modalService.Show<ActionConfirm>("Failure", parameters);
+                    var paramet = new ModalParameters();
+                    paramet.Add(nameof(ErrorModal.Message),e.Message);
+                    _modalService.Show<ErrorModal>("Error",paramet);
                 }
             }
         

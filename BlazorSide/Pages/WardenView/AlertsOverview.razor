@@ -82,7 +82,9 @@
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.Message);
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
@@ -98,13 +100,22 @@
     
     public async Task SendAlert()
     {
-        alert.Priority = Priority.Low;
-        alert.DateTime = DateTime.Now;
-        alert.Text = text;
-        alert.DurationInMinutes = duration;
-        await _alertService.SendAlert(alert);
-        alerts = await _alertService.GetAlerts();
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            alert.Priority = Priority.Low;
+            alert.DateTime = DateTime.Now;
+            alert.Text = text;
+            alert.DurationInMinutes = duration;
+            await _alertService.SendAlert(alert);
+            alerts = await _alertService.GetAlerts();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
     public void SeeMore(Alert alert)
     {

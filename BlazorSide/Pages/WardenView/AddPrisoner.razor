@@ -35,8 +35,8 @@
         <label class="text-white">Crime Commited: </label> <InputText @bind-Value="newPrisoner.CrimeCommitted" class="form-control" type="text"  />
         <br/>
         <label class="text-white">Sector:
-            <SfDropDownList TItem="Sector" TValue="Sector" PopupHeight="200px"  @bind-Value="@newPrisoner.Sector" DataSource="sectors">
-                <DropDownListFieldSettings   Text="Id" Value="Id"/>
+            <SfDropDownList TItem="Sector" TValue="Sector" PopupHeight="200px"  @bind-Value="@newPrisoner.Sector" Placeholder="Select a sector: " DataSource=@(sectors)>
+                <DropDownListFieldSettings   Text="Id" Value="Id"></DropDownListFieldSettings>
             </SfDropDownList>
         </label> 
         <br/>
@@ -109,7 +109,9 @@
             }
             catch (Exception e)
             {
-                errorLabel = e.Message;
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                modalService.Show<ErrorModal>("Error",paramet);
             }
             
         }

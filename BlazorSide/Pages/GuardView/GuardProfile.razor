@@ -80,12 +80,14 @@
             {
                 await guardService.UpdateGuardAsync(loggedGuard);
             }
+           
             catch (Exception e)
-            {
-                parameters.Add(nameof(ActionConfirm.Message),e.Message);
-                modalService.Show<ActionConfirm>("Failure", parameters);
-            }
-            
+                {
+                    var paramet = new ModalParameters();
+                    parameters.Add(nameof(ErrorModal.Message),e.Message);
+                    modalService.Show<ErrorModal>("Error",paramet);
+                }
+
         }
     }
     

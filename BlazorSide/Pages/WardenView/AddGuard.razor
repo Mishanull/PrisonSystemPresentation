@@ -80,17 +80,22 @@
                     }
                 }
             }
+        
             catch (Exception e)
-            {
-                errorLabel = e.Message;
-            }
+                {
+                    var paramet = new ModalParameters();
+                    paramet.Add(nameof(ErrorModal.Message),e.Message);
+                    _modalService.Show<ErrorModal>("Error",paramet);
+                }
+            
             
         }
     
 
     private async Task BackToAdd()
     {
-        StateHasChanged();
+        newGuard=new Guard();
+        await InvokeAsync(StateHasChanged);
     }
 
     private async Task GoToOverview()
