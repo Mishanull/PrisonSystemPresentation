@@ -62,8 +62,9 @@ public class AlertClient : IAlertService
             throw new Exception("Failed to send alert.");
         }
     }
+    
 
-    public async Task<ICollection<Alert>> GetAlerts()
+    public async Task<ICollection<Alert>> GetAlertsAsync(int pageNumber, int pageSize)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -72,7 +73,8 @@ public class AlertClient : IAlertService
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
         
-        var messageBytes = Encoding.UTF8.GetBytes("");
+        String[] array = new[] {pageNumber.ToString(), pageSize.ToString()};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.get", basicProperties: props, body: messageBytes);
