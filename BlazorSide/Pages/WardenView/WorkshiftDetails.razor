@@ -122,6 +122,7 @@
     private DateTime? EndTime { get; set; }
     List<Guard> currentGuards;
     List<Guard> availableGuards;
+    List<Guard> guardsToClear = new();
     Guard FirstSelected { get; set; }
     Guard SecondSelected { get; set; }
 
@@ -233,12 +234,14 @@
         {
             case 1:
                 currentGuards.ForEach(e => availableGuards.Add(e));
+                currentGuards.ForEach(e => guardsToClear.Add(e));
                 currentGuards.Clear();
                 break;
             case 2:
                 if (FirstSelected != null)
                 {
                     availableGuards.Add(FirstSelected);
+                    guardsToClear.Add(FirstSelected);
                     currentGuards.RemoveAt(currentGuards.FindIndex(e => e.Id == FirstSelected.Id));
                     FirstSelected = null;
                 }
@@ -248,12 +251,15 @@
                 {
                     currentGuards.Add(SecondSelected);
                     availableGuards.RemoveAt(availableGuards.FindIndex(e => e.Id == SecondSelected.Id));
+                    if(guardsToClear.Any())
+                    guardsToClear.RemoveAt(guardsToClear.FindIndex(e => e.Id == SecondSelected.Id));
                     SecondSelected = null;
                 }
                 break;
             case 4:
                 availableGuards.ForEach(e => currentGuards.Add(e));
                 availableGuards.Clear();
+                guardsToClear.Clear();
                 break;
             default:
                 break;
@@ -269,6 +275,22 @@
         else
         {
             SecondSelected = eventArgs.ItemData;
+        }
+    }
+
+    private async Task ClearGuards()
+    {
+        foreach (var guard in guardsToClear)
+        {
+            try
+            {
+                await _workShiftService.RemoveGuardFromWorkShift(guard.Id.ToString(), editedWorkshift.Id.ToString());
+            }
+            catch (Exception e)
+            {
+                errorLabel = e.Message;
+                Console.WriteLine($"Failed to remove guard id {guard.Id} from workshift id {editedWorkshift.Id}");
+            }
         }
     }
     
@@ -289,6 +311,7 @@
         {
             if (!result.Cancelled)
             {
+                await ClearGuards();
                 await _workShiftService.UpdateWorkShiftAsync(editedWorkshift);
                 _navMgr.NavigateTo("/WorkShiftsOverview");
             }
