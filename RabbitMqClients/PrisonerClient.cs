@@ -185,4 +185,33 @@ public class PrisonerClient : IPrisonerService
             throw new Exception($"Failed to update prisoner n.-{newPrisoner.Id}");
         }
     }
+
+    public async Task<ICollection<Prisoner>?> GetPrisonersAsync(int pageNumber, int pageSize)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+
+        String[] array = new[] {pageNumber.ToString(), pageSize.ToString()};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.get", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to load prisoners");
+        }
+    
+        ICollection<Prisoner> ps = JsonSerializer.Deserialize<ICollection<Prisoner>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return ps;
+    }
 }

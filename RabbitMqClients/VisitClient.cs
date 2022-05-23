@@ -60,34 +60,7 @@ public class VisitClient : IVisitService
             throw new Exception("Failed to request a visit");
         }
     }
-
-    public async Task<ICollection<Visit>> GetVisitsAsync()
-    {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        
-        props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
-        
-        var messageBytes = Encoding.UTF8.GetBytes("");
-        var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "visit.get", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
-        
-        String response =  tcs.Task.Result;
-        if (response.Equals("fail"))
-        {
-            throw new Exception("Failed to load visits");
-        }
     
-        ICollection<Visit> visits = JsonSerializer.Deserialize<ICollection<Visit>>(response, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        })!;
-        return visits;
-    }
 
     public async Task<Visit> GetAccessCodeConfirmation(string code)
     {
@@ -163,5 +136,34 @@ public class VisitClient : IVisitService
         {
             throw new Exception("Failed to update the visit");
         }
+    }
+
+    public async Task<ICollection<Visit>> GetVisitsAsync(int pageNumber, int pageSize)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        String[] array = new[] {pageNumber.ToString(), pageSize.ToString()};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "visit.get", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to load visits");
+        }
+    
+        ICollection<Visit> visits = JsonSerializer.Deserialize<ICollection<Visit>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return visits;
     }
 }

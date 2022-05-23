@@ -161,4 +161,52 @@ public class WorkShiftClient : IWorkShiftService
         })!;
         return w;    
     }
+
+
+    public async Task AddGuardToWorkShift(string guardId, string shiftId)
+    {
+        string[] idArray = {guardId, shiftId};
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(idArray));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs); 
+        
+        channel.BasicPublish(exchange: Exchange, routingKey: "workShift.addGuard", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception($"Failed to add guard n.-{guardId} to workshift n.-{shiftId}");
+        }
+    }
+
+    public async Task RemoveGuardFromWorkShift(string guardId, string shiftId)
+    {
+        string ids = $"{guardId}{shiftId}";
+        Console.WriteLine(ids);
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(ids));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs); 
+        
+        channel.BasicPublish(exchange: Exchange, routingKey: "workShift.removeGuard", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception($"Failed to remove guard n.-{guardId} from workshift n.-{shiftId}");
+        }
+    }
 }

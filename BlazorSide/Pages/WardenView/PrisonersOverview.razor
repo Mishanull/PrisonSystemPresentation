@@ -124,11 +124,11 @@
                         <div class="card-header text-white" style="background-color: #41B3D3 !important">@p.FirstName @p.LastName</div>
                         <div class="card-body text-center">
                             <img 
-                          src="img/download.png"
-                          class="rounded-circle"
-                          alt=""
-                          style="width: 100px; height: 100px"
-                          />
+                                src="img/download.png"
+                                class="rounded-circle"
+                                alt=""
+                                style="width: 100px; height: 100px"
+                            />
                             <ul class="list-group list-group-light">
                                 <li class="list-group-item px-3">SSN: @p.Ssn</li>
                                 <li class="list-group-item px-3">Crime: @p.CrimeCommitted</li>
@@ -151,15 +151,19 @@
         </div>
     }
 </div>
+
 @code{
     private OptionsValues currentOption { get; set; }=OptionsValues.Table;
     private ICollection<Prisoner>? prisoners;
+
+    private int pageNumber, pageSize;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            prisoners = await _prisonerService.GetPrisonersAsync();
+            // prisoners = await _prisonerService.GetPrisonersAsync();
+            prisoners = await _prisonerService.GetPrisonersAsync(pageNumber, pageSize);
         }
         catch (Exception e)
         {

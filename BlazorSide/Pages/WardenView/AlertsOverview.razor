@@ -73,11 +73,14 @@
     private string? text { get; set; }
     private ICollection<Entities.Alert> alerts;
     private int duration;
+
+    int pageNumber = 1;
+    int pageSize = 2;
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            alerts = await _alertService.GetAlerts();
+            alerts = await _alertService.GetAlertsAsync(pageNumber, pageSize);
             stateContainer.OnChange += OnAlertSent;
         }
         catch (Exception e)
@@ -107,7 +110,7 @@
             alert.Text = text;
             alert.DurationInMinutes = duration;
             await _alertService.SendAlert(alert);
-            alerts = await _alertService.GetAlerts();
+            alerts = await _alertService.GetAlertsAsync(pageNumber, pageSize);
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception e)
