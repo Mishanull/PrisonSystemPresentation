@@ -144,9 +144,12 @@
     private Prisoner? currentPrisonerInVisit;
     [CascadingParameter]
     private IModalService Modal { get; set; }
+
+    private int pageNumber = 1;
+    private int pageSize = 2;
     protected override async Task OnInitializedAsync()
     {
-        visits = await visitService.GetVisitsAsync();
+        visits = await visitService.GetVisitsAsync(pageNumber, pageSize);
     }
 
     public async void SeeMore(Visit v)
@@ -176,7 +179,7 @@
             if (!result.Cancelled)
             {
                 await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Approved);
-                visits = await visitService.GetVisitsAsync();
+                visits = await visitService.GetVisitsAsync(pageNumber, pageSize);
                 await InvokeAsync(StateHasChanged);
                 selectedVisit = null;
                 isSelected = false;
@@ -206,7 +209,7 @@
             if (!result.Cancelled)
             { 
                 await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Denied);
-                visits = await visitService.GetVisitsAsync();
+                visits = await visitService.GetVisitsAsync(pageNumber, pageSize);
                 await InvokeAsync(StateHasChanged);
                 selectedVisit = null;
                 isSelected = false;
