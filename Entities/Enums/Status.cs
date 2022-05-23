@@ -9,5 +9,7 @@ public enum Status
     [EnumMember(Value = "Denied")]
     Denied,
     [EnumMember(Value = "Approved")]
-    Approved
+    Approved,
+    [EnumMember(Value = "Fulfilled")]
+    Fulfilled
 }

@@ -103,16 +103,43 @@ public class VisitClient : IVisitService
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "visit.getByCode", basicProperties: props, body: messageBytes);
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
-        
         String response =  tcs.Task.Result;
+        Visit visit = new Visit();
         if (response.Equals("fail"))
         {
             throw new Exception($"Failed to load visit code: {code}");
         }
-        Visit visit = JsonSerializer.Deserialize<Visit>(response, new JsonSerializerOptions
+
+        if (response.Equals("no"))
+        {
+            throw new Exception("Invalid");
+        }
+
+        if (response.Equals("fulfilled"))
+        {
+            throw new Exception("Visit has already been completed.");
+        }
+        visit = JsonSerializer.Deserialize<Visit>(response, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         })!;
+         
+         if (visit.VisitDate.Date == DateTime.Today.Date && visit.VisitDate.TimeOfDay > DateTime.Now.TimeOfDay)
+         {
+             throw new Exception("Visitor is too early. Please try again at " + visit.VisitDate.Hour + ":" +
+                                 visit.VisitDate.Minute);
+         }
+         if (visit.VisitDate.Date != DateTime.Today)
+         {
+             throw new Exception("This visit is not booked for today.");
+         }
+
+         if (visit.VisitDate.Date == DateTime.Today.Date &&
+             visit.VisitDate.TimeOfDay.Add(new TimeSpan(0, 30, 0)) < DateTime.Now.TimeOfDay)
+         {
+             throw new Exception("The visitor is 30 min late. Access is denied.");
+         }
+         
         return visit;
     }
 
