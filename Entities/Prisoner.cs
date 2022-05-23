@@ -14,9 +14,9 @@ public class Prisoner
     
     public int Points { get; set; }
     
-    public string Note { get; set; }
+    public ICollection<Note>? Notes { get; set; }
     // public DateTime EntryDate { get; set; }
-    public String EntryDate { get; set; }
-    public int DurationInMonths { get; set; }
+    public DateTime EntryDate { get; set; }
+    public DateTime ReleaseDate { get; set; }
     public Sector Sector { get; set; }
 }

@@ -30,6 +30,7 @@ builder.Services.AddScoped<IGuardService, GuardClient >();
 builder.Services.AddScoped<IAlertService, AlertClient>();
 builder.Services.AddScoped<IWorkShiftService, WorkShiftClient >();
 builder.Services.AddScoped<ISectorService, SectorClient >();
+builder.Services.AddScoped<INotesService, NoteClient >();
 
 builder.Services.AddScoped<IVisitService, VisitClient>();
 builder.Services.AddSingleton<StateContainer.StateContainer>();
