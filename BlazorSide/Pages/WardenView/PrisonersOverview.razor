@@ -3,6 +3,7 @@
 @using Contracts
 @using BlazorLoginApp.Authentication
 @using BlazorSide.UIComponents
+@using Microsoft.VisualBasic.CompilerServices
 
 @inject NavigationManager _navMgr
 @inject IAuthService _authService
@@ -13,10 +14,22 @@
 
 <div class="row container"><h5>Choose how you want to see the prisoners: </h5></div>
 <br/>
-<div class="row container w-25">
-    <SfDropDownList  TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
-        <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
-    </SfDropDownList>
+<div class="d-flex flex-row mb-3">
+    <div class="p-2">
+        <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
+            <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
+        </SfDropDownList>
+    </div>
+    <div class="p-2">
+        <input class="form-control" type="text" placeholder="Filter..."
+               @bind="Filter"
+               @bind:event="oninput">
+    </div>
+    <div class="p-2">
+        <SfDropDownList TValue="SectorsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select sector" @bind-Value="@currentOption2" DataSource="@(Options2)">
+            <DropDownListEvents TItem="string" TValue="SectorsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
+        </SfDropDownList>
+    </div>
 </div>
 <div class="row  mt-5">
     @if (currentOption == OptionsValues.Table)
@@ -38,7 +51,7 @@
                     </thead>
 
                     <tbody>
-                    @foreach (var p in prisoners!)
+                    @foreach (var p in prisoners!.Where(IsVisible))
                     {
                         <tr>
 
@@ -117,7 +130,7 @@
     }
     else if (currentOption == OptionsValues.Grid && prisoners!=null){
         <div class="row row-cols-1 row-cols-md-3">
-            @foreach (var p in prisoners)
+            @foreach (var p in prisoners.Where(IsVisible))
             {
                 <div class="col mx-3">
                     <div class="card mt-3 ">
@@ -154,7 +167,11 @@
 
 @code{
     private OptionsValues currentOption { get; set; }=OptionsValues.Table;
+    private SectorsValues currentOption2 { get; set; }=SectorsValues.All;
+
     private ICollection<Prisoner>? prisoners;
+    private string Filter { get; set; }
+    private int _sector;
 
     private int pageNumber, pageSize;
 
@@ -183,6 +200,42 @@
     private void OnDropdownSelected()
     {
         Console.WriteLine(currentOption);
+            
+    }
+    
+    public string[] Options2 = Enum.GetNames(typeof(SectorsValues));
 
+    public enum SectorsValues
+    {
+        All,
+        Sector1,
+        Sector2,
+        Sector3
+    }
+    
+    private bool IsVisible(Prisoner prisoner)
+    {
+        if (CheckFilter(prisoner) && currentOption2.ToString().Equals("All"))
+            return true;
+ 
+        if (CheckFilter(prisoner) && currentOption2.ToString().Equals("Sector"+prisoner.Sector.Id))
+            return true;
+
+        return false;
+    }
+    
+    private bool CheckFilter(Prisoner prisoner)
+    {
+        if (string.IsNullOrEmpty(Filter))
+            return true;
+ 
+        if (prisoner.FirstName.Contains(Filter, StringComparison.OrdinalIgnoreCase) 
+            || prisoner.LastName.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+ 
+        if (prisoner.Ssn.ToString().StartsWith(Filter) || prisoner.Sector.Id.ToString().StartsWith(Filter))
+            return true;
+
+        return false;
     }
 }

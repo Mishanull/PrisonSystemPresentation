@@ -8,6 +8,13 @@
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="row  mt-5">
+<div class="d-flex flex-row mb-3">
+    <div class="p-2">
+        <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select sector" @bind-Value="@currentOption" DataSource="@(Options)">
+            <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
+        </SfDropDownList>
+    </div>
+</div>
     <div class="d-flex flex-column col-md-7 align-items-center">
          <div class="card text-center overflow-y-scroll" style="height: 30rem;">
                     <h5 class="card-header bg-info text-white" >Workshifts Overview</h5>
@@ -25,7 +32,7 @@
             </thead>
 
             <tbody>
-            @foreach (var w in workShifts!)
+            @foreach (var w in workShifts!.Where(IsVisible))
             {
                 <tr>
 
@@ -108,6 +115,7 @@
 }
 
 @code {
+    private OptionsValues currentOption { get; set; }=OptionsValues.All;
     private ICollection<WorkShift>? workShifts;
     private string errorLabel = String.Empty;
 
@@ -126,5 +134,29 @@
         }
         
     }
+    
+    public string[] Options = Enum.GetNames(typeof(OptionsValues));
 
+    public enum OptionsValues
+    {
+        All,
+        Sector1,
+        Sector2,
+        Sector3
+    }
+    private void OnDropdownSelected()
+    {
+        Console.WriteLine(currentOption);
+    }
+
+    private bool IsVisible(WorkShift workShift)
+    {
+        if (currentOption.ToString().Equals("All"))
+            return true;
+ 
+        if (currentOption.ToString().Equals("Sector"+workShift.Sector.Id))
+            return true;
+
+        return false;
+    }
 }

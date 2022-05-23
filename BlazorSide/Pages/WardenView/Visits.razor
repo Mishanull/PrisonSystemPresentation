@@ -9,7 +9,18 @@
 @inject IPrisonerService prisonerService
 @inject NavigationManager navMgr
 <div class="row mt-5">
-    
+    <div class="d-flex flex-row mb-3">
+        <div class="p-2">
+                <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select status" @bind-Value="@currentOption" DataSource="@(Options)">
+                    <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
+                </SfDropDownList>
+            </div>
+        <div class="p-2">
+            <input class="form-control" type="text" placeholder="Filter..."
+                   @bind="Filter"
+                   @bind:event="oninput">
+        </div>
+    </div>
     <div class="d-flex flex-column col-md-7 align-items-center" >
         <div class="card text-center overflow-y-scroll" style="height: 30rem;">
             <h5 class="card-header bg-info text-white" >An Overview of Visit Requests</h5>
@@ -34,6 +45,8 @@
                     {
                         @for (int i = visits.ToList().Count - 1; i >= 0; i--)
                         {
+                            if (!IsVisible(visits.ToList()[i]))
+                                continue;
                             Visit? visit = visits.ToList()[i];
                             @if (selectedVisit!=null && selectedVisit!.Equals(visit) )
                             {
@@ -138,10 +151,13 @@
     }
 </div>
 @code {
+    private OptionsValues currentOption { get; set; }=OptionsValues.All;
     private ICollection<Visit> visits;
     private bool isSelected;
     private Visit? selectedVisit { get; set; } = null;
     private Prisoner? currentPrisonerInVisit;
+    private string Filter { get; set; }
+    
     [CascadingParameter]
     private IModalService Modal { get; set; }
 
@@ -223,6 +239,48 @@
             modalService.Show<ErrorModal>();
         }
     }
+    
+    public string[] Options = Enum.GetNames(typeof(OptionsValues));
 
-   
+    public enum OptionsValues
+    {
+        All,
+        Waiting,
+        Denied,
+        Approved,
+        Fulfilled
+    }
+    
+    private void OnDropdownSelected()
+    {
+        Console.WriteLine(currentOption);
+    }
+    
+    private bool IsVisible(Visit visit)
+    {
+        if ( CheckFilter(visit) && currentOption.ToString().Equals("All"))
+            return true;
+ 
+        if (CheckFilter(visit) && currentOption.ToString().Equals(visit.Status.ToString()))
+            return true;
+
+        return false;
+    }
+
+    private bool CheckFilter(Visit visit )
+    {
+        if (string.IsNullOrEmpty(Filter))
+            return true;
+ 
+        if (visit.FirstName.Contains(Filter, StringComparison.OrdinalIgnoreCase) 
+            || visit.LastName.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+ 
+        if (visit.PrisonerSsn.ToString().StartsWith(Filter))
+            return true;
+
+        return false;
+        
+    }
+
 }

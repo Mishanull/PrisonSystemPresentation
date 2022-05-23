@@ -10,11 +10,18 @@
 @using Syncfusion.Blazor.DropDowns
 @using BlazorSide.UIComponents
 <div class="row container"><h5>Choose how you want to see the guards: </h5></div>
-<br/>
-<div class="row container w-25">
-    <SfDropDownList  TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
-        <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
-    </SfDropDownList>
+    <br/>
+<div class="d-flex flex-row mb-3">
+    <div class="p-2">
+        <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
+            <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
+        </SfDropDownList>
+    </div>
+    <div class="p-2">
+        <input class="form-control" type="text" placeholder="Filter..."
+               @bind="Filter"
+               @bind:event="oninput">
+    </div>
 </div>
 <div class="row container mt-5">
     @if (currentOption == OptionsValues.Table)
@@ -35,10 +42,10 @@
                 </tr>
                 </thead>
 
-                <tbody>
-                @foreach (var g in guards)
-                {
-                    <tr>
+                    <tbody>
+                    @foreach (var g in guards.Where(IsVisible))
+                    {
+                        <tr>
 
                         <td>
                             <div class="d-flex align-items-center">
@@ -104,7 +111,7 @@
     else if (currentOption == OptionsValues.Grid)
     {
         <div class="row row-cols-1 row-cols-md-3">
-            @foreach (var g in guards)
+            @foreach (var g in guards.Where(IsVisible))
             {
                 <div class="col mx-3">
                     <div class="card mt-3 ">
@@ -142,6 +149,8 @@
 @code{
     private OptionsValues currentOption { get; set; }=OptionsValues.Table;
     private ICollection<Guard>? guards;
+    private string Filter { get; set; }
+    
     protected  override async Task OnInitializedAsync()
     {
         try
@@ -166,5 +175,18 @@
     {
         Console.WriteLine(currentOption);
 
+    }
+    
+    private bool IsVisible(Guard guard)
+    {
+        if (string.IsNullOrEmpty(Filter))
+            return true;
+ 
+        if (guard.FirstName.Contains(Filter, StringComparison.OrdinalIgnoreCase) 
+            || guard.LastName.Contains(Filter, StringComparison.OrdinalIgnoreCase)
+                || guard.Email.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
     }
 }
