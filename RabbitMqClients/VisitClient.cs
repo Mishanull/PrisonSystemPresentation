@@ -48,7 +48,10 @@ public class VisitClient : IVisitService
         props.CorrelationId = correlationId;
         props.ReplyTo = replyQueueName;
         
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(visit));
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(visit, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        }));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: Exchange, routingKey: "visit.add", basicProperties: props, body: messageBytes);
