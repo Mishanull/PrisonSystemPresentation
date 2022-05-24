@@ -10,7 +10,7 @@
 @inject IModalService _modalService
 @inject NavigationManager navMgr
 @inject IUserService _userService
-@inject StateContainer stateContainer
+@inject AlertStateContainer alertStateContainer
 @implements IDisposable
 <nav
        id="main-navbar"
@@ -117,14 +117,14 @@
       User? u = await _userService.GetUserAsync(userName.Value);
       if (u.Role.Equals("guard"))
       {
-        stateContainer.OnChange += ReceiveNotifications;
+        alertStateContainer.OnChange += ReceiveNotifications;
         timerDone += StopTimer;
       }
     }
 
   private void ReceiveNotifications()
   {
-    Alert = stateContainer.Property;
+    Alert = alertStateContainer.Property;
     StartTimer();
     text = Alert.Text;
     notificationDuration = Alert.DurationInMinutes;

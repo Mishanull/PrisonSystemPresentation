@@ -41,14 +41,14 @@ public class AlertClient : IAlertService
            
     }
 
-    public async Task SendAlert(Alert alert)
+    public async Task SendAlert(Alert alert, long[] id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-       
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(alert));
+        String[] array = new[] {JsonSerializer.Serialize(alert), JsonSerializer.Serialize(id)};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.broadcast" , basicProperties: props,

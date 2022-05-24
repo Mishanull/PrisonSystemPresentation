@@ -179,8 +179,7 @@
     {
         try
         {
-            // prisoners = await _prisonerService.GetPrisonersAsync();
-            prisoners = await _prisonerService.GetPrisonersAsync(pageNumber, pageSize);
+            prisoners = await _prisonerService.GetPrisonersAsync(1, 2);
         }
         catch (Exception e)
         {

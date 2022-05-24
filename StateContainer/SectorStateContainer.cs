@@ -2,16 +2,16 @@
 
 namespace StateContainer;
 
-public class StateContainer
+public class SectorStateContainer
 {
-    private Alert? savedAlert;
+    private Sector? savedSector;
     public event Action OnChange;
-    public Alert Property
+    public Sector Property
     {
-        get => savedAlert ?? new Alert();
+        get => savedSector ?? new Sector();
         set
         {
-            savedAlert = value;
+            savedSector = value;
             Console.WriteLine(value);
             NotifyStateChanged();
         }

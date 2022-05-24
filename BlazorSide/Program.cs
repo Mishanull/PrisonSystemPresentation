@@ -33,7 +33,8 @@ builder.Services.AddScoped<ISectorService, SectorClient >();
 builder.Services.AddScoped<INotesService, NoteClient >();
 
 builder.Services.AddScoped<IVisitService, VisitClient>();
-builder.Services.AddSingleton<StateContainer.StateContainer>();
+builder.Services.AddSingleton<StateContainer.AlertStateContainer>();
+builder.Services.AddSingleton<StateContainer.SectorStateContainer>();
 builder.Services.AddSingleton<Consumer>();
 builder.Services.AddHostedService(sp=>sp.GetService<Consumer>());
 

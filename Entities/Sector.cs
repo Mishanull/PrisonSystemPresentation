@@ -15,6 +15,11 @@ public class Sector
         Capacity = capacity;
     }
 
+    public Sector()
+    {
+        
+    }
+
     public override string ToString()
     {
         return $"S-{Id} [{OccupiedCells}/{Capacity}]";

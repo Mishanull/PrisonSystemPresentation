@@ -34,7 +34,19 @@ public class Consumer: BackgroundService
             Console.WriteLine("CancellationRequested");
 
         }
-
+        var sectorState = _sp.CreateScope().ServiceProvider.GetService < StateContainer.SectorStateContainer>();
+        sectorState!.OnChange += () =>
+        {
+            switch (sectorState.Property.Id)
+            {
+                case 1:     _channel.QueueBind(replyQueueName,"guard.listen.sector1","");
+                    break;
+                case 2: _channel.QueueBind(replyQueueName,"guard.listen.sector2","");
+                    break;
+                case 3: _channel.QueueBind(replyQueueName,"guard.listen.sector3","");
+                    break;
+            }
+        };
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received +=   (model, ea) =>
         {
@@ -49,8 +61,10 @@ public class Consumer: BackgroundService
             var message = Encoding.UTF8.GetString(body);
             using (var scope = _sp.CreateScope())
             {
-                var state = scope.ServiceProvider.GetService<StateContainer.StateContainer>();
+                
+                var state = scope.ServiceProvider.GetService<StateContainer.AlertStateContainer>();
                 state!.Property = a;
+                
             }
             Console.WriteLine(" [x] Received {0}", message);
         };

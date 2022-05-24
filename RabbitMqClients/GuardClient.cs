@@ -173,5 +173,32 @@ public class GuardClient : IGuardService
         }
     }
 
+    public async Task<Sector> GetGuardSector(long guardId)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getBySector", basicProperties: props,
+            body: messageBytes);
+    
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to get guard sector.");
+        }
+        Sector? sector = JsonSerializer.Deserialize <Sector>(response,new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        return sector!;
+    }
  
 }

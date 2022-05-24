@@ -182,11 +182,14 @@
             }
             else{navMgr.NavigateTo("/");}
         }
+
         catch (Exception e)
-        {
-            
-            errorLabel = $"Error:"+e.Message;
-        }
+            {
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                _modalService.Show<ErrorModal>("Error",paramet);
+            }
+        
     }
     
     private DateTime? SelectedDate { get; set; }

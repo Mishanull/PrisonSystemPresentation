@@ -1,8 +1,10 @@
 ﻿@page "/GuardsPrisonersOverview"
 @using Contracts
 @using Entities
+@using BlazorSide.UIComponents
 @inject IPrisonerService prisonerService
 @inject NavigationManager _navMgr
+@inject IModalService _modalService
 @attribute [Authorize(Policy = "GuardAccess")]
 
 
@@ -29,69 +31,71 @@
                     <th scope="col">Actions</th>
                 </tr>
                 </thead>
-
-                <tbody>
-                @foreach (var p in prisoners.Where(IsVisible))
+                @if (prisoners!.Any())
                 {
-                    <tr>
+                    <tbody>
+                    @foreach (var p in prisoners!.Where(IsVisible))
+                    {
+                        <tr>
 
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img
-                                    src="img/download.png"
-                                    class="rounded-circle"
-                                    alt=""
-                                    style="width: 45px; height: 45px"/>
-                                <div class="ms-3">
-                                    <p class="fw-bold mb-1">@p.FirstName</p>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img
+                                        src="img/download.png"
+                                        class="rounded-circle"
+                                        alt=""
+                                        style="width: 45px; height: 45px"/>
+                                    <div class="ms-3">
+                                        <p class="fw-bold mb-1">@p.FirstName</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">@p.LastName</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@p.LastName</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">@p.Ssn</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@p.Ssn</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">@p.CrimeCommitted</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@p.CrimeCommitted</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">####</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">####</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
-                        </td>
+                            </td>
+                            <td>
+                                <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
+                            </td>
 
-                        <td>
-                            <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
-                                <button
-                                    type="button"
-                                    class="btn btn-link btn-rounded btn-sm fw-bold"
-                                    data-mdb-ripple-color="dark">
-                                    Edit
-                                </button>
-                            </a>
-                        </td>
-                    </tr>
+                            <td>
+                                <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
+                                    <button
+                                        type="button"
+                                        class="btn btn-link btn-rounded btn-sm fw-bold"
+                                        data-mdb-ripple-color="dark">
+                                        Edit
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
                 }
-                </tbody>
             </table>
         </div>
     </div>
@@ -102,7 +106,16 @@
     
     protected  override async Task OnInitializedAsync()
     {
-        prisoners = await prisonerService.GetPrisonersAsync();
+        try
+        {
+            prisoners = await prisonerService.GetPrisonersAsync(1, 2);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
 
     private bool IsVisible(Prisoner prisoner)
@@ -114,7 +127,7 @@
             || prisoner.LastName.Contains(Filter, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (prisoner.Ssn.ToString().StartsWith(Filter) || prisoner.Sector.Id.ToString().StartsWith(Filter))
+        if (prisoner.Ssn.ToString().StartsWith(Filter) || prisoner!.Sector!.Id.ToString().StartsWith(Filter))
             return true;
 
         return false;

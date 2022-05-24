@@ -2,24 +2,50 @@
 @using StateContainer
 @using BlazorSide.Pages.WardenView
 @using BlazorSide.UIComponents
+@using Contracts
+@using Entities
 @using Alert = Entities.Alert
+@using System.Security.Claims
 @inject IModalService modalService
 @inject NavigationManager navMgr
-@inject StateContainer stateContainer
+@inject AlertStateContainer alertStateContainer
 @inject IModalService _modalService
-
+@inject IGuardService _guardService
+@inject SectorStateContainer sectorStateContainer
+@inject IUserService _userService
+<h1>Sector: @sector!.Id </h1>
 @code {
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthState { get; set; }
     private Alert? Alert { get; set; }
     public string text { get; set; }
+    public Sector? sector { get; set; }
+    private ClaimsPrincipal? user;
+
     protected override async Task OnInitializedAsync()
     {
-        stateContainer.OnChange += ShowModal;
+        try
+        {
+            AuthenticationState authState = await AuthState;
+            user = authState.User;
+            Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
+            User? u = await _userService.GetUserAsync(userName.Value);
+            alertStateContainer.OnChange += ShowModal;
+            sector = await _guardService.GetGuardSector(u.Id);
+            sectorStateContainer.Property = sector;
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
     
     public void ShowModal()
     {
         var parameters = new ModalParameters();
-        Alert = stateContainer.Property;
+        Alert = alertStateContainer.Property;
         text = Alert.Text;
         parameters.Add(nameof(AlertModal.Message),Alert?.Text);
         parameters.Add(nameof(AlertModal.dateTime),Alert?.DateTime);

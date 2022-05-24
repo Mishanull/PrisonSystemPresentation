@@ -49,11 +49,14 @@ public class UserClient : IUserService
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: "sep3.prison", routingKey: "prison.users", basicProperties: props, body: messageBytes);
-        Console.WriteLine("message published login");
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
-         User u = JsonSerializer.Deserialize<User>(response, new JsonSerializerOptions
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Something went wrong, please try again or contact the support team.");
+        }
+        User u = JsonSerializer.Deserialize<User>(response, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         })!;
