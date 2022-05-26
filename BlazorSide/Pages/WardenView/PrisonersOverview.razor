@@ -45,6 +45,7 @@
                         <th scope="col">Sector</th>
                         <th scope="col">Status</th>
                         <th scope="col">Notes</th>
+                        <th scope="col">Points</th>
                         <th scope="col">Actions</th>
                     </tr>
                     </thead>
@@ -108,6 +109,28 @@
                                         Notes
                                     </button>
                                 </a>
+                            </td>
+                            
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <a @onclick="@(() => AddPoints(p.Id))">
+                                        <button
+                                            type="button"
+                                            class="btn btn-link btn-rounded btn-sm fw-bold"
+                                            data-mdb-ripple-color="dark">
+                                            +
+                                        </button>
+                                    </a>
+                                    <p class=" mb-1"> @p.Points</p>
+                                    <a @onclick="@(() => SubPoints(p.Id) )">
+                                        <button
+                                            type="button"
+                                            class="btn btn-link btn-rounded btn-sm fw-bold"
+                                            data-mdb-ripple-color="dark">
+                                            -
+                                        </button>
+                                    </a>
+                                </div>
                             </td>
 
                             <td>
@@ -214,8 +237,7 @@
 
     private ICollection<Prisoner>? Prisoners { get; set; }
     private string Filter { get; set; }
-    private int _sector;
-    
+
     private int PageSize { get; set; } = 10;
     private int TotalNumberOfPrisoners { get; set; }
     private int noOfPages { get; set; }
@@ -300,5 +322,19 @@
         noOfPages = TotalNumberOfPrisoners / PageSize + 1;
         Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage,PageSize);
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddPoints(long id)
+    {
+        await _prisonerService.AddPointsToPrisonerAsync(id,1);
+        await InvokeAsync(StateHasChanged);
+        await base.OnParametersSetAsync();
+    }
+    
+    private async Task SubPoints(long id)
+    {
+        await _prisonerService.AddPointsToPrisonerAsync(id,-1);
+        await InvokeAsync(StateHasChanged);
+        await base.OnParametersSetAsync();
     }
 }

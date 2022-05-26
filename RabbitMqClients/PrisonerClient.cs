@@ -267,4 +267,27 @@ public class PrisonerClient : IPrisonerService
         })!;
         return ps;
     }
+
+    public async Task AddPointsToPrisonerAsync(long prisonerId, int points)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        String[] array = {prisonerId.ToString(), points.ToString()};
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs); 
+        
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.addPoints", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception($"Failed to add points prisoner n.-{prisonerId}");
+        }
+    }
 }
