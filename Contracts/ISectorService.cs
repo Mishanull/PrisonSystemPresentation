@@ -4,5 +4,5 @@ namespace Contracts;
 
 public interface ISectorService
 {
-    Task<ICollection<Sector>> GetSectorsAsync();
+    public Task<ICollection<Sector>> GetSectorsAsync();
 }

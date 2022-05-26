@@ -200,5 +200,9 @@ public class GuardClient : IGuardService
         });
         return sector!;
     }
- 
+
+    public Task<ICollection<Guard>> GetGuardsBySector(long sectorId)
+    {
+        throw new NotImplementedException();
+    }
 }

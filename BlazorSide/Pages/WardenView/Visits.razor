@@ -8,24 +8,32 @@
 @inject IModalService modalService
 @inject IPrisonerService prisonerService
 @inject NavigationManager navMgr
-<div class="row mt-5">
-    <div class="d-flex flex-row mb-3">
-        <div class="p-2">
+<div class=" flex-row mt-5 justify-content-center">
+    @if (VisitsList == null || !VisitsList!.Any())
+        {
+            <div class="spinner-border text-info" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        }
+    else
+    {
+        <div class="d-flex flex-row mb-3 justify-content-center  ">
+            <div class="p-2">
                 <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select status" @bind-Value="@currentOption" DataSource="@(Options)">
                     <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
                 </SfDropDownList>
             </div>
-        <div class="p-2">
-            <input class="form-control" type="text" placeholder="Filter..."
-                   @bind="Filter"
-                   @bind:event="oninput">
+            <div class="p-2">
+                <input class="form-control" type="text" placeholder="Filter..."
+                       @bind="Filter"
+                       @bind:event="oninput">
+            </div>
         </div>
-    </div>
-    <div class="d-flex flex-column col-md-7 align-items-center" >
-        <div class="card text-center overflow-y-scroll" style="height: 30rem;">
-            <h5 class="card-header bg-info text-white" >An Overview of Visit Requests</h5>
-                <table class="table table-hover  align-middle bg-white "  style="position: relative; ">
-                    <thead class="bg-info sticky-top" >
+        <div class="d-flex flex-column col-md-7 align-items-center">
+            <div class="card text-center overflow-y-scroll" style="height: 30rem;">
+                <h5 class="card-header bg-info text-white">An Overview of Visit Requests</h5>
+                <table class="table table-hover  align-middle bg-white " style="position: relative; ">
+                    <thead class="bg-info sticky-top">
                     <tr class="text-uppercase text-white ">
                         <th scope="col">Visitor Name </th>
                         <th scope="col">Date</th>
@@ -35,83 +43,118 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @if (!visits.Any() )
+
+                    @for (int i = VisitsList.ToList().Count - 1; i >= 0; i--)
                     {
-                        <div class="spinner-border text-info" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                    }
-                    else
-                    {
-                        @for (int i = visits.ToList().Count - 1; i >= 0; i--)
+                        if (!IsVisible(VisitsList.ToList()[i]))
+                            continue;
+                        Visit? visit = VisitsList.ToList()[i];
+                        @if (selectedVisit != null && selectedVisit!.Equals(visit))
                         {
-                            if (!IsVisible(visits.ToList()[i]))
-                                continue;
-                            Visit? visit = visits.ToList()[i];
-                            @if (selectedVisit!=null && selectedVisit!.Equals(visit) )
-                            {
-                                <tr class="table-active">
-                                    <td >@visit.FirstName @visit.LastName
-                                    </td>
-                                    <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
-                                    <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
-                                    <td>
-                                        @switch (visit.Status)
-                                        {
-                                            case Status.Approved:
-                                                <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                            case Status.Denied:
-                                                <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                            case Status.Waiting:
-                                                <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                            case Status.Fulfilled:
-                                                <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                        }
+                            <tr class="table-active">
+                                <td >@visit.FirstName @visit.LastName
+                                </td>
+                                <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
+                                <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+                                <td>
+                                    @switch (visit.Status)
+                                    {
+                                        case Status.Approved:
+                                            <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                        case Status.Denied:
+                                            <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                        case Status.Waiting:
+                                            <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                        case Status.Fulfilled:
+                                            <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                    }
 
-                                    </td>
-                                    <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
-                                </tr>
-                            }
-                            else
-                            {
-                                <tr >
-                                    <td >@visit.FirstName @visit.LastName
-                                    </td>
-                                    <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
-                                    <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
-                                    <td>
-                                        @switch (visit.Status)
-                                        {
-                                            case Status.Approved:
-                                                <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                            case Status.Denied:
-                                                <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                            case Status.Waiting:
-                                                <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                            case Status.Fulfilled:
-                                                <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
-                                                break;
-                                        }
+                                </td>
+                                <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr >
+                                <td >@visit.FirstName @visit.LastName
+                                </td>
+                                <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
+                                <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+                                <td>
+                                    @switch (visit.Status)
+                                    {
+                                        case Status.Approved:
+                                            <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                        case Status.Denied:
+                                            <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                        case Status.Waiting:
+                                            <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                        case Status.Fulfilled:
+                                            <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
+                                            break;
+                                    }
 
-                                    </td>
-                                    <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
-                                </tr>
-                            }
+                                </td>
+                                <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
+                            </tr>
                         }
                     }
                     </tbody>
                 </table>
-                    
+            </div>
+            <br/>
+                <nav>
+                    <ul class="pagination ">
+                        @for (int i = 0; i < noOfPages; i++)
+                        {
+                            int page = i;
+                            @if (selectedPage == page + 1)
+                            {
+    
+                                <li class="page-item active ms-3" aria-current="page" style="cursor: pointer; background-color:  #41B3D3 !important;">
+                                    <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                        @(i + 1)
+                                    </a>
+                                </li>
+                            }
+                            else
+                            {
+                                <li class="page-item  ms-3" aria-current="page" style="cursor: pointer;">
+                                    <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                        @(i + 1)
+                                    </a>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </nav>
+                <div class="p-2 ">
+                    <div class=" dropup">
+                        <button
+                            class="btn btn-info dropdown-toggle"
+                            type="button"
+                            id="dropdownMenuButton"
+                            data-mdb-toggle="dropdown"
+                            aria-expanded="false">
+                            Rows/page: @PageSize
+                        </button>
+                        <ul class="dropdown-menu  " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
+                            <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
+                            <li><a class="dropdown-item" @onclick=@(() => SetPageSize(15))>15</a></li>
+                            <li><a class="dropdown-item" @onclick=@(() => SetPageSize(20))>20</a></li>
+                            <li><a class="dropdown-item" @onclick=@(() => SetPageSize(25))>25</a></li>
+                        </ul>
+                    </div>
+                </div>
         </div>
-    </div>
-    @if (isSelected && currentPrisonerInVisit!=null)
+        @if (isSelected && currentPrisonerInVisit!=null)
     {
         long id = currentPrisonerInVisit.Id;
         <div class="col-md-4">
@@ -149,10 +192,13 @@
             </div>
         </div>
     }
+    }
 </div>
+        
+    
 @code {
     private OptionsValues currentOption { get; set; }=OptionsValues.All;
-    private ICollection<Visit> visits;
+    private ICollection<Visit>? VisitsList { get; set; }
     private bool isSelected;
     private Visit? selectedVisit { get; set; } = null;
     private Prisoner? currentPrisonerInVisit;
@@ -160,12 +206,18 @@
     
     [CascadingParameter]
     private IModalService Modal { get; set; }
-
-    private int pageNumber = 1;
-    private int pageSize = 2;
+    
+    private int PageSize { get; set; } = 10;
+    private int TotalNumberOfVisits { get; set; }
+    private int noOfPages { get; set; }
+    private int selectedPage { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        visits = await visitService.GetVisitsAsync(pageNumber, pageSize);
+        selectedPage = 1;
+        VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
+        TotalNumberOfVisits = VisitsList!.Count;
+        if (TotalNumberOfVisits < 10) noOfPages = 0;
+        else noOfPages = TotalNumberOfVisits / PageSize +1;
     }
 
     public async void SeeMore(Visit v)
@@ -195,7 +247,7 @@
             if (!result.Cancelled)
             {
                 await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Approved);
-                visits = await visitService.GetVisitsAsync(pageNumber, pageSize);
+                VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
                 await InvokeAsync(StateHasChanged);
                 selectedVisit = null;
                 isSelected = false;
@@ -225,7 +277,7 @@
             if (!result.Cancelled)
             { 
                 await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Denied);
-                visits = await visitService.GetVisitsAsync(pageNumber, pageSize);
+                VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
                 await InvokeAsync(StateHasChanged);
                 selectedVisit = null;
                 isSelected = false;
@@ -282,5 +334,21 @@
         return false;
         
     }
+
+    private async Task SelectPage(int i)
+    {
+        selectedPage = i;
+        VisitsList = await visitService.GetVisitsAsync(selectedPage,PageSize);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SetPageSize(int i)
+    {
+        PageSize = i;
+        noOfPages = TotalNumberOfVisits / PageSize + 1;
+        VisitsList = await visitService.GetVisitsAsync(selectedPage,PageSize);
+        await InvokeAsync(StateHasChanged);
+    }
+
 
 }

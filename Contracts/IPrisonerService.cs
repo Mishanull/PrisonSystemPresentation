@@ -10,5 +10,7 @@ public interface IPrisonerService
     public Task<Prisoner> GetPrisonerBySsn(string prisonerSsn);
     // public Task<ICollection<Prisoner>> GetPrisonersAsync();
     public Task UpdatePrisonerAsync(Prisoner newPrisoner);
-    Task<ICollection<Prisoner>?> GetPrisonersAsync(int pageNumber, int pageSize);
+    public Task<ICollection<Prisoner>?> GetPrisonersAsync(int pageNumber, int pageSize);
+    public Task<int> GetPrisonerCount();
+    public Task<ICollection<Prisoner>?> GetPrisonersBySectorAsync(int selectedPage, int pageSize, int sectorId);
 }

@@ -9,9 +9,8 @@
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.DropDowns
 @using BlazorSide.UIComponents
-<div class="row container"><h5>Choose how you want to see the guards: </h5></div>
     <br/>
-<div class="d-flex flex-row mb-3">
+<div class="d-flex flex-row mb-3 justify-content-center">
     <div class="p-2">
         <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
             <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
@@ -23,7 +22,7 @@
                @bind:event="oninput">
     </div>
 </div>
-<div class="row container mt-5">
+<div class="d-flex flex-row container mt-5 justify-content-center">
     @if (currentOption == OptionsValues.Table)
     {
         <div class="d-flex flex-column col-md-7 align-items-center">
@@ -83,7 +82,7 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="ms-3">
-                                    <p class=" mb-1">#</p>
+                                    <p class=" mb-1">@GetSector(g.Id)</p>
                                 </div>
                             </div>
                         </td>
@@ -189,4 +188,11 @@
 
         return false;
     }
+
+    private long GetSector(long gId)
+    {
+        Sector sector=   _guardService.GetGuardSector(gId).Result;
+        return sector.Id;
+    }
+
 }
