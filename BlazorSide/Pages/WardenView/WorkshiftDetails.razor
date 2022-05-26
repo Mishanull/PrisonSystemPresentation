@@ -8,6 +8,7 @@
 @inject IWorkShiftService _workShiftService
 @inject IModalService _modalService
 @inject IGuardService _guardService
+@inject ISectorService _sectorService
 @inject NavigationManager _navMgr
 @attribute [Authorize(Policy = "WardenAccess")]
 
@@ -39,8 +40,8 @@
         <br/>
         <p></p>
         <label class="text-white">Sector:
-            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px"  @bind-Value="@sectorValue" DataSource="sectors">
-                <DropDownListFieldSettings   Text="id" Value="id"/>
+            <SfDropDownList TItem="Sector" TValue="string" PopupHeight="200px"  @bind-Value="@sectorValue"  DataSource="sectors">
+                <DropDownListFieldSettings   Text="Id" Value="Id"/>
             </SfDropDownList>
         </label> 
         <br/>
@@ -117,34 +118,92 @@
     private string[] dayValue = {};
     private ICollection<string> DaysOfTheWeek = new DaysOfTheWeek().Days;
     private string sectorValue = "fail";
-    private ICollection<string> sectors = new[] {"1", "2", "3"};
+    private ICollection<Sector> sectors;
     private DateTime? StartTime { get; set; } 
     private DateTime? EndTime { get; set; }
-    List<Guard> currentGuards;
-    List<Guard> availableGuards;
-    List<Guard> guardsToClear = new();
-    Guard FirstSelected { get; set; }
-    Guard SecondSelected { get; set; }
-
-    // todo different solution for sectors
+    private List<Guard> currentGuards;
+    private List<Guard> availableGuards;
+    private List<Guard> guardsToClear = new();
+    private Guard FirstSelected { get; set; }
+    private Guard SecondSelected { get; set; }
     
     
-
     [CascadingParameter]
     private IModalService Modal { get; set; }
+    
     
     protected override async Task OnParametersSetAsync()
     {
         if (Id.HasValue)
         {
-            editedWorkshift = await _workShiftService.GetWorkShiftById(Id.Value);
+            try
+            {
+                sectors = await _sectorService.GetSectorsAsync();
+                editedWorkshift = await _workShiftService.GetWorkShiftById(Id.Value);
+                sectorValue = editedWorkshift.Sector.Id.ToString();
+            }
+            catch (Exception e)
+            {
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                _modalService.Show<ErrorModal>("Error",paramet);
+            }
             StartTime = editedWorkshift.Start;
             EndTime = editedWorkshift.End;
-            sectorValue = editedWorkshift.Id.ToString();
             dayValue = editedWorkshift.DaysOfWeek.Split(", ");
             await FetchGuards(Id);
         }
         await base.OnParametersSetAsync();
+    }
+    
+    private async Task EditWorkShift()
+    {
+        editedWorkshift.Start = StartTime;
+        editedWorkshift.End = EndTime;
+        editedWorkshift.Sector = sectors.First(s => s.Id == Int64.Parse(sectorValue));
+        editedWorkshift.DaysOfWeek = string.Join(", ", dayValue);
+        editedWorkshift.Guards = currentGuards;
+        
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to update the workshift?");
+        var modalRef=_modalService.Show<ActionConfirm>("Success",parameters);
+        var result = await modalRef.Result;
+        try
+        {
+            if (!result.Cancelled)
+            {
+                await ClearGuards();
+                await _workShiftService.UpdateWorkShiftAsync(editedWorkshift);
+                _navMgr.NavigateTo("/WorkShiftsOverview");
+            }
+        }
+        catch (Exception e)
+        {
+            parameters.Add(nameof(ActionConfirm.Message),e.Message);
+            _modalService.Show<ActionConfirm>("Failure", parameters);
+        }
+    }
+    
+    private async Task DeleteWorkShift()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message), "Are you sure you want to delete the workshift?");
+        var modalRef = _modalService.Show<ActionConfirm>("Delete", parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
+        {
+            try
+            {
+                await _workShiftService.RemoveWorkShiftAsync(editedWorkshift.Id);
+                _navMgr.NavigateTo("/WorkshiftsOverview");
+            }
+            catch (Exception e)
+            {
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                _modalService.Show<ErrorModal>("Error",paramet);
+            }
+        }
     }
     
     private async Task FetchGuards(long? workshiftID)
@@ -294,58 +353,11 @@
         }
     }
     
-    private async Task EditWorkShift()
-    {
-        editedWorkshift.Start = (DateTime) StartTime;
-        editedWorkshift.End = (DateTime) EndTime;
-        editedWorkshift.Sector = new Sector(int.Parse(sectorValue), 500);
-        editedWorkshift.DaysOfWeek = string.Join(", ", dayValue);
-        editedWorkshift.Guards = currentGuards;
-        // todo remove guards from the list
-        
-        var parameters = new ModalParameters();
-        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to update the workshift?");
-        var modalRef=_modalService.Show<ActionConfirm>("Success",parameters);
-        var result = await modalRef.Result;
-        try
-        {
-            if (!result.Cancelled)
-            {
-                await ClearGuards();
-                await _workShiftService.UpdateWorkShiftAsync(editedWorkshift);
-                _navMgr.NavigateTo("/WorkShiftsOverview");
-            }
-        }
-        catch (Exception e)
-        {
-            parameters.Add(nameof(ActionConfirm.Message),e.Message);
-            _modalService.Show<ActionConfirm>("Failure", parameters);
-        }
-    }
+    
     
     // todo fix modal fuckery
 
-    private async Task DeleteWorkShift()
-    {
-        var parameters = new ModalParameters();
-        parameters.Add(nameof(ActionConfirm.Message), "Are you sure you want to delete the workshift?");
-        var modalRef = _modalService.Show<ActionConfirm>("Delete", parameters);
-        var result = await modalRef.Result;
-        if (!result.Cancelled)
-        {
-            try
-            {
-                await _workShiftService.RemoveWorkShiftAsync(editedWorkshift.Id);
-                _navMgr.NavigateTo("/WorkshiftsOverview");
-            }
-            catch (Exception e)
-            {
-                var paramet = new ModalParameters();
-                paramet.Add(nameof(ErrorModal.Message),e.Message);
-                _modalService.Show<ErrorModal>("Error",paramet);
-            }
-        }
-    }
+    
 
 }
 

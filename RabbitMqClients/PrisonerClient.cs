@@ -127,7 +127,7 @@ public class PrisonerClient : IPrisonerService
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
         {
-            throw new Exception($"Failed to load prisoner n.-{prisonerSSN}");
+            throw new Exception($"Failed to load prisoner n.{prisonerSSN}");
         }
         Prisoner p = JsonSerializer.Deserialize<Prisoner>(response, new JsonSerializerOptions
         {

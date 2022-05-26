@@ -53,14 +53,14 @@
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="ms-3">
-                                <p class=" mb-1">@w.Start.TimeOfDay.ToString(@"hh\:mm")</p>
+                                <p class=" mb-1">@w.Start</p>
                             </div>
                         </div>
                     </td>
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="ms-3">
-                                <p class=" mb-1">@w.End.TimeOfDay.ToString(@"hh\:mm")</p>
+                                <p class=" mb-1">@w.End</p>
                             </div>
                         </div>
                     </td>
@@ -77,7 +77,7 @@
                                 <p class=" mb-1">
                                     @foreach (var guard in w.Guards)
                                     {
-                                        string temp = $"{guard.FirstName} {guard.LastName} " + Environment.NewLine;
+                                        string temp = $"{guard.FirstName} {guard.LastName}, " + Environment.NewLine;
                                         @temp
                                     }
                                 </p>

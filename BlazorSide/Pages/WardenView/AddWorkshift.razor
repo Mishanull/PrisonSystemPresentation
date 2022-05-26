@@ -10,6 +10,7 @@
 @inject IWorkShiftService _workShiftService
 @inject IModalService _modalService
 @inject IGuardService _guardService
+@inject ISectorService _sectorService
 @inject NavigationManager _navMgr
 @attribute [Authorize(Policy = "WardenAccess")]
 
@@ -43,8 +44,8 @@
         <p></p>
         <label class="text-white">
             Sector:
-            <SfDropDownList TItem="string" TValue="string" PopupHeight="200px" @bind-Value="@sectorValue" DataSource="sectors">
-                <DropDownListFieldSettings Text="id" Value="id"/>
+            <SfDropDownList TItem="Sector" TValue="string" PopupHeight="200px" @bind-Value="@sectorValue" DataSource="@sectors">
+                <DropDownListFieldSettings Text="Id" Value="Id"/>
             </SfDropDownList>
         </label>
         <br/>
@@ -130,28 +131,41 @@
     private DateTime? EndTime { get; set; } = DateTime.Now + TimeSpan.FromHours(4);
     private string[] dayValue = {};
     private ICollection<string> DaysOfTheWeek = new DaysOfTheWeek().Days;
-
-    // todo different solution for sectors
-
+    private ICollection<Sector> sectors;
     private string sectorValue = "fail";
-    private ICollection<string> sectors = new[] {"1", "2", "3"};
+    
 
     [CascadingParameter]
     private IModalService Modal { get; set; }
 
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchGuards();
+        try
+        {
+            sectors = await _sectorService.GetSectorsAsync();
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
+    }
 
     private async Task AddNewWorkShift()
     {
         newWorkShift.Start = (DateTime) StartTime!;
         newWorkShift.End = (DateTime) EndTime!;
-        newWorkShift.Sector = new Sector(int.Parse(sectorValue), 500);
+        newWorkShift.Sector = sectors.First(s => s.Id == Int64.Parse(sectorValue));
         newWorkShift.DaysOfWeek = string.Join(", ", dayValue);
         newWorkShift.Guards = guardsToBeAdded;
         
         var parameters = new ModalParameters();
         parameters.Add(nameof(ChoiceModal.Message), "Workshift added successfully");
         parameters.Add(nameof(ChoiceModal.FirstButton), "Go back");
-        parameters.Add(nameof(ChoiceModal.SecondButton), "Add another workshift");
+        parameters.Add(nameof(ChoiceModal.SecondButton),"Go to workshift overview");
+        parameters.Add(nameof(ChoiceModal.ThirdButton), "Add another workshift");
         try
         {
             await _workShiftService.CreateWorkShiftAsync(newWorkShift);
@@ -173,6 +187,9 @@
                         await BackToAdd();
                         break;
                     }
+                    case "Go to workshift overview":
+                        await BackToOptions();
+                        break;
                 }
             }
         }
@@ -194,11 +211,12 @@
     {
         _navMgr.NavigateTo("/");
     }
-
-    protected override async Task OnInitializedAsync()
+    
+    private async Task BackToOptions()
     {
-        await FetchGuards();
+        _navMgr.NavigateTo("/WorkshiftOptions");
     }
+    
 
     private async Task FetchGuards()
     {
