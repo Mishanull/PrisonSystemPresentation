@@ -12,9 +12,8 @@
 @attribute [Authorize(Policy = "WardenAccess")]
 
 
-<div class="row container"><h5>Choose how you want to see the prisoners: </h5></div>
 <br/>
-<div class="d-flex flex-row mb-3">
+<div class="d-flex flex-row  justify-content-center mb-3">
     <div class="p-2">
         <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
             <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
@@ -31,7 +30,7 @@
         </SfDropDownList>
     </div>
 </div>
-<div class="row  mt-5">
+<div class="d-flex flex-row justify-content-center  mt-5">
     @if (currentOption == OptionsValues.Table)
     {
         <div class="d-flex flex-column col-md-7 align-items-center">
@@ -51,7 +50,7 @@
                     </thead>
 
                     <tbody>
-                    @foreach (var p in prisoners!.Where(IsVisible))
+                    @foreach (var p in Prisoners!.Where(IsVisible))
                     {
                         <tr>
 
@@ -126,11 +125,55 @@
                     </tbody>
                 </table>
             </div>
+            <br/>
+            <nav>
+                            <ul class="pagination ">
+                                @for (int i = 0; i < noOfPages; i++)
+                                {
+                                    int page = i;
+                                    @if (selectedPage == page + 1)
+                                    {
+            
+                                        <li class="page-item active ms-3" aria-current="page" style="cursor: pointer; background-color:  #41B3D3 !important;">
+                                            <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                                @(i + 1)
+                                            </a>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="page-item  ms-3" aria-current="page" style="cursor: pointer;">
+                                            <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                                @(i + 1)
+                                            </a>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </nav>
+                        <div class="p-2 ">
+                            <div class=" dropup">
+                                <button
+                                    class="btn btn-info dropdown-toggle"
+                                    type="button"
+                                    id="dropdownMenuButton"
+                                    data-mdb-toggle="dropdown"
+                                    aria-expanded="false">
+                                    Rows/page: @PageSize
+                                </button>
+                                <ul class="dropdown-menu  " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
+                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
+                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(15))>15</a></li>
+                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(20))>20</a></li>
+                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(25))>25</a></li>
+                                </ul>
+                            </div>
+                        </div>
         </div>
     }
-    else if (currentOption == OptionsValues.Grid && prisoners!=null){
+    else if (currentOption == OptionsValues.Grid && Prisoners!=null){
         <div class="row row-cols-1 row-cols-md-3">
-            @foreach (var p in prisoners.Where(IsVisible))
+            @foreach (var p in Prisoners.Where(IsVisible))
             {
                 <div class="col mx-3">
                     <div class="card mt-3 ">
@@ -157,7 +200,7 @@
             }
         </div>
     }
-    @if (prisoners == null && !prisoners!.Any())
+    @if (Prisoners == null && !Prisoners!.Any())
     {
         <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -169,17 +212,24 @@
     private OptionsValues currentOption { get; set; }=OptionsValues.Table;
     private SectorsValues currentOption2 { get; set; }=SectorsValues.All;
 
-    private ICollection<Prisoner>? prisoners;
+    private ICollection<Prisoner>? Prisoners { get; set; }
     private string Filter { get; set; }
     private int _sector;
-
-    private int pageNumber, pageSize;
+    
+    private int PageSize { get; set; } = 10;
+    private int TotalNumberOfPrisoners { get; set; }
+    private int noOfPages { get; set; }
+    private int selectedPage { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            prisoners = await _prisonerService.GetPrisonersAsync(1, 2);
+            selectedPage = 1;
+            Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage, PageSize);
+            TotalNumberOfPrisoners = Prisoners!.Count;
+            if (TotalNumberOfPrisoners < 10) noOfPages = 0;
+            else noOfPages = TotalNumberOfPrisoners / PageSize +1;
         }
         catch (Exception e)
         {
@@ -236,5 +286,19 @@
             return true;
 
         return false;
+    }
+    private async Task SelectPage(int i)
+    {
+        selectedPage = i;
+        Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage,PageSize);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SetPageSize(int i)
+    {
+        PageSize = i;
+        noOfPages = TotalNumberOfPrisoners / PageSize + 1;
+        Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage,PageSize);
+        await InvokeAsync(StateHasChanged);
     }
 }

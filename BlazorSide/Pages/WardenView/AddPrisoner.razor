@@ -83,6 +83,10 @@
             parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Prisoner");
             try
             {
+                if (_entryDate >= _releaseDate)
+                {
+                    throw new Exception("Release date cannot be earlier or the same day as entry date.");
+                }
                 newPrisoner.EntryDate = _entryDate;
                 newPrisoner.ReleaseDate = _releaseDate;
                 await _prisonerService.CreatePrisonerAsync(newPrisoner);

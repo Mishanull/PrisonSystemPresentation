@@ -2,113 +2,197 @@
 @using Contracts
 @using Entities
 @using BlazorSide.UIComponents
-@inject IPrisonerService prisonerService
+@using Microsoft.AspNetCore.Components
+@using Microsoft.Extensions.Options
+@using System.Security.Claims
 @inject NavigationManager _navMgr
 @inject IModalService _modalService
+@inject IPrisonerService prisonerService
+@inject IGuardService guardService
+@inject IUserService userService
 @attribute [Authorize(Policy = "GuardAccess")]
 
 
-<div class="row mt-5">
-    <div class="d-flex flex-row mb-3">
-        <div class="p-2">
-            <input class="form-control" type="text" placeholder="Filter..."
-                   @bind="Filter"
-                   @bind:event="oninput">
+<div class="row mt-3 align-items-center">
+    
+    @if (prisoners == null || !prisoners!.Any())
+    {
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
-    </div>
-    <div class="d-flex flex-column align-items-center ">
-        <div class="card text-center overflow-y-scroll " style="height: 40rem;">
-            <h5 class="card-header bg-info text-white">Inmates</h5>
-            <table class="table  table-hover align-middle mb-0 bg-white" style="position: relative; ">
-                <thead class="bg-info">
-                <tr class="text-uppercase text-white">
-                    <th scope="col">First name</th>
-                    <th scope="col">Last name</th>
-                    <th scope="col">Ssn</th>
-                    <th scope="col">Crime commited</th>
-                    <th scope="col">Sector</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Actions</th>
-                </tr>
-                </thead>
-                @if (prisoners!.Any())
-                {
-                    <tbody>
-                    @foreach (var p in prisoners!.Where(IsVisible))
+    }
+    else
+    {
+        
+        <div class="d-flex flex-row mb-3 justify-content-center ">
+        
+            <div class="p-2">
+                <input class="form-control" type="text" placeholder="Filter..."
+                       @bind="Filter"
+                       @bind:event="oninput">
+            </div>
+
+        </div>
+        <div class="d-flex flex-column align-items-center  ">
+            <div class="card text-center overflow-y-scroll " style="height: 40rem;">
+                <h5 class="card-header bg-info text-white">Inmates</h5>
+                <table class="table  table-hover align-middle mb-0 bg-white" style="position: relative; ">
+                    <thead class="bg-info sticky-top">
+                    <tr class="text-uppercase text-white">
+                        <th scope="col">First name</th>
+                        <th scope="col">Last name</th>
+                        <th scope="col">Ssn</th>
+                        <th scope="col">Crime commited</th>
+                        <th scope="col">Sector</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                    </thead>
+                    @if (prisoners!.Any())
                     {
-                        <tr>
+                        <tbody>
+                        @foreach (var p in prisoners!.Where(IsVisible))
+                        {
+                            <tr>
 
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img
-                                        src="img/download.png"
-                                        class="rounded-circle"
-                                        alt=""
-                                        style="width: 45px; height: 45px"/>
-                                    <div class="ms-3">
-                                        <p class="fw-bold mb-1">@p.FirstName</p>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img
+                                            src="img/download.png"
+                                            class="rounded-circle"
+                                            alt=""
+                                            style="width: 45px; height: 45px"/>
+                                        <div class="ms-3">
+                                            <p class="fw-bold mb-1">@p.FirstName</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@p.LastName</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@p.LastName</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@p.Ssn</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@p.Ssn</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@p.CrimeCommitted</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@p.CrimeCommitted</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">####</p>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">####</p>
+                                        </div>
                                     </div>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
-                            </td>
+                                </td>
+                                <td>
+                                    <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
+                                </td>
 
-                            <td>
-                                <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
-                                    <button
-                                        type="button"
-                                        class="btn btn-link btn-rounded btn-sm fw-bold"
-                                        data-mdb-ripple-color="dark">
-                                        Edit
-                                    </button>
-                                </a>
-                            </td>
-                        </tr>
+                                <td>
+                                    <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
+                                        <button
+                                            type="button"
+                                            class="btn btn-link btn-rounded btn-sm fw-bold"
+                                            data-mdb-ripple-color="dark">
+                                            Edit
+                                        </button>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
                     }
-                    </tbody>
-                }
-            </table>
+                    <br/>
+
+                </table>
+            </div>
+            <br/>
+            <nav>
+                <ul class="pagination ">
+                    @for (int i = 0; i < noOfPages; i++)
+                    {
+                        int page = i;
+                        @if (selectedPage == page + 1)
+                        {
+
+                            <li class="page-item active ms-3" aria-current="page" style="cursor: pointer; background-color:  #41B3D3 !important;">
+                                <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                    @(i + 1)
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="page-item  ms-3" aria-current="page" style="cursor: pointer;">
+                                <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                    @(i + 1)
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </nav>
+            <div class="p-2 ">
+                <div class=" dropup">
+                    <button
+                        class="btn btn-info dropdown-toggle"
+                        type="button"
+                        id="dropdownMenuButton"
+                        data-mdb-toggle="dropdown"
+                        aria-expanded="false">
+                        Rows/page: @PageSize
+                    </button>
+                    <ul class="dropdown-menu  " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(15))>15</a></li>
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(20))>20</a></li>
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(25))>25</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
-    </div>
+    }
+    
 </div>
 @code {
-    private ICollection<Prisoner>? prisoners;
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthState { get; set; }
+    private ICollection<Prisoner>? prisoners { get; set; } = null;
     private string Filter { get; set; }
-    
+    private int PageSize { get; set; } = 10;
+    private int TotalNumberOfPrisoners { get; set; }
+    private int noOfPages { get; set; }
+    private int selectedPage { get; set; }
+    private int sectorId { get; set; } 
+    private ClaimsPrincipal? user;
+
     protected  override async Task OnInitializedAsync()
     {
         try
         {
-            prisoners = await prisonerService.GetPrisonersAsync(1, 2);
+            AuthenticationState authState = await AuthState;
+            user = authState.User;
+            Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
+            User? u = await userService.GetUserAsync(userName.Value);
+            selectedPage = 1;
+            Sector sector = await guardService.GetGuardSector(u.Id);
+            sectorId = (int)sector.Id;
+            
+            prisoners = await prisonerService.GetPrisonersBySectorAsync(selectedPage,PageSize, sectorId);
+            TotalNumberOfPrisoners = prisoners!.Count;
+            if (TotalNumberOfPrisoners < 10) noOfPages = 0;
+            else noOfPages = TotalNumberOfPrisoners / PageSize +1;
         }
         catch (Exception e)
         {
@@ -132,5 +216,22 @@
 
         return false;
     }
+
+    private async Task SelectPage(int i)
+    {
+        selectedPage = i;
+        prisoners = await prisonerService.GetPrisonersBySectorAsync(selectedPage,PageSize,sectorId);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task SetPageSize(int i)
+    {
+        PageSize = i;
+        noOfPages = TotalNumberOfPrisoners / PageSize + 1;
+        prisoners = await prisonerService.GetPrisonersBySectorAsync(selectedPage,PageSize,sectorId);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    
 
 }
