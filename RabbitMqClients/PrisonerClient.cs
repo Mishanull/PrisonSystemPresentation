@@ -110,7 +110,7 @@ public class PrisonerClient : IPrisonerService
         return p;
     }
 
-    public async Task<Prisoner> GetPrisonerBySSN(string prisonerSSN)
+    public async Task<Prisoner> GetPrisonerBySsn(string prisonerSSN)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

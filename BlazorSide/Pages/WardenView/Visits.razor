@@ -174,7 +174,7 @@
         {
             isSelected = true;
             selectedVisit = v;
-            currentPrisonerInVisit = await prisonerService.GetPrisonerBySSN(v.PrisonerSsn.ToString());
+            currentPrisonerInVisit = await prisonerService.GetPrisonerBySsn(v.PrisonerSsn.ToString());
         }
         catch (Exception e)
         {

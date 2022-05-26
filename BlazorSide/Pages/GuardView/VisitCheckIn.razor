@@ -92,7 +92,7 @@ else
         try
         {
             checkedVisit = await visitService.GetAccessCodeConfirmation(code);
-            VisitedPrisoner = await prisonerService.GetPrisonerBySSN(checkedVisit.PrisonerSsn.ToString());
+            VisitedPrisoner = await prisonerService.GetPrisonerBySsn(checkedVisit.PrisonerSsn.ToString());
             isChecked = true;
         }
         catch (Exception e)
