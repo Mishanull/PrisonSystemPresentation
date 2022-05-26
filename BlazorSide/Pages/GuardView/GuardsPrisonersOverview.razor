@@ -45,6 +45,8 @@
                         <th scope="col">Crime commited</th>
                         <th scope="col">Sector</th>
                         <th scope="col">Status</th>
+                        <th scope="col">Notes</th>
+                        <th scope="col">Points</th>
                         <th scope="col">Actions</th>
                     </tr>
                     </thead>
@@ -97,6 +99,38 @@
                                 </td>
                                 <td>
                                     <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
+                                </td>
+                                <td>
+                                    <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerNotes/" + @p.Id); })">
+                                        <button
+                                            type="button"
+                                            class="btn btn-link btn-rounded btn-sm fw-bold"
+                                            data-mdb-ripple-color="dark">
+                                            Notes
+                                        </button>
+                                    </a>
+                                </td>
+
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <a @onclick="@(() => AddPoints(p.Id))">
+                                            <button
+                                                type="button"
+                                                class="btn btn-link btn-rounded btn-sm fw-bold"
+                                                data-mdb-ripple-color="dark">
+                                                +
+                                            </button>
+                                        </a>
+                                        <p class=" mb-1"> @p.Points</p>
+                                        <a @onclick="@(() => SubPoints(p.Id) )">
+                                            <button
+                                                type="button"
+                                                class="btn btn-link btn-rounded btn-sm fw-bold"
+                                                data-mdb-ripple-color="dark">
+                                                -
+                                            </button>
+                                        </a>
+                                    </div>
                                 </td>
 
                                 <td>
@@ -232,6 +266,18 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async Task AddPoints(long id)
+    {
+        await prisonerService.AddPointsToPrisonerAsync(id,1);
+        await InvokeAsync(StateHasChanged);
+        await base.OnParametersSetAsync();
+    }
     
-
+    private async Task SubPoints(long id)
+    {
+        await prisonerService.AddPointsToPrisonerAsync(id,-1);
+        await InvokeAsync(StateHasChanged);
+        await base.OnParametersSetAsync();
+    }
+    
 }
