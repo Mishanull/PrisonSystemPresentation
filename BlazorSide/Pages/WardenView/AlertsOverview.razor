@@ -176,7 +176,7 @@
     private void OnAlertSent()
     {
         var parameters = new ModalParameters();
-        parameters.Add(nameof(MessageModal.Message),"Alert sent succesfully! Be aware that you will not be able to send another alert until this one finishes");
+        parameters.Add(nameof(MessageModal.Message),"Alert sent successfully! ");
         parameters.Add(nameof(MessageModal.OkButton),"Ok");
         var modalReference = _modalService.Show<MessageModal>("Alert", parameters);
         if(modalReference.Result.IsCompleted){text=String.Empty;  }
