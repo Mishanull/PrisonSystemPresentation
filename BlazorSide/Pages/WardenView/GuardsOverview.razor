@@ -126,7 +126,7 @@
                                 <li class="list-group-item px-3">Username: @g.Username</li>
                                 <li class="list-group-item px-3">Email: @g.Email</li>
                                 <li class="list-group-item px-3">Status: <span class="badge badge-danger rounded-pill d-inline">Not Working Today</span> </li>
-                                <li class="list-group-item px-3">Sector: ### </li>
+                                <li class="list-group-item px-3">Sector:@GetSector(g.Id) </li>
                             </ul>
                             <br/>
                             <a @onclick="@(()=>{_navMgr.NavigateTo("/GuardDetails/"+@g.Id);})"  class="btn btn-primary">Edit</a>

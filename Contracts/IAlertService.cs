@@ -4,6 +4,6 @@ namespace Contracts;
 
 public interface IAlertService
 {
-    public Task SendAlert(Alert alert, long[] sectors);
+    public Task<string> SendAlert(Alert alert);
     public Task<ICollection<Alert>> GetAlertsAsync(int pageNumber, int pageSize);
 }

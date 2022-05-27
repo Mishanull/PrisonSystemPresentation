@@ -92,7 +92,7 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="ms-3">
-                                        <p class=" mb-1">S: @p.Sector?.Id</p>
+                                        <p class=" mb-1">@p.Sector?.Id</p>
                                     </div>
                                 </div>
                             </td>
@@ -150,48 +150,48 @@
             </div>
             <br/>
             <nav>
-                            <ul class="pagination ">
-                                @for (int i = 0; i < noOfPages; i++)
-                                {
-                                    int page = i;
-                                    @if (selectedPage == page + 1)
-                                    {
-            
-                                        <li class="page-item active ms-3" aria-current="page" style="cursor: pointer; background-color:  #41B3D3 !important;">
-                                            <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
-                                                @(i + 1)
-                                            </a>
-                                        </li>
-                                    }
-                                    else
-                                    {
-                                        <li class="page-item  ms-3" aria-current="page" style="cursor: pointer;">
-                                            <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
-                                                @(i + 1)
-                                            </a>
-                                        </li>
-                                    }
-                                }
-                            </ul>
-                        </nav>
-                        <div class="p-2 ">
-                            <div class=" dropup">
-                                <button
-                                    class="btn btn-info dropdown-toggle"
-                                    type="button"
-                                    id="dropdownMenuButton"
-                                    data-mdb-toggle="dropdown"
-                                    aria-expanded="false">
-                                    Rows/page: @PageSize
-                                </button>
-                                <ul class="dropdown-menu  " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
-                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
-                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(15))>15</a></li>
-                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(20))>20</a></li>
-                                    <li><a class="dropdown-item" @onclick=@(() => SetPageSize(25))>25</a></li>
-                                </ul>
-                            </div>
-                        </div>
+                <ul class="pagination ">
+                    @for (int i = 0; i < noOfPages; i++)
+                    {
+                        int page = i;
+                        @if (selectedPage == page + 1)
+                        {
+
+                            <li class="page-item active ms-3" aria-current="page" style="cursor: pointer; background-color:  #41B3D3 !important;">
+                                <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                    @(i + 1)
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="page-item  ms-3" aria-current="page" style="cursor: pointer;">
+                                <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
+                                    @(i + 1)
+                                </a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </nav>
+            <div class="p-2 ">
+                <div class=" dropup">
+                    <button
+                        class="btn btn-info dropdown-toggle"
+                        type="button"
+                        id="dropdownMenuButton"
+                        data-mdb-toggle="dropdown"
+                        aria-expanded="false">
+                        Rows/page: @PageSize
+                    </button>
+                    <ul class="dropdown-menu  " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(15))>15</a></li>
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(20))>20</a></li>
+                        <li><a class="dropdown-item" @onclick=@(() => SetPageSize(25))>25</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     }
     else if (currentOption == OptionsValues.Grid && Prisoners!=null){
@@ -208,11 +208,30 @@
                                 alt=""
                                 style="width: 100px; height: 100px"
                             />
+                            <br/>
                             <ul class="list-group list-group-light">
                                 <li class="list-group-item px-3">SSN: @p.Ssn</li>
                                 <li class="list-group-item px-3">Crime: @p.CrimeCommitted</li>
                                 <li class="list-group-item px-3">Status: <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span> </li>
                                 <li class="list-group-item px-3">Sector: @p.Sector!.Id </li>
+                                <li class="list-group-item px-3">Points: @p.Points </li>
+                                <li class="list-group-item px-3"><a @onclick="@(() => AddPoints(p.Id))">
+                                 <button
+                                     type="button"
+                                     class="btn btn-link btn-rounded btn-sm fw-bold"
+                                     data-mdb-ripple-color="dark">
+                                     +
+                                 </button>
+                             </a>
+                             <p class=" mb-1"> @p.Points</p>
+                             <a @onclick="@(() => SubPoints(p.Id) )">
+                                 <button
+                                     type="button"
+                                     class="btn btn-link btn-rounded btn-sm fw-bold"
+                                     data-mdb-ripple-color="dark">
+                                     -
+                                 </button>
+                             </a> </li>
                             </ul>
                             <br/>
                             <a @onclick="@(()=>{_navMgr.NavigateTo("/PrisonerDetail/"+@p.Id);})"  class="btn btn-primary">Edit</a>
@@ -311,30 +330,66 @@
     }
     private async Task SelectPage(int i)
     {
-        selectedPage = i;
-        Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage,PageSize);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            selectedPage = i;
+            Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage, PageSize);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
 
     private async Task SetPageSize(int i)
     {
-        PageSize = i;
-        noOfPages = TotalNumberOfPrisoners / PageSize + 1;
-        Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage,PageSize);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            PageSize = i;
+            noOfPages = TotalNumberOfPrisoners / PageSize + 1;
+            Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage, PageSize);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
 
     private async Task AddPoints(long id)
     {
-        await _prisonerService.AddPointsToPrisonerAsync(id,1);
-        await InvokeAsync(StateHasChanged);
-        await base.OnParametersSetAsync();
+        try
+        {
+            Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage, PageSize);
+            await _prisonerService.AddPointsToPrisonerAsync(id, 1);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
     
     private async Task SubPoints(long id)
     {
-        await _prisonerService.AddPointsToPrisonerAsync(id,-1);
-        await InvokeAsync(StateHasChanged);
-        await base.OnParametersSetAsync();
+        try
+        {
+            Prisoners = await _prisonerService.GetPrisonersAsync(selectedPage, PageSize);
+            await _prisonerService.AddPointsToPrisonerAsync(id, -1);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
 }
