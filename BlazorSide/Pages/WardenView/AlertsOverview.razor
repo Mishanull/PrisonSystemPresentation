@@ -198,7 +198,7 @@
             alert.Priority = Priority.Low;
             alert.DateTime = DateTime.Now;
             alert.Text = text;
-            alert.DurationInMinutes = duration;
+            alert.DurationInMinutes = duration*60;
             bool[] ids = new bool[3];
             if (sector1) ids[0] = true;
             if (sector2) ids[1] = true;
@@ -236,7 +236,7 @@
         double totalSeconds = alert.DurationInMinutes;
         TimeSpan finishTime=TimeSpan.FromSeconds(totalSeconds);
         DateTime finishDate = alert.DateTime.Add(finishTime);
-        if (DateTime.Compare(finishDate, DateTime.Now) == 0 )
+        if (DateTime.Compare(finishDate, DateTime.Now) == -1 )
         {
             return false;
         }

@@ -127,7 +127,7 @@
     Alert = alertStateContainer.Property;
     StartTimer();
     text = Alert.Text;
-    notificationDuration = Alert.DurationInMinutes;
+    notificationDuration = Alert.DurationInMinutes/60;
   }
 
   private void ToggleNavMenu()
@@ -174,7 +174,6 @@
       {
          InvokeAsync(StateHasChanged);
         elapsedTime++;
-        Console.WriteLine(elapsedTime);
       }, null, 0, 1000);
     }
 
