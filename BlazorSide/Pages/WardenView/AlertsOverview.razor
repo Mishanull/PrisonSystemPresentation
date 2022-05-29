@@ -5,10 +5,9 @@
 @page "/AlertsOverview"
 @inject IAlertService _alertService
 @inject NavigationManager navigationManager
-@inject AlertStateContainer alertStateContainer
 @inject IModalService _modalService
 @attribute [Authorize(Policy = "WardenAccess")]
-@implements IDisposable 
+
 <div class="row mt-5">
     @if (Alerts == null || !Alerts!.Any())
         {
@@ -60,6 +59,7 @@
                     <tr>
                         <th scope="col">Date </th>
                         <th scope="col">Time</th>
+                        <th scope="col">Sector(s)</th>
                         <th scope="col">Duration (minutes)</th>
                         <th scope="col">Details</th>
                     </tr>
@@ -84,6 +84,20 @@
                                         <br/>
                                         <span class="badge rounded-pill badge-warning" style="margin-left: 2px">Active</span>
                                     }
+                                </td>
+                                <td>
+                                    @if (alert.Sectors[0])
+                                    {
+                                        <span> 1 </span>
+                                    } 
+                                    @if (alert.Sectors[1])
+                                    {
+                                        <span> 2 </span>
+                                    } 
+                                    @if (alert.Sectors[2])
+                                    {
+                                        <span> 3 </span>
+                                    } 
                                 </td>
                                 <td >@alert.DurationInMinutes</td>
                                 <td><button class="btn btn-outline-warning" @onclick=@(() => SeeMore(alert))>See more</button></td>
@@ -159,7 +173,6 @@
         try
         {
             Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
-            alertStateContainer.OnChange += OnAlertSent;
             selectedPage = 1;
             TotalNumberOfAlerts = Alerts!.Count;
             if (TotalNumberOfAlerts < 10) noOfPages = 0;
@@ -173,15 +186,6 @@
         }
     }
 
-    private void OnAlertSent()
-    {
-        var parameters = new ModalParameters();
-        parameters.Add(nameof(MessageModal.Message),"Alert sent succesfully! Be aware that you will not be able to send another alert until this one finishes");
-        parameters.Add(nameof(MessageModal.OkButton),"Ok");
-        var modalReference = _modalService.Show<MessageModal>("Alert", parameters);
-        if(modalReference.Result.IsCompleted){text=String.Empty;  }
-        
-    }
     
     public async Task SendAlert()
     {
@@ -194,18 +198,22 @@
             alert.Priority = Priority.Low;
             alert.DateTime = DateTime.Now;
             alert.Text = text;
-            alert.DurationInMinutes = duration;
-            long[] ids = new long[3];
-            ids.SetValue(0,0);
-            ids.SetValue(0,1);
-            ids.SetValue(0,2);
-            
-            if (sector1) ids[0] = 1;
-            if (sector2) ids[1] = 2;
-            if (sector3) ids[2] = 3;
-            await _alertService.SendAlert(alert,ids);
+            alert.DurationInMinutes = duration*60;
+            bool[] ids = new bool[3];
+            if (sector1) ids[0] = true;
+            if (sector2) ids[1] = true;
+            if (sector3) ids[2] = true;
+            alert.Sectors = ids;
+            String response=await _alertService.SendAlert(alert);
             Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
             await InvokeAsync(StateHasChanged);
+            if (response == "success")
+            {
+                var parameters = new ModalParameters();
+                parameters.Add(nameof(MessageModal.Message), "Alert sent successfully! ");
+                parameters.Add(nameof(MessageModal.OkButton), "Ok");
+                var modalReference = _modalService.Show<MessageModal>("Alert", parameters);
+            }
         }
         catch (Exception e)
         {
@@ -236,22 +244,37 @@
 
     }
 
-    public void Dispose()
-    {
-        alertStateContainer.OnChange -= OnAlertSent;
-    }
+   
     private async Task SelectPage(int i)
     {
-        selectedPage = i;
-        Alerts = await _alertService.GetAlertsAsync(selectedPage,PageSize);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            selectedPage = i;
+            Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
 
     private async Task SetPageSize(int i)
     {
-        PageSize = i;
-        noOfPages = TotalNumberOfAlerts / PageSize + 1;
-        Alerts = await _alertService.GetAlertsAsync(selectedPage,PageSize);
-        await InvokeAsync(StateHasChanged);
+        try
+        {
+            PageSize = i;
+            noOfPages = TotalNumberOfAlerts / PageSize + 1;
+            Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception e)
+        {
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
     }
 }

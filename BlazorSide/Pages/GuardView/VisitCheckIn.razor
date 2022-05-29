@@ -118,8 +118,9 @@ else
     {
         try
         {
+            visit.Status = Status.Fulfilled;
             Visits!.Remove(visit);
-            await visitService.UpdateVisitStatusAsync(visit.Id, Status.Fulfilled);
+            await visitService.UpdateVisitStatusAsync(visit);
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception e)

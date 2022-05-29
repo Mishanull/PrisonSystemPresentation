@@ -8,7 +8,7 @@
 @inject IModalService modalService
 @inject IPrisonerService prisonerService
 @inject NavigationManager navMgr
-<div class=" flex-row mt-5 justify-content-center">
+<div class=" row mt-5 justify-content-center">
     @if (VisitsList == null || !VisitsList!.Any())
         {
             <div class="spinner-border text-info" role="status">
@@ -29,7 +29,7 @@
                        @bind:event="oninput">
             </div>
         </div>
-        <div class="d-flex flex-column col-md-7 align-items-center">
+        <div class="d-flex flex-column col-md-6 align-items-center">
             <div class="card text-center overflow-y-scroll" style="height: 30rem;">
                 <h5 class="card-header bg-info text-white">An Overview of Visit Requests</h5>
                 <table class="table table-hover  align-middle bg-white " style="position: relative; ">
@@ -157,7 +157,7 @@
         @if (isSelected && currentPrisonerInVisit!=null)
     {
         long id = currentPrisonerInVisit.Id;
-        <div class="col-md-4">
+        <div class="d-flex flex-column col-md-6">
             <div class="card ">
                 <h5 class="card-header bg-info text-white">Selected Visit</h5>
                 <div class="card-body font-normal">
@@ -246,7 +246,8 @@
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
-                await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Approved);
+                selectedVisit!.Status = Status.Approved;
+                await visitService.UpdateVisitStatusAsync(selectedVisit!);
                 VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
                 await InvokeAsync(StateHasChanged);
                 selectedVisit = null;
@@ -275,8 +276,9 @@
             var modalRef=modalService.Show<ActionConfirm>("Confirm",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
-            { 
-                await visitService.UpdateVisitStatusAsync(selectedVisit!.Id, Status.Denied);
+            {
+                selectedVisit!.Status = Status.Denied;
+                await visitService.UpdateVisitStatusAsync(selectedVisit!);
                 VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
                 await InvokeAsync(StateHasChanged);
                 selectedVisit = null;

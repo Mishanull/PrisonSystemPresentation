@@ -41,14 +41,17 @@ public class AlertClient : IAlertService
            
     }
 
-    public async Task SendAlert(Alert alert, long[] id)
+    public async Task<string> SendAlert(Alert alert)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        String[] array = new[] {JsonSerializer.Serialize(alert), JsonSerializer.Serialize(id)};
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(alert, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy= JsonNamingPolicy.CamelCase
+        }));
         var tcs = new TaskCompletionSource<string>();
         callbackMapper.TryAdd(correlationId, tcs);                
         channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.broadcast" , basicProperties: props,
@@ -61,6 +64,7 @@ public class AlertClient : IAlertService
         {
             throw new Exception("Failed to send alert.");
         }
+        return "success";
     }
     
 
