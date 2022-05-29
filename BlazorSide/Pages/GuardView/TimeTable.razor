@@ -1,6 +1,78 @@
 ﻿@page "/Timetable"
+@using BlazorSide.SyncfusionClasses
+@using BlazorSide.UIComponents
+@using Syncfusion.Blazor.Schedule
+@using Contracts
+@using Entities
+@using System.Security.Claims
+@inject IWorkShiftService _workShiftService
+@inject IUserService _userService
+@inject IGuardService _guardService
+@inject IModalService _modalService
 @attribute [Authorize(Policy = "GuardAccess")]
+<div class="row mt-5 justify-content-center">
+    <div class="d-flex flex-column justify-content-center mb-5" >
+        <h5 class="card-header bg-info text-white" style=" width: 75%;" >Your Schedule</h5>
+        <SfSchedule TValue="ScheduleData" Height="calc(100vh - 4.6rem)" Width="75%" Readonly="true">
+            <ScheduleEventSettings DataSource="@WorkShiftData"></ScheduleEventSettings>
+            <ScheduleViews>
+                <ScheduleView Option="View.Month"></ScheduleView>
+                <ScheduleView Option="View.Agenda"></ScheduleView>
+            </ScheduleViews>
+        </SfSchedule>
+    </div>
+</div>
 
 @code {
+    [CascadingParameter]
+    public Task<AuthenticationState> AuthState { get; set; }
+
+    private WorkShift? CurrentWorkShift;
+    private ClaimsPrincipal? user;
+
+    List<ScheduleData>? WorkShiftData = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            AuthenticationState authState = await AuthState;
+            user = authState.User;
+            Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
+            User? u = await _userService.GetUserAsync(userName.Value);
+            CurrentWorkShift =await _workShiftService.GetWorkShiftByGuardAsync(u.Id);
+            string[] days = CurrentWorkShift.DaysOfWeek!.Split(", ");
+            string extracted=String.Empty;
+            for (int i = 0; i < days.Length; i++)
+            {
+                days[i] = days[i].Substring(0, 2).ToUpper();
+                extracted += days[i]+",";
+            }
+            extracted = extracted.Remove(extracted.Length-1);
+            if (CurrentWorkShift != null)
+            {
+                WorkShiftData = new List<ScheduleData>
+                {
+                    new()
+                    {
+                        Id = (int) CurrentWorkShift.Id,
+                        Subject = "Working ",
+                        Description = "Shift in Sector " + CurrentWorkShift.Sector!.Id,
+                        StartTime = CurrentWorkShift.Start!.Value,
+                        EndTime = CurrentWorkShift.End!.Value,
+                        RecurrenceRule = "FREQ=WEEKLY;INTERVAL=1;BYDAY="+extracted
+                    }
+                };
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.ToString());
+            var paramet = new ModalParameters();
+            paramet.Add(nameof(ErrorModal.Message),e.Message);
+            _modalService.Show<ErrorModal>("Error",paramet);
+        }
+    }
     
+
 }

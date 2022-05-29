@@ -95,4 +95,9 @@ public class AlertClient : IAlertService
         })!;
         return alerts;
     }
+
+    public Task<ICollection<Alert>> GetAlertsToday()
+    {
+        throw new NotImplementedException();
+    }
 }

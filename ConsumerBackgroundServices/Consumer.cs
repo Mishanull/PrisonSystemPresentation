@@ -22,7 +22,6 @@ public class Consumer: BackgroundService
         _connection = _factory.CreateConnection();
         _channel = _connection.CreateModel();
         replyQueueName=_channel.QueueDeclare("").QueueName;
-        _channel.QueueBind(replyQueueName,"guard.listen","");
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -50,15 +49,12 @@ public class Consumer: BackgroundService
         var consumer = new EventingBasicConsumer(_channel);
         consumer.Received +=   (model, ea) =>
         {
-            Console.WriteLine("received something");
             var body = ea.Body.ToArray();
-            String result = Encoding.UTF8.GetString(body,0,body.Length);
-            Console.WriteLine(result+" received");
+            
             Alert a = JsonSerializer.Deserialize<Alert>(body, new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
             })!;
-            var message = Encoding.UTF8.GetString(body);
             using (var scope = _sp.CreateScope())
             {
                 
@@ -66,7 +62,6 @@ public class Consumer: BackgroundService
                 state!.Property = a;
                 
             }
-            Console.WriteLine(" [x] Received {0}", message);
         };
         _channel.BasicConsume(queue:replyQueueName, autoAck: true, consumer: consumer);
     }

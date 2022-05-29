@@ -8,4 +8,5 @@ public interface IVisitService
     public Task<Visit> GetAccessCodeConfirmation(string code);
     public Task UpdateVisitStatusAsync(Visit v);
     public Task<ICollection<Visit>> GetVisitsAsync(int pageNumber, int pageSize);
+    public Task<int> GetNumOfVisitsToday();
 }
