@@ -173,7 +173,7 @@ public class GuardClient : IGuardService
         }
     }
 
-    public async Task<Sector> GetGuardSector(long guardId)
+    public async Task<Sector> GetGuardSectorAsync(long guardId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

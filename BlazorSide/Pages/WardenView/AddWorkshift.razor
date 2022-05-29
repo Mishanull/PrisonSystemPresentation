@@ -120,10 +120,10 @@
 
 
 @code {
-    List<Guard> guardsToBeAdded;
-    List<Guard> availableGuards;
-    Guard FirstSelected { get; set; }
-    Guard SecondSelected { get; set; }
+    private List<Guard> guardsToBeAdded;
+    private List<Guard> availableGuards;
+    private Guard FirstSelected { get; set; }
+    private Guard SecondSelected { get; set; }
 
     private WorkShift newWorkShift = new();
     private string errorLabel = String.Empty;
@@ -223,7 +223,7 @@
         guardsToBeAdded = new List<Guard>();
         try
         {
-            ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
+            ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShiftsAsync();
             Console.Write(tempWorkshifts);
             ICollection<Guard> takenGuards = new List<Guard>();
             foreach (var workShift in tempWorkshifts)

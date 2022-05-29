@@ -191,7 +191,7 @@
 
     private long GetSector(long gId)
     {
-        Sector sector=   _guardService.GetGuardSector(gId).Result;
+        Sector sector=   _guardService.GetGuardSectorAsync(gId).Result;
         return sector.Id;
     }
 

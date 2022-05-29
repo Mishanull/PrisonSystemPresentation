@@ -63,12 +63,11 @@
     [Required]
     private DateTime _entryDate = DateTime.Now;
     private DateTime _releaseDate = DateTime.Now;
-    
     private string errorLabel=String.Empty;
     [CascadingParameter]
     private IModalService Modal { get; set; }
-
     private ICollection<Sector> sectors;
+    
     protected async override Task OnInitializedAsync()
     {
         sectors = await _sectorService.GetSectorsAsync();

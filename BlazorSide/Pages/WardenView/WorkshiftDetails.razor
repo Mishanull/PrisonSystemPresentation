@@ -139,7 +139,7 @@
             try
             {
                 sectors = await _sectorService.GetSectorsAsync();
-                editedWorkshift = await _workShiftService.GetWorkShiftById(Id.Value);
+                editedWorkshift = await _workShiftService.GetWorkShiftByIdAsync(Id.Value);
                 sectorValue = editedWorkshift.Sector.Id.ToString();
             }
             catch (Exception e)
@@ -208,11 +208,11 @@
     
     private async Task FetchGuards(long? workshiftID)
     {
-        WorkShift currentWorkshift = await _workShiftService.GetWorkShiftById(workshiftID);
+        WorkShift currentWorkshift = await _workShiftService.GetWorkShiftByIdAsync(workshiftID);
         currentGuards = (List<Guard>) currentWorkshift.Guards;
         try
         {
-            ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
+            ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShiftsAsync();
             ICollection<Guard> takenGuards = new List<Guard>();
             foreach (var workShift in tempWorkshifts)
             {

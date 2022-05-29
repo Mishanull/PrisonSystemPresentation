@@ -41,7 +41,7 @@ public class WorkShiftClient : IWorkShiftService
             queue: replyQueueName,
             autoAck: true);
     }
-    public async Task<ICollection<WorkShift>> GetWorkShifts()
+    public async Task<ICollection<WorkShift>> GetWorkShiftsAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -135,7 +135,7 @@ public class WorkShiftClient : IWorkShiftService
         }
     }
 
-    public async Task<WorkShift> GetWorkShiftById(long? id)
+    public async Task<WorkShift> GetWorkShiftByIdAsync(long? id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -163,7 +163,7 @@ public class WorkShiftClient : IWorkShiftService
     }
 
 
-    public async Task AddGuardToWorkShift(string guardId, string shiftId)
+    public async Task AddGuardToWorkShiftAsync(string guardId, string shiftId)
     {
         string[] idArray = {guardId, shiftId};
         CancellationToken cancellationToken = default;

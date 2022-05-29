@@ -4,8 +4,8 @@ namespace Contracts;
 
 public interface IVisitService
 {
-    public Task CreateVisitAsync(Visit visit);
-    public Task<Visit> GetAccessCodeConfirmation(string code);
-    public Task UpdateVisitStatusAsync(long id, Status status);
-    public Task<ICollection<Visit>> GetVisitsAsync(int pageNumber, int pageSize);
+    Task CreateVisitAsync(Visit visit);
+    Task<Visit> GetAccessCodeConfirmationAsync(string code);
+    Task UpdateVisitStatusAsync(long id, Status status);
+    Task<ICollection<Visit>> GetVisitsAsync(int pageNumber, int pageSize);
 }

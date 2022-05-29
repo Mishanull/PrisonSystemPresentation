@@ -25,14 +25,14 @@
             </div>
         </div>
     </div>
-    @if (isChecked && checkedVisit != null && VisitedPrisoner != null)
+    @if (isChecked && CheckedVisit != null && VisitedPrisoner != null)
 {
     <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <ul class="list-group  list-group-light">
-                    <li class="list-group-item hover-shadow px-3">Visitor First Name: @checkedVisit.FirstName</li>
-                    <li class="list-group-item hover-shadow px-3">Visitor Last Name: @checkedVisit.LastName</li>
+                    <li class="list-group-item hover-shadow px-3">Visitor First Name: @CheckedVisit.FirstName</li>
+                    <li class="list-group-item hover-shadow px-3">Visitor Last Name: @CheckedVisit.LastName</li>
                     <li class="list-group-item hover-shadow px-3">Prisoner to be visited: @VisitedPrisoner.FirstName @VisitedPrisoner.LastName</li>
                 </ul>
                 <div class="card-body text-danger">
@@ -84,15 +84,15 @@ else
 @code {
     public string? Code { get; set; }
     private bool isChecked;
-    public Visit? checkedVisit { get; set; } 
+    public Visit? CheckedVisit { get; set; } 
     public Prisoner? VisitedPrisoner { get; set; }
     public ICollection<Visit>? Visits { get; set; } = new List<Visit>();
     private async Task CheckAccessCode(string code)
     {
         try
         {
-            checkedVisit = await visitService.GetAccessCodeConfirmation(code);
-            VisitedPrisoner = await prisonerService.GetPrisonerBySsn(checkedVisit.PrisonerSsn.ToString());
+            CheckedVisit = await visitService.GetAccessCodeConfirmationAsync(code);
+            VisitedPrisoner = await prisonerService.GetPrisonerBySsn(CheckedVisit.PrisonerSsn.ToString());
             isChecked = true;
         }
         catch (Exception e)
@@ -107,10 +107,10 @@ else
 
     private async Task ConfirmVisitor()
     {
-        Visits.Add(checkedVisit!);
+        Visits.Add(CheckedVisit!);
         isChecked = false;
         Code=String.Empty;
-        checkedVisit = null;
+        CheckedVisit = null;
         VisitedPrisoner = null;
         await InvokeAsync(StateHasChanged);
     }

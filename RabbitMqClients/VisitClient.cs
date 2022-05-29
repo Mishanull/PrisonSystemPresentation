@@ -65,7 +65,7 @@ public class VisitClient : IVisitService
     }
     
 
-    public async Task<Visit> GetAccessCodeConfirmation(string code)
+    public async Task<Visit> GetAccessCodeConfirmationAsync(string code)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

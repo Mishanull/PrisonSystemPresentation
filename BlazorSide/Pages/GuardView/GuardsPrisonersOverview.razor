@@ -220,7 +220,7 @@
             Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
             User? u = await userService.GetUserAsync(userName.Value);
             selectedPage = 1;
-            Sector sector = await guardService.GetGuardSector(u.Id);
+            Sector sector = await guardService.GetGuardSectorAsync(u.Id);
             sectorId = (int)sector.Id;
             
             prisoners = await prisonerService.GetPrisonersBySectorAsync(selectedPage,PageSize, sectorId);

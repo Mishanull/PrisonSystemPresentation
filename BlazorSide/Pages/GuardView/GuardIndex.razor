@@ -31,7 +31,7 @@
             Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
             User? u = await _userService.GetUserAsync(userName.Value);
             alertStateContainer.OnChange += ShowModal;
-            sector = await _guardService.GetGuardSector(u.Id);
+            sector = await _guardService.GetGuardSectorAsync(u.Id);
             sectorStateContainer.Property = sector;
         }
         catch (Exception e)
