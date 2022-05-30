@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace Entities;
+﻿namespace Entities;
 
 public class User
 {
