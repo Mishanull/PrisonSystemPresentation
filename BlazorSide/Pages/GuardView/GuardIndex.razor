@@ -12,10 +12,111 @@
 @inject IGuardService _guardService
 @inject SectorStateContainer sectorStateContainer
 @inject IUserService _userService
+
 @if (IsAssigned(currentGuardId))
 {
     GetCurrentSector(currentGuardId);
-    <h1>Sector: @sector!.Id </h1>
+    <div class="row mt-5 justify-content-center">
+        <div class="d-flex flex-column col-md-3 align-items-center align-self-center">
+            <div class="card p-3">
+                <h3 class="text-center">
+                    Your sector is @sector!.Id
+                </h3>
+                <br/>
+            @if (isWorkingToday)
+            {
+                <h3>
+                    You are working today
+                </h3>
+                <br/>
+            }
+            else
+            {
+                <h3>
+                    Working times:
+                    From: @CurrentWorkShift!.Start!.Value.TimeOfDay.ToString(@"hh\:mm")
+                    To: @CurrentWorkShift.End!.Value.TimeOfDay.ToString(@"hh\:mm")
+                    Days: @CurrentWorkShift.DaysOfWeek
+                </h3>
+                <br/>
+
+            }
+        </div>
+        </div>
+        @if (Colleagues != null && Colleagues.Any())
+        {
+            <div class="d-flex flex-column col-md-6 align-items-center">
+                <div class="card text-center overflow-y-scroll" style="height: 30rem;">
+                    <h5 class="card-header bg-info text-white">Your Colleagues on the shift</h5>
+                    <table class="table table-hover align-middle mb-0 bg-white">
+                    
+                        <thead class=" bg-info sticky-top">
+                        <tr class="text-uppercase text-white">
+                            <th scope="col">First name</th>
+                            <th scope="col">Last name</th>
+                            <th scope="col">Username</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Sector</th>
+                        </tr>
+                        </thead>
+
+                        <tbody>
+                        @foreach (var g in Colleagues)
+                        {
+
+                            <tr>
+
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img
+                                            src="img/officer.jpg"
+                                            class="rounded-circle"
+                                            alt=""
+                                            style="width: 45px; height: 45px"/>
+                                        <div class="ms-3">
+                                            <p class="fw-bold mb-1">@g.FirstName</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@g.LastName</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@g.Username</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@g.Email</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+
+                                            <p class=" mb-1">@sector!.Id</p>
+
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
 }
 else
 {
@@ -29,7 +130,9 @@ else
     public Sector? sector { get; set; }
     private ClaimsPrincipal? user;
     private long currentGuardId;
-
+    private ICollection<Guard>? Colleagues { get; set; }
+    private  WorkShift? CurrentWorkShift { get; set; }
+    private bool isWorkingToday;
     protected override async Task OnInitializedAsync()
     {
         try
@@ -40,10 +143,14 @@ else
             User? u = await _userService.GetUserAsync(userName.Value);
             alertStateContainer.OnChange += ShowModal;
             currentGuardId = u.Id;
+            sector = await _guardService.GetGuardSector(u.Id);
             sectorStateContainer.Property = sector;
+            isWorkingToday =await _guardService.IsGuardWorking(currentGuardId);
+            Colleagues = await _guardService.GetGuardsBySector(sector!.Id);
         }
         catch (Exception e)
         {
+            Console.WriteLine(e.Message);
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
             _modalService.Show<ErrorModal>("Error",paramet);
