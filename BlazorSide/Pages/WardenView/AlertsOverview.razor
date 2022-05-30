@@ -1,20 +1,21 @@
-﻿@using Entities
+﻿@page "/AlertsOverview"
+
+@using Entities
 @using Contracts
-@using StateContainer
 @using BlazorSide.UIComponents
-@page "/AlertsOverview"
-@inject IAlertService _alertService
-@inject NavigationManager navigationManager
-@inject IModalService _modalService
+
+@inject IAlertService AlertService
+@inject IModalService ModalService
+
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="row mt-5">
-    @if (Alerts == null || !Alerts!.Any())
-        {
-            <div class="spinner-border text-info" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        }
+    @if (_alerts == null || !_alerts!.Any())
+    {
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
     else
     {
         <div class="col-md-4">
@@ -22,28 +23,25 @@
                 <h5 class="card-header bg-grey text-warning">Alert</h5>
                 <div class="card-body">
                     <h5 class="card-title ">Broadcast an alert </h5>
-
-                    <textarea @bind="text" class="form-control " type="text" required></textarea>
+                    <textarea @bind="_text" class="form-control " type="text" required></textarea>
                     <label >Duration In Minutes: </label>
-                    <input @bind="duration" class="form-control " type="number" required/>
+                    <input @bind="_duration" class="form-control " type="number" required/>
                     <br/>
                     <label >Send to : </label>
                     <br/>
                     <br/>
-
-
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" @bind="sector1" id="flexCheck1"/>
+                        <input class="form-check-input" type="checkbox" @bind="_sector1" id="flexCheck1"/>
                         <label class="form-check-label" for="flexCheck1">Sector 1</label>
                     </div>
                     <br/>
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" @bind="sector2" id="flexCheck2"/>
+                        <input class="form-check-input" type="checkbox" @bind="_sector2" id="flexCheck2"/>
                         <label class="form-check-label" for="flexCheck2">Sector 2</label>
                     </div>
                     <br/>
                     <div class="form-check">
-                        <input class="form-check-input" type="checkbox" @bind="sector3" id="flexCheck3"/>
+                        <input class="form-check-input" type="checkbox" @bind="_sector3" id="flexCheck3"/>
                         <label class="form-check-label" for="flexCheck3">Sector 3</label>
                     </div>
                     <br/>
@@ -65,7 +63,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    @if (!Alerts.Any())
+                    @if (!_alerts.Any())
                     {
                         <div class="spinner-border text-info" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -73,13 +71,13 @@
                     }
                     else
                     {
-                        @for (int i = Alerts.ToList().Count - 1; i >= 0; i--)
+                        @for (int i = _alerts.ToList().Count - 1; i >= 0; i--)
                         {
-                            Alert? alert = Alerts.ToList()[i];
+                            Alert? alert = _alerts.ToList()[i];
                             <tr>
                                 <td >@alert.DateTime.Day/@alert.DateTime.Month/@alert.DateTime.Year</td>
                                 <td >@alert.DateTime.TimeOfDay.ToString(@"hh\:mm")
-                                    @if (isActive(alert))
+                                    @if (IsActive(alert))
                                     {
                                         <br/>
                                         <span class="badge rounded-pill badge-warning" style="margin-left: 2px">Active</span>
@@ -106,18 +104,15 @@
                     }
                     </tbody>
                 </table>
-                
-               
             </div>
             <br/>
-             <nav>
+            <nav>
                 <ul class="pagination ">
-                    @for (int i = 0; i < noOfPages; i++)
+                    @for (int i = 0; i < _numberOfPages; i++)
                     {
                         int page = i;
-                        @if (selectedPage == page + 1)
+                        @if (_selectedPage == page + 1)
                         {
-
                             <li class="page-item active  ms-3" aria-current="page" style="cursor: pointer;  ">
                                 <a class="page-link" style="background-color:  orange !important;" @onclick=@(() => SelectPage(page + 1))>
                                     @(i + 1)
@@ -143,7 +138,7 @@
                         id="dropdownMenuButton"
                         data-mdb-toggle="dropdown"
                         aria-expanded="false">
-                        Rows/page: @PageSize
+                        Rows/page: @_pageSize
                     </button>
                     <ul class="dropdown-menu   " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
                         <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
@@ -156,81 +151,84 @@
         </div>
     }
 </div>
+
 @code {
-    private Entities.Alert alert = new Entities.Alert();
-    private string? text { get; set; }
-    private ICollection<Entities.Alert>? Alerts { get; set; }
-    private int duration;
-    private bool sector1;
-    private bool sector2;
-    private bool sector3;
-    private int PageSize { get; set; } = 10;
-    private int TotalNumberOfAlerts{ get; set; }
-    private int noOfPages { get; set; }
-    private int selectedPage { get; set; }
+    private Alert _alert = new Alert();
+    private string? _text { get; set; }
+    private ICollection<Alert>? _alerts { get; set; }
+    private int _duration;
+    private bool _sector1;
+    private bool _sector2;
+    private bool _sector3;
+    private int _pageSize { get; set; } = 10;
+    private int _totalNumberOfAlerts{ get; set; }
+    private int _numberOfPages { get; set; }
+    private int _selectedPage { get; set; }
+    
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
-            selectedPage = 1;
-            TotalNumberOfAlerts = Alerts!.Count;
-            if (TotalNumberOfAlerts < 10) noOfPages = 0;
-            else noOfPages = TotalNumberOfAlerts / PageSize +1;
+            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
+            _selectedPage = 1;
+            _totalNumberOfAlerts = _alerts!.Count;
+            if (_totalNumberOfAlerts < 10) _numberOfPages = 0;
+            else _numberOfPages = _totalNumberOfAlerts / _pageSize +1;
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            _modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
-    
-    public async Task SendAlert()
+
+    private async Task SendAlert()
     {
         try
         {
-            if (!sector1 && !sector2 &&!sector3)
+            if (!_sector1 && !_sector2 &&!_sector3)
             {
                 throw new Exception("Please select one or more sectors!");
             }
-            alert.DateTime = DateTime.Now;
-            alert.Text = text;
-            alert.DurationInMinutes = duration*60;
+            _alert.DateTime = DateTime.Now;
+            _alert.Text = _text;
+            _alert.DurationInMinutes = _duration*60;
             bool[] ids = new bool[3];
-            if (sector1) ids[0] = true;
-            if (sector2) ids[1] = true;
-            if (sector3) ids[2] = true;
-            alert.Sectors = ids;
-            String response=await _alertService.SendAlert(alert);
-            Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
+            if (_sector1) ids[0] = true;
+            if (_sector2) ids[1] = true;
+            if (_sector3) ids[2] = true;
+            _alert.Sectors = ids;
+            String response=await AlertService.SendAlert(_alert);
+            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
             await InvokeAsync(StateHasChanged);
             if (response == "success")
             {
                 var parameters = new ModalParameters();
                 parameters.Add(nameof(MessageModal.Message), "Alert sent successfully! ");
                 parameters.Add(nameof(MessageModal.OkButton), "Ok");
-                var modalReference = _modalService.Show<MessageModal>("Alert", parameters);
+                var modalReference = ModalService.Show<MessageModal>("Alert", parameters);
             }
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            _modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
     }
-    public void SeeMore(Alert alert)
+
+    private void SeeMore(Alert alert)
     {
         var parameters = new ModalParameters();
         parameters.Add(nameof(AlertModal.Message),alert.Text);
         parameters.Add(nameof(AlertModal.dateTime),alert.DateTime);
         parameters.Add(nameof(AlertModal.duration),alert.DurationInMinutes);
-        _modalService.Show<AlertModal>("Alert", parameters);
+        ModalService.Show<AlertModal>("Alert", parameters);
     }
 
-    public bool isActive(Alert alert)
+    public bool IsActive(Alert alert)
     {
         double totalSeconds = alert.DurationInMinutes;
         TimeSpan finishTime=TimeSpan.FromSeconds(totalSeconds);
@@ -248,32 +246,32 @@
     {
         try
         {
-            selectedPage = i;
-            Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
+            _selectedPage = i;
+            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            _modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
-    private async Task SetPageSize(int i)
+    private async Task SetPageSize(int pageIndex)
     {
         try
         {
-            PageSize = i;
-            noOfPages = TotalNumberOfAlerts / PageSize + 1;
-            Alerts = await _alertService.GetAlertsAsync(selectedPage, PageSize);
+            _pageSize = pageIndex;
+            _numberOfPages = _totalNumberOfAlerts / _pageSize + 1;
+            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            _modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
     }
 }
