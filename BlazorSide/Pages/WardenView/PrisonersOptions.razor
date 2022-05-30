@@ -1,22 +1,14 @@
 ﻿@page "/PrisonersOptions"
-@using Entities
-@using Contracts
-@using BlazorLoginApp.Authentication
 
-@inject NavigationManager _navMgr
-@inject IAuthService _authService
-@inject IPrisonerService _prisonerService
+@inject NavigationManager NavMgr
 
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <AuthorizeView>
-
     <Authorized>
-       
         <div class="row">
                 <div class="col-md-6 m-0">
                     <div class="card">
-                        
                         <a @onclick="AddPrisoner">
                             <button class="border-0 p-0"><img src="img/more.png" height="100" width="100" style="background-color: white;"/></button>
                         </a>
@@ -36,23 +28,16 @@
                     </div>
                 </div>
             </div>
-        
-        <!--Old table -->
-        
     </Authorized>
 </AuthorizeView>
 
 @code {
-    
-    
-
     private async Task AddPrisoner()
     {
-       _navMgr.NavigateTo($"/AddPrisoner");
+       NavMgr.NavigateTo($"/AddPrisoner");
     }
     private async Task PrisonersOverview()
     {
-        _navMgr.NavigateTo($"/PrisonersOverview");
+        NavMgr.NavigateTo($"/PrisonersOverview");
     }
-
 }
