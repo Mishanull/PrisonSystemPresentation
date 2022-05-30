@@ -211,6 +211,10 @@
         {
             Console.Write(newVisit);
             newVisit.VisitDate =  (DateTime)SelectedDate!;
+            if (SelectedDate <= DateTime.Now)
+            {
+                throw new Exception("Cannot book a date before today, check your input again. ");
+            }
             TimeSpan timeOfVisit =  SelectedTime.Value.TimeOfDay;
             newVisit.VisitDate=newVisit.VisitDate.Add(timeOfVisit);
             await _VisitService.CreateVisitAsync(newVisit);
