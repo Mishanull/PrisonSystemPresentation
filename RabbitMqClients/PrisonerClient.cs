@@ -290,4 +290,9 @@ public class PrisonerClient : IPrisonerService
             throw new Exception($"Failed to add points prisoner n.-{prisonerId}");
         }
     }
+
+    public Task<int[]> GetNumPrisPerSectAsync()
+    {
+        throw new NotImplementedException();
+    }
 }

@@ -205,4 +205,14 @@ public class GuardClient : IGuardService
     {
         throw new NotImplementedException();
     }
+
+    public Task<int> GetNoOfGuardsPerSectToday(long sectorId)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<int[]> GetNoOfGuardsPerSect()
+    {
+        throw new NotImplementedException();
+    }
 }

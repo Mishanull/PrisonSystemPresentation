@@ -172,4 +172,9 @@ public class VisitClient : IVisitService
         })!;
         return visits;
     }
+
+    public Task<int> GetNumOfVisitsToday()
+    {
+        throw new NotImplementedException();
+    }
 }

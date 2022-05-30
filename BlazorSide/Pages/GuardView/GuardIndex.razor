@@ -6,7 +6,6 @@
 @using Entities
 @using Alert = Entities.Alert
 @using System.Security.Claims
-@inject IModalService modalService
 @inject NavigationManager navMgr
 @inject AlertStateContainer alertStateContainer
 @inject IModalService _modalService
@@ -50,7 +49,7 @@
         parameters.Add(nameof(AlertModal.Message),Alert?.Text);
         parameters.Add(nameof(AlertModal.dateTime),Alert?.DateTime);
         parameters.Add(nameof(AlertModal.duration),Alert?.DurationInMinutes);
-        modalService.Show<AlertModal>("Alert", parameters);
+        _modalService.Show<AlertModal>("Alert", parameters);
     }
     
 }

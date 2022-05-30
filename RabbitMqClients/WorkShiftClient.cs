@@ -209,4 +209,31 @@ public class WorkShiftClient : IWorkShiftService
             throw new Exception($"Failed to remove guard n.-{guardId} from workshift n.-{shiftId}");
         }
     }
+
+    public async Task<WorkShift> GetWorkShiftByGuardAsync(long guardId)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "workShift.getByGuardId", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception($"Failed to load workshift from guard n.-{guardId}");
+        }
+        WorkShift w = JsonSerializer.Deserialize<WorkShift>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return w;    
+    }
 }
