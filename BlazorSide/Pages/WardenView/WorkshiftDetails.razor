@@ -1,25 +1,27 @@
 ﻿@page "/WorkshiftDetails/{id:long}"
+
 @using Entities
-@using Syncfusion.Blazor
 @using Contracts
 @using BlazorSide.UIComponents
 @using Syncfusion.Blazor.Lists
 @using System.Linq
-@inject IWorkShiftService _workShiftService
-@inject IModalService _modalService
-@inject IGuardService _guardService
-@inject ISectorService _sectorService
-@inject NavigationManager _navMgr
+
+@inject IWorkShiftService WorkShiftService
+@inject IModalService ModalService
+@inject IGuardService GuardService
+@inject ISectorService SectorService
+@inject NavigationManager NavMgr
+
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
-    <EditForm Model="@editedWorkshift" OnValidSubmit="@EditWorkShift">
+    <EditForm Model="@_editedWorkshift" OnValidSubmit="@EditWorkShift">
         <DataAnnotationsValidator/> 
         <ValidationSummary/>
-        <h3>Edit a workshift n(@editedWorkshift.Id)</h3>
+        <h3>Edit a workshift n(@_editedWorkshift.Id)</h3>
         <br/>
         <label class="text-white">Day of the week:
-            <SfMultiSelect  TItem="string" TValue="string[]" PopupHeight="200px"  @bind-Value="@dayValue" DataSource="DaysOfTheWeek">
+            <SfMultiSelect  TItem="string" TValue="string[]" PopupHeight="200px"  @bind-Value="@_dayValue" DataSource="_daysOfTheWeek">
                 <MultiSelectFieldSettings  Text="Day" Value="Day"/>
             </SfMultiSelect>
         </label> 
@@ -29,18 +31,18 @@
             <br/>
             <div class="col-md-6">
                 <label for="start-time" class="text-white"> Start time:</label>
-                <SfTimePicker ID="start-time" @bind-Value="@StartTime" Step=60 Format="HH:mm"></SfTimePicker>
+                <SfTimePicker ID="start-time" @bind-Value="@_startTime" Step=60 Format="HH:mm"></SfTimePicker>
 
             </div>
             <div class="col-md-6">
                 <label for="end-time" class="text-white">End time: </label>
-                <SfTimePicker ID="end-time" @bind-Value="@EndTime" Step=60 Format="HH:mm"></SfTimePicker>
+                <SfTimePicker ID="end-time" @bind-Value="@_endTime" Step=60 Format="HH:mm"></SfTimePicker>
             </div>
         </div>
         <br/>
         <p></p>
         <label class="text-white">Sector:
-            <SfDropDownList TItem="Sector" TValue="string" PopupHeight="200px"  @bind-Value="@sectorValue"  DataSource="sectors">
+            <SfDropDownList TItem="Sector" TValue="string" PopupHeight="200px"  @bind-Value="@_sectorValue"  DataSource="_sectors">
                 <DropDownListFieldSettings   Text="Id" Value="Id"/>
             </SfDropDownList>
         </label> 
@@ -50,9 +52,7 @@
                     <div class="sample flex">
                         <div class="flex">
                             <div class="padding">
-        
-                                @* <SfTextBox Placeholder="Filter" Input="@(e => OnInput(e, 1))"></SfTextBox> *@
-                                <SfListView DataSource="@currentGuards" ShowHeader="true">
+                                <SfListView DataSource="@_currentGuards" ShowHeader="true">
                                     <ListViewFieldSettings TValue="Guard" Id="Id" Text="FirstName"></ListViewFieldSettings>
                                     <ListViewTemplates TValue="Guard">
                                         <HeaderTemplate>
@@ -63,26 +63,23 @@
                                     </ListViewTemplates>
                                     <ListViewEvents TValue="Guard" Clicked="@(e => OnSelected(e, 1))"></ListViewEvents>
                                 </SfListView>
-        
-        
                             </div>
                             <div class="flex vertical vertical__center flex__center padding">
                                 <div class="padding">
-                                    <button disabled="@(!currentGuards.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(1))">@(">>")</button>
+                                    <button disabled="@(!_currentGuards.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(1))">@(">>")</button>
                                 </div>
                                 <div class="padding">
-                                    <button disabled="@(FirstSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(2))">@(">")</button>
+                                    <button disabled="@(_firstSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(2))">@(">")</button>
                                 </div>
                                 <div class="padding">
-                                    <button disabled="@(SecondSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(3))">@("<")</button>
+                                    <button disabled="@(_secondSelected == null)" type="button" class="e-btn" @onclick="@(e => OnButtonClick(3))">@("<")</button>
                                 </div>
                                 <div class="padding">
-                                    <button disabled="@(!availableGuards.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(4))">@("<<")</button>
+                                    <button disabled="@(!_availableGuards.Any())" type="button" class="e-btn" @onclick="@(e => OnButtonClick(4))">@("<<")</button>
                                 </div>
                             </div>
                             <div class="padding">
-                                @* <SfTextBox Placeholder="Filter" Input="@(e => OnInput(e, 2))"></SfTextBox> *@
-                                <SfListView DataSource="@availableGuards" ShowHeader="true">
+                                <SfListView DataSource="@_availableGuards" ShowHeader="true">
                                     <ListViewFieldSettings Id="Id" Text="FirstName" TValue="Guard"></ListViewFieldSettings>
                                     <ListViewTemplates TValue="Guard">
                                         <HeaderTemplate>
@@ -105,32 +102,30 @@
         </EditForm>
 </div>
 
-@if (!string.IsNullOrEmpty(errorLabel))
+@if (!string.IsNullOrEmpty(_errorLabel))
         {
-            <label style="color: red;">Error: @errorLabel</label>
+            <label style="color: red;">Error: @_errorLabel</label>
         }
 
 @code {
     [Parameter]
     public virtual long? Id { get; set; }
-    public virtual WorkShift editedWorkshift { get; set; }
-    private string errorLabel = String.Empty;
-    private string[] dayValue = {};
-    private ICollection<string> DaysOfTheWeek = new DaysOfTheWeek().Days;
-    private string sectorValue = "fail";
-    private ICollection<Sector> sectors;
-    private DateTime? StartTime { get; set; } 
-    private DateTime? EndTime { get; set; }
-    private List<Guard> currentGuards;
-    private List<Guard> availableGuards;
-    private List<Guard> guardsToClear = new();
-    private Guard FirstSelected { get; set; }
-    private Guard SecondSelected { get; set; }
-    
+    public virtual WorkShift _editedWorkshift { get; set; }
+    private string _errorLabel = String.Empty;
+    private string[] _dayValue = {};
+    private ICollection<string> _daysOfTheWeek = new DaysOfTheWeek().Days;
+    private string _sectorValue = "fail";
+    private ICollection<Sector> _sectors;
+    private DateTime? _startTime { get; set; } 
+    private DateTime? _endTime { get; set; }
+    private List<Guard> _currentGuards;
+    private List<Guard> _availableGuards;
+    private List<Guard> _guardsToClear = new();
+    private Guard _firstSelected { get; set; }
+    private Guard _secondSelected { get; set; }
     
     [CascadingParameter]
-    private IModalService Modal { get; set; }
-    
+    private IModalService _modal { get; set; }
     
     protected override async Task OnParametersSetAsync()
     {
@@ -138,19 +133,19 @@
         {
             try
             {
-                sectors = await _sectorService.GetSectorsAsync();
-                editedWorkshift = await _workShiftService.GetWorkShiftById(Id.Value);
-                sectorValue = editedWorkshift.Sector.Id.ToString();
+                _sectors = await SectorService.GetSectorsAsync();
+                _editedWorkshift = await WorkShiftService.GetWorkShiftById(Id.Value);
+                _sectorValue = _editedWorkshift.Sector.Id.ToString();
             }
             catch (Exception e)
             {
                 var paramet = new ModalParameters();
                 paramet.Add(nameof(ErrorModal.Message),e.Message);
-                _modalService.Show<ErrorModal>("Error",paramet);
+                ModalService.Show<ErrorModal>("Error",paramet);
             }
-            StartTime = editedWorkshift.Start;
-            EndTime = editedWorkshift.End;
-            dayValue = editedWorkshift.DaysOfWeek.Split(", ");
+            _startTime = _editedWorkshift.Start;
+            _endTime = _editedWorkshift.End;
+            _dayValue = _editedWorkshift.DaysOfWeek.Split(", ");
             await FetchGuards(Id);
         }
         await base.OnParametersSetAsync();
@@ -158,29 +153,29 @@
     
     private async Task EditWorkShift()
     {
-        editedWorkshift.Start = StartTime;
-        editedWorkshift.End = EndTime;
-        editedWorkshift.Sector = sectors.First(s => s.Id == Int64.Parse(sectorValue));
-        editedWorkshift.DaysOfWeek = string.Join(", ", dayValue);
-        editedWorkshift.Guards = currentGuards;
+        _editedWorkshift.Start = _startTime;
+        _editedWorkshift.End = _endTime;
+        _editedWorkshift.Sector = _sectors.First(s => s.Id == Int64.Parse(_sectorValue));
+        _editedWorkshift.DaysOfWeek = string.Join(", ", _dayValue);
+        _editedWorkshift.Guards = _currentGuards;
         
         var parameters = new ModalParameters();
         parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to update the workshift?");
-        var modalRef=_modalService.Show<ActionConfirm>("Success",parameters);
+        var modalRef=ModalService.Show<ActionConfirm>("Success",parameters);
         var result = await modalRef.Result;
         try
         {
             if (!result.Cancelled)
             {
                 await ClearGuards();
-                await _workShiftService.UpdateWorkShiftAsync(editedWorkshift);
-                _navMgr.NavigateTo("/WorkShiftsOverview");
+                await WorkShiftService.UpdateWorkShiftAsync(_editedWorkshift);
+                NavMgr.NavigateTo("/WorkShiftsOverview");
             }
         }
         catch (Exception e)
         {
             parameters.Add(nameof(ActionConfirm.Message),e.Message);
-            _modalService.Show<ActionConfirm>("Failure", parameters);
+            ModalService.Show<ActionConfirm>("Failure", parameters);
         }
     }
     
@@ -188,31 +183,31 @@
     {
         var parameters = new ModalParameters();
         parameters.Add(nameof(ActionConfirm.Message), "Are you sure you want to delete the workshift?");
-        var modalRef = _modalService.Show<ActionConfirm>("Delete", parameters);
+        var modalRef = ModalService.Show<ActionConfirm>("Delete", parameters);
         var result = await modalRef.Result;
         if (!result.Cancelled)
         {
             try
             {
-                await _workShiftService.RemoveWorkShiftAsync(editedWorkshift.Id);
-                _navMgr.NavigateTo("/WorkshiftsOverview");
+                await WorkShiftService.RemoveWorkShiftAsync(_editedWorkshift.Id);
+                NavMgr.NavigateTo("/WorkshiftsOverview");
             }
             catch (Exception e)
             {
                 var paramet = new ModalParameters();
                 paramet.Add(nameof(ErrorModal.Message),e.Message);
-                _modalService.Show<ErrorModal>("Error",paramet);
+                ModalService.Show<ErrorModal>("Error",paramet);
             }
         }
     }
     
-    private async Task FetchGuards(long? workshiftID)
+    private async Task FetchGuards(long? workshiftId)
     {
-        WorkShift currentWorkshift = await _workShiftService.GetWorkShiftById(workshiftID);
-        currentGuards = (List<Guard>) currentWorkshift.Guards;
+        WorkShift currentWorkshift = await WorkShiftService.GetWorkShiftById(workshiftId);
+        _currentGuards = (List<Guard>) currentWorkshift.Guards;
         try
         {
-            ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
+            ICollection<WorkShift> tempWorkshifts = await WorkShiftService.GetWorkShifts();
             ICollection<Guard> takenGuards = new List<Guard>();
             foreach (var workShift in tempWorkshifts)
             {
@@ -223,20 +218,20 @@
                 }
             }
 
-            availableGuards = (List<Guard>) await _guardService.GetGuardsAsync(20);
+            _availableGuards = (List<Guard>) await GuardService.GetGuardsAsync(20);
 
             foreach (var takenGuard in takenGuards)
             {
                 try
                 {
-                    if (availableGuards.Contains(availableGuards.Find(g => g.Id == takenGuard.Id))) 
-                        availableGuards.Remove(availableGuards.Find(g => g.Id == takenGuard.Id));
+                    if (_availableGuards.Contains(_availableGuards.Find(g => g.Id == takenGuard.Id))) 
+                        _availableGuards.Remove(_availableGuards.Find(g => g.Id == takenGuard.Id));
                 }
                 catch (Exception e)
                 {
                     var paramet = new ModalParameters();
                     paramet.Add(nameof(ErrorModal.Message),e.Message);
-                    _modalService.Show<ErrorModal>("Error",paramet);
+                    ModalService.Show<ErrorModal>("Error",paramet);
                 }
             }
         }
@@ -244,81 +239,42 @@
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            _modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
     }
-    
-    // private async Task UpdateGuards()
-    // {
-    //     
-    //     try
-    //     {
-    //         ICollection<WorkShift> tempWorkshifts = await _workShiftService.GetWorkShifts();
-    //         ICollection<Guard> takenGuards = new List<Guard>();
-    //         foreach (var workShift in tempWorkshifts)
-    //         {
-    //             if (workShift.Guards != null)
-    //             {
-    //                 foreach (var workShiftGuard in workShift.Guards)
-    //                 {
-    //                     if (workShift.Guards.)
-    //                     {
-    //                         
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         foreach (var takenGuard in takenGuards)
-    //         {
-    //             try
-    //             {
-    //                 if (availableGuards.Contains(availableGuards.Find(g => g.Id == takenGuard.Id))) 
-    //                     availableGuards.Remove(availableGuards.Find(g => g.Id == takenGuard.Id));
-    //             }
-    //             catch (Exception e)
-    //             {
-    //                 errorLabel = e.Message;
-    //             }
-    //         }
-    //     }
-    //     catch (Exception e)
-    //     {
-    //         errorLabel = e.Message;
-    //     }
-    // }
-    
+
     private void OnButtonClick(int buttonIndex)
     {
         switch (buttonIndex)
         {
             case 1:
-                currentGuards.ForEach(e => availableGuards.Add(e));
-                currentGuards.ForEach(e => guardsToClear.Add(e));
-                currentGuards.Clear();
+                _currentGuards.ForEach(e => _availableGuards.Add(e));
+                _currentGuards.ForEach(e => _guardsToClear.Add(e));
+                _currentGuards.Clear();
                 break;
             case 2:
-                if (FirstSelected != null)
+                if (_firstSelected != null)
                 {
-                    availableGuards.Add(FirstSelected);
-                    guardsToClear.Add(FirstSelected);
-                    currentGuards.RemoveAt(currentGuards.FindIndex(e => e.Id == FirstSelected.Id));
-                    FirstSelected = null;
+                    _availableGuards.Add(_firstSelected);
+                    _guardsToClear.Add(_firstSelected);
+                    _currentGuards.RemoveAt(_currentGuards.FindIndex(e => e.Id == _firstSelected.Id));
+                    _firstSelected = null;
                 }
                 break;
             case 3:
-                if (SecondSelected != null)
+                if (_secondSelected != null)
                 {
-                    currentGuards.Add(SecondSelected);
-                    availableGuards.RemoveAt(availableGuards.FindIndex(e => e.Id == SecondSelected.Id));
-                    if(guardsToClear.Any())
-                    guardsToClear.RemoveAt(guardsToClear.FindIndex(e => e.Id == SecondSelected.Id));
-                    SecondSelected = null;
+                    _currentGuards.Add(_secondSelected);
+                    _availableGuards.RemoveAt(_availableGuards.FindIndex(e => e.Id == _secondSelected.Id));
+                    if(_guardsToClear.Any())
+                    _guardsToClear.RemoveAt(_guardsToClear.FindIndex(e => e.Id == _secondSelected.Id));
+                    _secondSelected = null;
                 }
                 break;
             case 4:
-                availableGuards.ForEach(e => currentGuards.Add(e));
-                availableGuards.Clear();
-                guardsToClear.Clear();
+                _availableGuards.ForEach(e => _currentGuards.Add(e));
+                _availableGuards.Clear();
+                _guardsToClear.Clear();
                 break;
             default:
                 break;
@@ -329,36 +285,30 @@
     {
         if (listviewIndex == 1)
         {
-            FirstSelected = eventArgs.ItemData;
+            _firstSelected = eventArgs.ItemData;
         }
         else
         {
-            SecondSelected = eventArgs.ItemData;
+            _secondSelected = eventArgs.ItemData;
         }
     }
 
     private async Task ClearGuards()
     {
-        foreach (var guard in guardsToClear)
+        foreach (var guard in _guardsToClear)
         {
             try
             {
-                await _workShiftService.RemoveGuardFromWorkShift(guard.Id.ToString(), editedWorkshift.Id.ToString());
+                await WorkShiftService.RemoveGuardFromWorkShift(guard.Id.ToString(), _editedWorkshift.Id.ToString());
             }
             catch (Exception e)
             {
-                errorLabel = e.Message;
-                Console.WriteLine($"Failed to remove guard id {guard.Id} from workshift id {editedWorkshift.Id}");
+                _errorLabel = e.Message;
+                Console.WriteLine($"Failed to remove guard id {guard.Id} from workshift id {_editedWorkshift.Id}");
             }
         }
     }
-    
-    
-    
-    // todo fix modal fuckery
-
-    
-
+    // TODO: fix modal issue ???
 }
 
 

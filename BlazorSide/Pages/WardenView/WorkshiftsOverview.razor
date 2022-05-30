@@ -1,16 +1,19 @@
 ﻿@page "/WorkshiftsOverview"
+
 @using Entities
 @using Contracts
 @using BlazorSide.UIComponents
-@inject NavigationManager _navMgr
-@inject IWorkShiftService workShiftService
-@inject IModalService modalService
+
+@inject NavigationManager NavMgr
+@inject IWorkShiftService WorkShiftService
+@inject IModalService ModalService
+
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="row  mt-5 justify-content-center">
 <div class="d-flex flex-row mb-3">
     <div class="p-2">
-        <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select sector" @bind-Value="@currentOption" DataSource="@(Options)">
+        <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select sector" @bind-Value="@_currentOption" DataSource="@(SectorOptions)">
             <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
         </SfDropDownList>
     </div>
@@ -30,12 +33,10 @@
                 <th scope="col">Actions</th>
             </tr>
             </thead>
-
             <tbody>
-            @foreach (var w in workShifts!.Where(IsVisible))
+            @foreach (var w in _workShifts!.Where(IsVisible))
             {
                 <tr>
-
                     <td>
                         <div class="d-flex align-items-center">
                             <div class="ms-3">
@@ -84,9 +85,8 @@
                             </div>
                         </div>
                     </td>
-
                     <td>
-                        <a @onclick="@(() => { _navMgr.NavigateTo("/WorkshiftDetails/" + w.Id); })">
+                        <a @onclick="@(() => { NavMgr.NavigateTo("/WorkshiftDetails/" + w.Id); })">
                             <button
                                 type="button"
                                 class="btn btn-link btn-rounded btn-sm fw-bold"
@@ -100,7 +100,7 @@
             </tbody>
         </table>
     </div>
-    @if (workShifts == null && !workShifts.Any())
+    @if (_workShifts == null && !_workShifts.Any())
     {
         <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -109,33 +109,33 @@
     </div>
 </div>
 
-@if (!string.IsNullOrEmpty(errorLabel))
+@if (!string.IsNullOrEmpty(_errorLabel))
 {
-    <label style="color: red">Error: @errorLabel</label>
+    <label style="color: red">Error: @_errorLabel</label>
 }
 
 @code {
-    private OptionsValues currentOption { get; set; }=OptionsValues.All;
-    private ICollection<WorkShift>? workShifts;
-    private string errorLabel = String.Empty;
+    private OptionsValues _currentOption { get; set; }=OptionsValues.All;
+    private ICollection<WorkShift>? _workShifts;
+    private string _errorLabel = String.Empty;
 
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            workShifts = await workShiftService.GetWorkShifts();
+            _workShifts = await WorkShiftService.GetWorkShifts();
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
         
     }
     
-    public string[] Options = Enum.GetNames(typeof(OptionsValues));
+    public string[] SectorOptions = Enum.GetNames(typeof(OptionsValues));
 
     public enum OptionsValues
     {
@@ -146,15 +146,15 @@
     }
     private void OnDropdownSelected()
     {
-        Console.WriteLine(currentOption);
+        Console.WriteLine(_currentOption);
     }
 
     private bool IsVisible(WorkShift workShift)
     {
-        if (currentOption.ToString().Equals("All"))
+        if (_currentOption.ToString().Equals("All"))
             return true;
  
-        if (currentOption.ToString().Equals("Sector"+workShift.Sector.Id))
+        if (_currentOption.ToString().Equals("Sector"+workShift.Sector.Id))
             return true;
 
         return false;
