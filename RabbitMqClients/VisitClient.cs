@@ -173,8 +173,59 @@ public class VisitClient : IVisitService
         return visits;
     }
 
-    public Task<int> GetNumOfVisitsToday()
+    public async Task<ICollection<Visit>> GetVisitsToday()
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "visit.getNumToday", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to load number of visits");
+        }
+
+        ICollection<Visit>? resp = JsonSerializer.Deserialize<ICollection<Visit>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        return resp;
+    }
+
+    public async Task<ICollection<Visit>> GetVisitsPending()
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "visit.getPending", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to load number of visits");
+        }
+
+        ICollection<Visit>? resp = JsonSerializer.Deserialize<ICollection<Visit>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        return resp;
     }
 }

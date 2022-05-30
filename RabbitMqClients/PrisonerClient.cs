@@ -291,8 +291,58 @@ public class PrisonerClient : IPrisonerService
         }
     }
 
-    public Task<int[]> GetNumPrisPerSectAsync()
+    public async Task<List<int>> GetNumPrisPerSectAsync()
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getNumPerSector", basicProperties: props,
+            body: messageBytes);
+    
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to fetch prisoners number per sector.");
+        }
+        List<int> g = JsonSerializer.Deserialize<List<int>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return g;
+    }
+
+    public async Task<ICollection<Prisoner>> GetPrisonersWithLowBehaviour()
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getLowBehaviour", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to load prisoners");
+        }
+    
+        ICollection<Prisoner> ps = JsonSerializer.Deserialize<ICollection<Prisoner>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return ps;
     }
 }

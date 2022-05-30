@@ -1,8 +1,775 @@
 @page "/"
+@using Contracts
+@using Entities
+@using System.Runtime.InteropServices
+@inject IVisitService _visitService
+@inject IGuardService _guardService
+@inject IPrisonerService _prisonerService
+@inject IAlertService _alertService
+@inject ISectorService _sectorService
+@inject NavigationManager navMgr
+<div class=" row mt-3 justify-content-center">
+    <div class="d-flex flex-column col-md-12 align-items-center">
+        <div class="container-fluid">
+            <div class="card"><!-- Tabs navs -->
+                <ul class="nav nav-tabs nav-fill mb-3" id="ovtabs" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <a
+                      class="nav-link active"
+                      id="all"
+                      data-mdb-toggle="tab"
+                      href="#all-tabs-1"
+                      role="tab"
+                      aria-controls="all-tabs-1"
+                      aria-selected="true"
+                      >Whole Prison</a>
+                  </li>
+                </ul>
+                <!-- Tabs navs -->
+                
+                <!-- Tabs content -->
+                <div class="tab-content" id="all-content">
+                  <div
+                    class="tab-pane fade show active"
+                    id="all-tabs-1"
+                    role="tabpanel"
+                    aria-labelledby="all-tab-1">
+                    <div class="row">
+                      <div class="d-flex flex-column col-md-12">
+        <div class="row">
+          <div class="col-3">
+            <!-- Tab navs -->
+            <div
+              class="nav flex-column nav-pills text-center"
+              id="v-pills-tab"
+              role="tablist"
+              aria-orientation="vertical">
+              <a
+                class="nav-link active"
+                id="v-pills-allprisoners-tab"
+                data-mdb-toggle="pill"
+                href="#v-pills-allprisoners"
+                role="tab"
+                aria-controls="v-pills-allprisoners"
+                aria-selected="true"
+                >Prisoners</a>
+              <a
+                class="nav-link"
+                id="v-pills-allguards-tab"
+                data-mdb-toggle="pill"
+                href="#v-pills-allguards"
+                role="tab"
+                aria-controls="v-pills-allguards"
+                aria-selected="false"
+                >Guards</a>
+              <a
+                class="nav-link"
+                id="v-pills-allvisits-tab"
+                data-mdb-toggle="pill"
+                href="#v-pills-allvisits"
+                role="tab"
+                aria-controls="v-pills-allvisits"
+                aria-selected="false">Visits</a>
+              <a
+              class="nav-link"
+              id="v-pills-allalerts-tab"
+              data-mdb-toggle="pill"
+              href="#v-pills-allalerts"
+              role="tab"
+              aria-controls="v-pills-allalerts"
+              aria-selected="false">Alerts</a>
+            </div>
+            <!-- Tab navs -->
+          </div>
+        
+          <div class="col-9">
+            <!-- Tab content -->
+            <div class="tab-content" id="v-pills-tabContent">
+              <div
+                class="tab-pane fade show active"
+                id="v-pills-allprisoners"
+                role="tabpanel"
+                aria-labelledby="v-pills-allprisoners-tab">
+              <div class="accordion accordion-flush" id="accordionFlushPrisonersAll">
+                                <div class="accordion-item">
+                                  <h2 class="accordion-header" id="flush-headingOnePrisonersAll">
+                                    <button
+                                      class="accordion-button collapsed"
+                                      type="button"
+                                      data-mdb-toggle="collapse"
+                                      data-mdb-target="#flush-collapseOnePrisonersAll"
+                                      aria-expanded="false"
+                                      aria-controls="flush-collapseOnePrisonersAll"
+                                      @onclick="LoadPrisonerMetricsAll">
+                                      Prisoner Metrics
+                                    </button>
+                                  </h2>
+                                  <div
+                                    id="flush-collapseOnePrisonersAll"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="flush-headingOnePrisonersAll"
+                                    data-mdb-parent="#accordionFlushPrisonersAll">
+                                    <div class="accordion-body">
+                                      <h4 class="text-start">
+                                        Prisoner Count Overall: <span class="bg-info p-2 my-1 text-black">@prisonerCount</span>
+                                      </h4>
+                                      <br/>
+                                      
+                                      <h4 class="text-start">Prisoners in Sector 1:  <span class="bg-info p-2 my-1 text-black"> @prisonerSectorCount[0]</span></h4>
+                                      <br/>
+                                      <h4 class="text-start">Prisoners in Sector 2: <span class="bg-info p-2 my-1 text-black"> @prisonerSectorCount[1]</span></h4>
+                                      <br/>
+                                      <h4 class="text-start">Prisoners in Sector 3: <span class="bg-info p-2 my-1 text-black">@prisonerSectorCount[2]</span></h4>
+                                      <br/>
+                                      @if (LowBehaviourPrisoners != null && LowBehaviourPrisoners.Any())
+                                      {
+                                        <h4 class="text-start">Prisoners with a Low Behavioural Score (less than 5) : @LowBehaviourPrisoners!.Count </h4>
+                                        <table class="table table-hover align-middle mb-0 bg-white">
+                                          <thead class="bg-info sticky-top">
+                                          <tr class="text-uppercase text-white">
+                                              <th scope="col">First name</th>
+                                              <th scope="col">Last name</th>
+                                              <th scope="col">Ssn</th>
+                                              <th scope="col">Crime commited</th>
+                                              <th scope="col">Sector</th>
+                                              <th scope="col">Status</th>
+                                          </tr>
+                                          </thead>
 
-@code{
+                                          <tbody>
+                                          @foreach (var p in LowBehaviourPrisoners)
+                                          {
+                                              <tr>
 
-    
+                                                  <td>
+                                                      <div class="d-flex align-items-center">
+                                                          <img
+                                                              src="img/download.png"
+                                                              class="rounded-circle"
+                                                              alt=""
+                                                              style="width: 45px; height: 45px"/>
+                                                          <br/>
+                                                          <div class="ms-3">
+                                                              <p class="fw-bold mb-1">@p.FirstName</p>
+                                                          </div>
+                                                      </div>
+                                                  </td>
+                                                  <td>
+                                                      <div class="d-flex align-items-center">
+                                                          <div class="ms-3">
+                                                              <p class=" mb-1">@p.LastName</p>
+                                                          </div>
+                                                      </div>
+                                                  </td>
+                                                  <td>
+                                                      <div class="d-flex align-items-center">
+                                                          <div class="ms-3">
+                                                              <p class=" mb-1">@p.Ssn</p>
+                                                          </div>
+                                                      </div>
+                                                  </td>
+                                                  <td>
+                                                      <div class="d-flex align-items-center">
+                                                          <div class="ms-3">
+                                                              <p class=" mb-1">@p.CrimeCommitted</p>
+                                                          </div>
+                                                      </div>
+                                                  </td>
+                                                  <td>
+                                                      <div class="d-flex align-items-center">
+                                                          <div class="ms-3">
+                                                              <p class=" mb-1">@p.Sector?.Id</p>
+                                                          </div>
+                                                      </div>
+                                                  </td>
+                                                  <td>
+                                                      <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
+                                                  </td>
+                                              </tr>
+                                          }
+                                          </tbody>
+                                      </table>                                                                                                            
+                                      }
+                                      else
+                                      {
+                                        <h4 class="text-start"></h4>
+                                      }
+                                      <br/>
+                                      <button class="btn-info" @onclick=@(() => navMgr.NavigateTo("PrisonersOverview"))> Go to Prisoners Overview</button>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="accordion-item">
+                                  <h2 class="accordion-header" id="flush-headingTwoPrisonersAll">
+                                    <button
+                                      class="accordion-button collapsed"
+                                      type="button"
+                                      data-mdb-toggle="collapse"
+                                      data-mdb-target="#flush-collapseTwoPrisonersAll"
+                                      aria-expanded="false"
+                                      aria-controls="flush-collapseTwoPrisonersAll">
+                                      Prisoners over time
+                                    </button>
+                                  </h2>
+                                  <div
+                                    id="flush-collapseTwoPrisonersAll"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="flush-headingTwoPrisonersAll"
+                                    data-mdb-parent="#accordionFlushPrisonersAll">
+                                    <div class="accordion-body">
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="accordion-item">
+                                  <h2 class="accordion-header" id="flush-headingThreePrisonersAll">
+                                    <button
+                                      class="accordion-button collapsed"
+                                      type="button"
+                                      data-mdb-toggle="collapse"
+                                      data-mdb-target="#flush-collapseThreePrisonersAll"
+                                      aria-expanded="false"
+                                      aria-controls="flush-collapseThreePrisonersAll"
+                                      @onclick="LoadPrisonOccupancy">
+                                     Prison Capacity Status
+                                    </button>
+                                  </h2>
+                                  <div
+                                    id="flush-collapseThreePrisonersAll"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="flush-headingThreePrisonersAll"
+                                    data-mdb-parent="#accordionFlushPrisonersAll">
+                                    <div class="accordion-body">
+                                      <table class="table align-middle bg-white" style="position:relative; width: 55%;" >
+                                        <thead class="bg-info ">
+                                        <tr class="text-uppercase text-white ">
+                                          <th scope="col"></th>
+                                          <th scope="col">Whole Prison</th>
+                                          <th scope="col">Sector 1</th>
+                                          <th scope="col">Sector 2</th>
+                                          <th scope="col">Sector 3</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr>
+                                          <th scope="row">Occupancy Rate</th>
+                                          <td>
+                                            <SfProgressBar Type="ProgressType.Linear" Value="@totalOccupancyRate" Height="60" Width="90%" 
+                                                           ShowProgressValue="true"  TrackThickness="24" CornerRadius="CornerType.Round"
+                                                           ProgressThickness="24" Minimum="0" Maximum="100">
+                                            </SfProgressBar>
+                                            
+                                          </td>
+                                          <td><SfProgressBar Type="ProgressType.Linear" Value="@sector1OccupancyRate" Height="60" Width="90%" 
+                                                             ShowProgressValue="true"  TrackThickness="24" CornerRadius="CornerType.Round"
+                                                             ProgressThickness="24" Minimum="0" Maximum="100">
+                                              </SfProgressBar></td>
+                                          <td><SfProgressBar Type="ProgressType.Linear" Value="@sector2OccupancyRate" Height="60" Width="90%" 
+                                                             ShowProgressValue="true"  TrackThickness="24" CornerRadius="CornerType.Round"
+                                                             ProgressThickness="24" Minimum="0" Maximum="100">
+                                              </SfProgressBar></td>
+                                          <td><SfProgressBar Type="ProgressType.Linear" Value="@sector3OccupancyRate" Height="60" Width="90%" 
+                                                         ShowProgressValue="true"  TrackThickness="24" CornerRadius="CornerType.Round"
+                                                         ProgressThickness="24" Minimum="0" Maximum="100">
+                                          </SfProgressBar></td>
+                                        </tr>
+                                        <tr>
+                                          <th scope="row">Occupied Cells</th>
+                                          <td>@(sector1!.OccupiedCells+sector2!.OccupiedCells+sector3!.OccupiedCells)</td>
+                                          <td>@sector1!.OccupiedCells</td>
+                                          <td>@sector2!.OccupiedCells</td>
+                                          <td>@sector3!.OccupiedCells</td>
+                                        </tr>
+                                        <tr>
+                                          <th scope="row">Free Cells</th>
+                                          <td>@(sector1!.FreeCells+sector2!.FreeCells+sector3!.FreeCells)</td>
+                                          <td>@sector1!.FreeCells</td>
+                                          <td>@sector2!.FreeCells</td>
+                                          <td>@sector3!.FreeCells</td>
+                                        </tr>
+                                        <tr>
+                                          <th scope="row">Total</th>
+                                          <td>@(sector1!.Capacity+sector2!.Capacity+sector3!.Capacity)</td>
+                                          <td>@sector1!.Capacity</td>
+                                          <td>@sector2!.Capacity</td>
+                                          <td>@sector3!.Capacity</td>
+                                        </tr>
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div
+                              class="tab-pane fade"
+                              id="v-pills-allguards"
+                              role="tabpanel"
+                              aria-labelledby="v-pills-allguards-tab">
+                              <div class="accordion accordion-flush" id="accordionFlushAllGuards">
+                                <div class="accordion-item">
+                                  <h2 class="accordion-header" id="flush-headingOneAllGuards">
+                                    <button
+                                      class="accordion-button collapsed"
+                                      type="button"
+                                      data-mdb-toggle="collapse"
+                                      data-mdb-target="#flush-collapseOneAllGuards"
+                                      aria-expanded="false"
+                                      aria-controls="flush-collapseOneAllGuards"
+                                      @onclick="LoadGuardDataAll">
+                                      Guard Metrics
+                                    </button>
+                                  </h2>
+                                  <div
+                                    id="flush-collapseOneAllGuards"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="flush-headingOneAllGuards"
+                                    data-mdb-parent="#accordionFlushAllGuards"
+                                  >
+                                    <div class="accordion-body">
+                                      <h4 class="text-start">Total Number of Guards in the Whole Prison:  <span class="bg-info p-2 my-1 text-black">@(guardsPerSector.Sum())</span></h4>
+                                      <br/>
+                                      <h4 class="text-start">Total Number of Guards in Sector 1: <span class="bg-info p-2 my-1 text-black"> @guardsPerSector[0]</span></h4>
+                                      <br/>
+                                      <h4 class="text-start">Total Number of Guards in Sector 2: <span class="bg-info p-2 my-1 text-black"> @guardsPerSector[1]</span></h4>
+                                      <br/>
+                                      <h4 class="text-start">Total Number of Guards in Sector 3: <span class="bg-info p-2 my-1 text-black">@guardsPerSector[2]</span></h4>
+                                      <br/>
+                                      <button class="btn btn-info" @onclick=@(() => navMgr.NavigateTo("GuardsOverview"))> Go to Guards Overview</button>
 
-}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div class="accordion-item">
+                                  <h2 class="accordion-header" id="flush-headingTwoGuardsToday">
+                                    <button
+                                      class="accordion-button collapsed"
+                                      type="button"
+                                      data-mdb-toggle="collapse"
+                                      data-mdb-target="#flush-collapseTwoGuardsToday"
+                                      aria-expanded="false"
+                                      aria-controls="flush-collapseTwoGuardsToday"
+                                      @onclick="LoadGuardsTodayData"
+                                    >
+                                      Working Today
+                                    </button>
+                                  </h2>
+                                  <div
+                                    id="flush-collapseTwoGuardsToday"
+                                    class="accordion-collapse collapse"
+                                    aria-labelledby="flush-headingTwoGuardsToday"
+                                    data-mdb-parent="#accordionFlushAllGuards"
+                                  >
+                                    <div class="accordion-body">
+                                      <div class="accordion-body">
+                                        <h4 class="text-start"> Guards Working Today in the Whole Prison:  <span class="bg-info p-2 my-1 text-black">@(guardsPerSectorToday.Sum())</span></h4>
+                                        <br/>
+                                        <h4 class="text-start">Guards Working Today of Guards in Sector 1: <span class="bg-info p-2 my-1 text-black"> @guardsPerSectorToday[0]</span></h4>
+                                        <br/>
+                                        <h4 class="text-start">Guards Working Today in Sector 2: <span class="bg-info p-2 my-1 text-black"> @guardsPerSectorToday[1]</span></h4>
+                                        <br/>
+                                        <h4 class="text-start">Guards Working Today in Sector 3: <span class="bg-info p-2 my-1 text-black">@guardsPerSectorToday[2]</span></h4>
+                                        <br/>
+                                        @if (GuardsWorkingToday != null && GuardsWorkingToday.Any())
+                                        {
+                                          <table class="table table-hover align-middle mb-0 bg-white">
+
+                                            <thead class=" bg-info sticky-top">
+                                            <tr class="text-uppercase text-white">
+                                              <th scope="col">First name</th>
+                                              <th scope="col">Last name</th>
+                                              <th scope="col">Username</th>
+                                              <th scope="col">Email</th>
+                                              <th scope="col">Sector</th>
+                                            </tr>
+                                            </thead>
+
+                                            <tbody>
+                                            @foreach (var g in GuardsWorkingToday)
+                                            {
+                                              if (IsWorking(g.Id))
+                                              {
+                                                <tr>
+
+                                                  <td>
+                                                    <div class="d-flex align-items-center">
+                                                      <img
+                                                        src="img/officer.jpg"
+                                                        class="rounded-circle"
+                                                        alt=""
+                                                        style="width: 45px; height: 45px"/>
+                                                      <div class="ms-3">
+                                                        <p class="fw-bold mb-1">@g.FirstName</p>
+                                                      </div>
+                                                    </div>
+                                                  </td>
+                                                  <td>
+                                                    <div class="d-flex align-items-center">
+                                                      <div class="ms-3">
+                                                        <p class=" mb-1">@g.LastName</p>
+                                                      </div>
+                                                    </div>
+                                                  </td>
+                                                  <td>
+                                                    <div class="d-flex align-items-center">
+                                                      <div class="ms-3">
+                                                        <p class=" mb-1">@g.Username</p>
+                                                      </div>
+                                                    </div>
+                                                  </td>
+                                                  <td>
+                                                    <div class="d-flex align-items-center">
+                                                      <div class="ms-3">
+                                                        <p class=" mb-1">@g.Email</p>
+                                                      </div>
+                                                    </div>
+                                                  </td>
+                                                  <td>
+                                                    <div class="d-flex align-items-center">
+                                                      <div class="ms-3">
+
+                                                        <p class=" mb-1">@GetSector(g.Id)</p>
+
+                                                      </div>
+                                                    </div>
+                                                  </td>
+                                                </tr>
+                                              }
+                                            }
+                                            </tbody>
+                                          </table>
+                                        }
+                                        <br/>
+                                        <!-- table with working guards -->
+                                        <br/>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                        <div
+                          class="tab-pane fade"
+                          id="v-pills-allvisits"
+                          role="tabpanel"
+                          aria-labelledby="v-pills-allvisits-tab">
+                          <div class="accordion accordion-flush" id="accordionFlushVisits">
+                            <div class="accordion-item">
+                              <h2 class="accordion-header" id="flush-headingOneVisits">
+                                <button
+                                  class="accordion-button collapsed"
+                                  type="button"
+                                  data-mdb-toggle="collapse"
+                                  data-mdb-target="#flush-collapseOneVisits"
+                                  aria-expanded="false"
+                                  aria-controls="flush-collapseOneVisits"
+                                  @onclick="LoadVisitsToday">
+                                  Visits Today
+                                </button>
+                              </h2>
+                              <div
+                                id="flush-collapseOneVisits"
+                                class="accordion-collapse collapse"
+                                aria-labelledby="flush-headingOneVisits"
+                                data-mdb-parent="#accordionFlushVisits"
+                              >
+                                <div class="accordion-body">
+                                  @if(visitsToday!=null && visitsToday.Any()){
+                                  <table class="table table-hover  align-middle bg-white " style="position: relative; ">
+                                    <thead class="bg-info ">
+                                    <tr class="text-uppercase text-white ">
+                                      <th scope="col">Visitor Name </th>
+                                      <th scope="col">Date</th>
+                                      <th scope="col">Time</th>
+                                      <th scope="col">Status</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    @foreach (var visit in visitsToday)
+                                    {
+
+                                      <tr >
+                                        <td >@visit.FirstName @visit.LastName
+                                        </td>
+                                        <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
+                                        <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+                                        <td>
+                                          @switch (visit.Status)
+                                          {
+                                            case Status.Approved:
+                                              <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
+                                              break;
+                                            case Status.Denied:
+                                              <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
+                                              break;
+                                            case Status.Waiting:
+                                              <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                              break;
+                                            case Status.Fulfilled:
+                                              <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
+                                              break;
+                                          }
+                                        </td>
+                                      </tr>
+
+                                    }
+                                    </tbody>
+                                  </table>
+                                  }
+                                  else
+                                  {
+                                    <h4>No visits booked for today.</h4>
+                                  }
+                                  <button class="btn btn-info" @onclick=@(() => navMgr.NavigateTo("Visits"))> Go to Visits Overview</button>
+
+                                </div>
+                              </div>
+                            </div>
+                            <div class="accordion-item">
+                              <h2 class="accordion-header" id="flush-headingTwoVisits">
+                                <button
+                                  class="accordion-button collapsed"
+                                  type="button"
+                                  data-mdb-toggle="collapse"
+                                  data-mdb-target="#flush-collapseTwoVisits"
+                                  aria-expanded="false"
+                                  aria-controls="flush-collapseTwoVisits"
+                                  @onclick="LoadVisitsPending"
+                                >
+                                  Visits Pending
+                                </button>
+                              </h2>
+                              <div
+                                id="flush-collapseTwoVisits"
+                                class="accordion-collapse collapse"
+                                aria-labelledby="flush-headingTwoVisits"
+                                data-mdb-parent="#accordionFlushVisits"
+                              >
+                                <div class="accordion-body">
+                                  @if(visitsPending!=null && visitsPending.Any()){
+                                    <table class="table table-hover  align-middle bg-white " style="position: relative; ">
+                                      <thead class="bg-info ">
+                                      <tr class="text-uppercase text-white ">
+                                        <th scope="col">Visitor Name </th>
+                                        <th scope="col">Date</th>
+                                        <th scope="col">Time</th>
+                                        <th scope="col">Status</th>
+                                      </tr>
+                                      </thead>
+                                      <tbody>
+
+                                      @foreach (var visit in visitsPending)
+                                      {
+
+                                        <tr >
+                                          <td >@visit.FirstName @visit.LastName
+                                          </td>
+                                          <td >@visit.VisitDate.Day/@visit.VisitDate.Month/@visit.VisitDate.Year</td>
+                                          <td >@visit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</td>
+                                          <td>
+                                            @switch (visit.Status)
+                                            {
+                                              case Status.Approved:
+                                                <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                              case Status.Denied:
+                                                <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                              case Status.Waiting:
+                                                <span class="badge rounded-pill badge-warning" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                              case Status.Fulfilled:
+                                                <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
+                                                break;
+                                            }
+                                          </td>
+                                        </tr>
+
+                                      }
+                                      </tbody>
+                                    </table>
+                                  }
+                                  else
+                                  {
+                                    <h4>No visits pending.</h4>
+                                  }
+                                  <button class="btn btn-info" @onclick=@(() => navMgr.NavigateTo("VisitsOverview"))> Go to Visits Overview</button>
+
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      <div
+                        class="tab-pane fade"
+                        id="v-pills-allalerts"
+                        role="tabpanel"
+                        aria-labelledby="v-pills-allalerts-tab">
+                       <div class="accordion accordion-flush" id="accordionFlushAlert">
+                         <div class="accordion-item">
+                           <h2 class="accordion-header" id="flush-headingOneAlert">
+                             <button
+                               class="accordion-button collapsed"
+                               type="button"
+                               data-mdb-toggle="collapse"
+                               data-mdb-target="#flush-collapseOneAlert"
+                               aria-expanded="false"
+                               aria-controls="flush-collapseOneAlert"
+                               @onclick="LoadAlertsToday"
+                             >
+                               Alerts Issued Today
+                             </button>
+                           </h2>
+                           <div
+                             id="flush-collapseOneAlert"
+                             class="accordion-collapse collapse"
+                             aria-labelledby="flush-headingOneAlert"
+                             data-mdb-parent="#accordionFlushAlert"
+                           >
+                             <div class="accordion-body">
+                               @if (alertsToday != null && alertsToday.Any())
+                               {
+                                 <table class="table table-hover  align-middle bg-white " style="position: relative; ">
+                               <thead class="bg-info ">
+                               <tr class="text-uppercase text-white ">
+                                 <th scope="col">Date </th>
+                                 <th scope="col">Time</th>
+                                 <th scope="col">Sector</th>
+                                 <th scope="col">Duration (minutes)</th>
+                               </tr>
+                               </thead>
+                               <tbody>
+                               @foreach (var alert in alertsToday)
+                               {
+                                 <tr>
+                                   <td>@alert.DateTime.Day/@alert.DateTime.Month/@alert.DateTime.Year</td>
+                                   <td>@alert.DateTime.TimeOfDay.ToString(@"hh\:mm")</td>
+                                   <td>
+                                     @if (alert.Sectors[0])
+                                     {
+                                       <span> 1 </span>
+                                     }
+                                     @if (alert.Sectors[1])
+                                     {
+                                       <span> 2 </span>
+                                     }
+                                     @if (alert.Sectors[2])
+                                     {
+                                       <span> 3 </span>
+                                     }
+                                   </td>
+                                   <td>@alert.DurationInMinutes</td>
+                                 </tr>
+                               }
+                               </tbody>
+                               </table>
+                               }
+                               <button class="btn btn-info" @onclick=@(() => navMgr.NavigateTo("AlertsOverview"))> Go to Alerts Overview</button>
+
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                      </div>
+                          </div>
+                          <!-- Tab content -->
+                        </div>
+                      </div>                        
+                      </div>
+                    </div>
+                  </div>
+                
+                </div>
+                <!-- Tabs content -->
+                </div>
+        </div>
+    </div>
+</div>
+          
+
+     @code{
+         private int[] guardsPerSectorToday = new int[3];
+         private int[] guardsPerSector=new int[3];
+         private int prisonerCount;
+         private ICollection<Prisoner>? LowBehaviourPrisoners { get; set; }
+         private int[] prisonerSectorCount=new int[]{0,0,0};
+         private ICollection<Alert>? alertsToday;
+         private ICollection<Visit>? visitsToday;
+         private ICollection<Visit>? visitsPending;
+         private Sector? sector1=new();
+         private Sector? sector2=new();
+         private Sector? sector3=new();
+         private double totalOccupancyRate;
+         private double sector1OccupancyRate;
+         private double sector2OccupancyRate;
+         private double sector3OccupancyRate;
+       private ICollection<Guard>? GuardsWorkingToday { get; set; }
+       protected override async Task OnInitializedAsync()
+         {
+         
+             alertsToday = await _alertService.GetAlertsToday();
+             List<int> num2 = await _guardService.GetNoOfGuardsPerSect();
+             num2.ForEach(i=>Console.WriteLine(i));
+            
+         }
+
+       private async Task LoadPrisonerMetricsAll()
+       {
+         prisonerSectorCount = (await _prisonerService.GetNumPrisPerSectAsync()).ToArray();
+         prisonerCount = prisonerSectorCount.Sum();
+         LowBehaviourPrisoners = await _prisonerService.GetPrisonersWithLowBehaviour();
+       }
+
+       private async Task LoadPrisonOccupancy()
+       {
+         ICollection<Sector> sectors = await _sectorService.GetSectorsAsync();
+         sector1 = sectors.First(s => s.Id == 1);
+         sector2 = sectors.First(s => s.Id == 2);
+         sector3 = sectors.First(s => s.Id == 3);
+         sector1OccupancyRate = ((double)sector1.OccupiedCells / (double)sector1.Capacity) * 100d;
+         sector2OccupancyRate =((double)sector2.OccupiedCells / (double)sector2.Capacity) * 100d;
+         sector3OccupancyRate =((double)sector3.OccupiedCells / (double)sector3.Capacity) * 100d;
+         totalOccupancyRate = (sector1OccupancyRate + sector2OccupancyRate + sector3OccupancyRate) / 3;
+       }
+
+       private async  Task LoadGuardDataAll()
+       {
+         guardsPerSector = (await _guardService.GetNoOfGuardsPerSect()).ToArray();
+         
+
+       }
+
+       private async Task LoadGuardsTodayData()
+       {
+         guardsPerSectorToday = (await _guardService.GetNoOfGuardsPerSectToday()).ToArray();
+         GuardsWorkingToday = await _guardService.GetGuardsAsync(20);
+       }
+
+       private async Task LoadVisitsToday()
+       {
+         visitsToday = await _visitService.GetVisitsToday();
+       }
+       private async Task LoadVisitsPending()
+       {
+         visitsPending = await _visitService.GetVisitsPending();
+         
+       }
+
+       private async Task LoadAlertsToday()
+       {
+         alertsToday = await _alertService.GetAlertsToday();
+       }
+      
+
+       private bool IsWorking(long guardId)
+       {
+         bool result = _guardService.IsGuardWorking(guardId).Result;
+         return result;
+       }
+       private long GetSector(long gId)
+       {
+         Sector sector=   _guardService.GetGuardSector(gId).Result;
+         return sector.Id;
+       }
+     }
 

@@ -13,5 +13,6 @@ public interface IPrisonerService
     public Task<int> GetPrisonerCount();
     public Task<ICollection<Prisoner>?> GetPrisonersBySectorAsync(int selectedPage, int pageSize, int sectorId);
     public Task AddPointsToPrisonerAsync(long prisonerId, int points);
-    public Task<int[]> GetNumPrisPerSectAsync();
+    public Task<List<int>> GetNumPrisPerSectAsync();
+    public Task<ICollection<Prisoner>> GetPrisonersWithLowBehaviour();
 }

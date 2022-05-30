@@ -12,7 +12,15 @@
 @inject IGuardService _guardService
 @inject SectorStateContainer sectorStateContainer
 @inject IUserService _userService
-<h1>Sector: @sector!.Id </h1>
+@if (IsAssigned(currentGuardId))
+{
+    GetCurrentSector(currentGuardId);
+    <h1>Sector: @sector!.Id </h1>
+}
+else
+{
+    <h1>You are not assigned to any sector. Refer to the warden.</h1>
+}
 @code {
     [CascadingParameter]
     public Task<AuthenticationState> AuthState { get; set; }
@@ -20,6 +28,7 @@
     public string text { get; set; }
     public Sector? sector { get; set; }
     private ClaimsPrincipal? user;
+    private long currentGuardId;
 
     protected override async Task OnInitializedAsync()
     {
@@ -30,7 +39,7 @@
             Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
             User? u = await _userService.GetUserAsync(userName.Value);
             alertStateContainer.OnChange += ShowModal;
-            sector = await _guardService.GetGuardSectorAsync(u.Id);
+            currentGuardId = u.Id;
             sectorStateContainer.Property = sector;
         }
         catch (Exception e)
@@ -50,6 +59,16 @@
         parameters.Add(nameof(AlertModal.dateTime),Alert?.DateTime);
         parameters.Add(nameof(AlertModal.duration),Alert?.DurationInMinutes);
         _modalService.Show<AlertModal>("Alert", parameters);
+    }
+
+    public bool IsAssigned(long guardId)
+    {
+        return _guardService.IsGuardAssigned(guardId).Result;
+    }
+
+    public void GetCurrentSector(long guardId)
+    {
+        sector= _guardService.GetGuardSector( guardId).Result;
     }
     
 }
