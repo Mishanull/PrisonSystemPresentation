@@ -10,5 +10,4 @@ public class Visit
     public string LastName { get; set; }
     public string Email { get; set; }
     public int PrisonerSsn { get; set; }
-
 }
