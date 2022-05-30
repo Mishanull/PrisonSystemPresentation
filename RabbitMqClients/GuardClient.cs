@@ -201,18 +201,137 @@ public class GuardClient : IGuardService
         return sector!;
     }
 
-    public Task<ICollection<Guard>> GetGuardsBySector(long sectorId)
+    public async Task<ICollection<Guard>> GetGuardsBySector(long sectorId)
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes(sectorId.ToString());
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getPerSectorToday", basicProperties: props,
+            body: messageBytes);
+    
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to fetch guards.");
+        }
+        ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return g;
     }
 
-    public Task<int> GetNoOfGuardsPerSectToday(long sectorId)
+    public async Task<List<int>> GetNoOfGuardsPerSectToday()
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getNumPerSectorToday", basicProperties: props,
+            body: messageBytes);
+    
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to fetch guards.");
+        }
+        List<int> g = JsonSerializer.Deserialize<List<int>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return g;
     }
 
-    public Task<int[]> GetNoOfGuardsPerSect()
+    public async Task<List<int>> GetNoOfGuardsPerSect()
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getNumPerSector", basicProperties: props,
+            body: messageBytes);
+    
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to fetch guards.");
+        }
+        List<int> g = JsonSerializer.Deserialize<List<int>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return g;
+    }
+
+    public async Task<bool> IsGuardAssigned(long guardId)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.isAssigned", basicProperties: props,
+            body: messageBytes);
+    
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to fetch guards.");
+        }
+        
+        return bool.Parse(response);
+    }
+
+    public async Task<bool> IsGuardWorking(long guardId)
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.isWorking", basicProperties: props,
+            body: messageBytes);
+    
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to get if guard is working today.");
+        }
+
+        return bool.Parse(response);
     }
 }

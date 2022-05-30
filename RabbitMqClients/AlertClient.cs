@@ -96,8 +96,30 @@ public class AlertClient : IAlertService
         return alerts;
     }
 
-    public Task<ICollection<Alert>> GetAlertsToday()
+    public async Task<ICollection<Alert>> GetAlertsToday()
     {
-        throw new NotImplementedException();
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        
+        props.CorrelationId = correlationId;
+        props.ReplyTo = replyQueueName;
+        
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        callbackMapper.TryAdd(correlationId, tcs);                
+        channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.getNum", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        if (response.Equals("fail") || response==null)
+        {
+            throw new Exception("Failed to load alerts");
+        }
+    
+        ICollection<Alert> alerts = JsonSerializer.Deserialize<ICollection<Alert>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return alerts;
     }
 }

@@ -23,88 +23,111 @@
     </div>
 </div>
 <div class="d-flex flex-row container mt-5 justify-content-center">
+@if (guards == null && !guards!.Any())
+    {
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    }
+else
+{
     @if (currentOption == OptionsValues.Table)
     {
         <div class="d-flex flex-column col-md-7 align-items-center">
-            <div class="card text-center overflow-y-scroll" style="height: 30rem;"><h5 class="card-header bg-info text-white" >Guards Overview</h5>
-            <table class="table table-hover align-middle mb-0 bg-white">
+            <div class="card text-center overflow-y-scroll" style="height: 30rem;"><h5 class="card-header bg-info text-white">Guards Overview</h5>
+                <table class="table table-hover align-middle mb-0 bg-white">
 
-                <thead class=" bg-info sticky-top">
-                <tr class="text-uppercase text-white">
-                    <th scope="col">First name</th>
-                    <th scope="col">Last name</th>
-                    <th scope="col">Username</th>
-                    <th scope="col">Email</th>
-                    <th scope="col">Sector</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Actions</th>
-                </tr>
-                </thead>
+                    <thead class=" bg-info sticky-top">
+                    <tr class="text-uppercase text-white">
+                        <th scope="col">First name</th>
+                        <th scope="col">Last name</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Sector</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                    </thead>
 
                     <tbody>
                     @foreach (var g in guards.Where(IsVisible))
                     {
                         <tr>
 
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <img
-                                    src="img/officer.jpg"
-                                    class="rounded-circle"
-                                    alt=""
-                                    style="width: 45px; height: 45px"/>
-                                <div class="ms-3">
-                                    <p class="fw-bold mb-1">@g.FirstName</p>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img
+                                        src="img/officer.jpg"
+                                        class="rounded-circle"
+                                        alt=""
+                                        style="width: 45px; height: 45px"/>
+                                    <div class="ms-3">
+                                        <p class="fw-bold mb-1">@g.FirstName</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">@g.LastName</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@g.LastName</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">@g.Username</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@g.Username</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">@g.Email</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        <p class=" mb-1">@g.Email</p>
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="ms-3">
-                                    <p class=" mb-1">@GetSector(g.Id)</p>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="ms-3">
+                                        @if (IsAssigned(@g.Id))
+                                        {
+                                            <p class=" mb-1">@GetSector(g.Id)</p>
+                                        }
+                                        else
+                                        {
+                                            <p class=" mb-1">Unassigned</p>
+                                        }
+                                    </div>
                                 </div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge badge-success rounded-pill d-inline">Working</span>
-                        </td>
+                            </td>
+                            <td>
+                                @if (IsWorking(g.Id))
+                                {
+                                    <span class="badge badge-success rounded-pill d-inline">Working Today</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-warning rounded-pill d-inline">Not Working Today</span>
 
-                        <td>
-                            <a @onclick="@(() => { _navMgr.NavigateTo("/GuardDetails/" + @g.Id); })">
-                                <button
-                                    type="button"
-                                    class="btn btn-link btn-rounded btn-sm fw-bold"
-                                    data-mdb-ripple-color="dark">
-                                    Edit
-                                </button>
-                            </a>
-                        </td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
+                                }
+                            </td>
+
+                            <td>
+                                <a @onclick="@(() => { _navMgr.NavigateTo("/GuardDetails/" + @g.Id); })">
+                                    <button
+                                        type="button"
+                                        class="btn btn-link btn-rounded btn-sm fw-bold"
+                                        data-mdb-ripple-color="dark">
+                                        Edit
+                                    </button>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
         </div>
     }
     else if (currentOption == OptionsValues.Grid)
@@ -116,20 +139,28 @@
                     <div class="card mt-3 ">
                         <div class="card-header text-white" style="background-color: #41B3D3 !important">@g.FirstName @g.LastName</div>
                         <div class="card-body text-center">
-                            <img 
-                          src="img/officer.jpg"
-                          class="rounded-circle"
-                          alt=""
-                          style="width: 100px; height: 100px"
-                          />
+                            <img
+                                src="img/officer.jpg"
+                                class="rounded-circle"
+                                alt=""
+                                style="width: 100px; height: 100px"/>
                             <ul class="list-group list-group-light">
                                 <li class="list-group-item px-3">Username: @g.Username</li>
                                 <li class="list-group-item px-3">Email: @g.Email</li>
                                 <li class="list-group-item px-3">Status: <span class="badge badge-danger rounded-pill d-inline">Not Working Today</span> </li>
-                                <li class="list-group-item px-3">Sector:@GetSector(g.Id) </li>
+                                <li class="list-group-item px-3">
+                                    @if (IsAssigned(@g.Id))
+                                    {
+                                        <p class=" mb-1">@GetSector(g.Id)</p>
+                                    }
+                                    else
+                                    {
+                                        <p class=" mb-1">Unassigned</p>
+                                    }
+                                </li>
                             </ul>
                             <br/>
-                            <a @onclick="@(()=>{_navMgr.NavigateTo("/GuardDetails/"+@g.Id);})"  class="btn btn-primary">Edit</a>
+                            <a @onclick="@(() => { _navMgr.NavigateTo("/GuardDetails/" + @g.Id); })" class="btn btn-primary">Edit</a>
                         </div>
                     </div>
                 </div>
@@ -138,12 +169,7 @@
 
         </div>
     }
-    @if (guards == null && !guards.Any())
-    {
-        <div class="spinner-border text-info" role="status">
-            <span class="visually-hidden">Loading...</span>
-        </div>
-    }
+}
 </div>
 @code{
     private OptionsValues currentOption { get; set; }=OptionsValues.Table;
@@ -193,6 +219,18 @@
     {
         Sector sector=   _guardService.GetGuardSector(gId).Result;
         return sector.Id;
+    }
+
+    private bool IsAssigned(long guardId)
+    {
+        bool result=  _guardService.IsGuardAssigned(guardId).Result;
+        return result;
+    }
+
+    private bool IsWorking(long guardId)
+    {
+        bool result = _guardService.IsGuardWorking(guardId).Result;
+        return result;
     }
 
 }

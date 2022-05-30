@@ -11,6 +11,8 @@ public interface IGuardService
     public Task UpdateGuardAsync(Guard guard);
     public Task<Sector> GetGuardSector(long id);
     public Task<ICollection<Guard>> GetGuardsBySector(long sectorId);
-    public Task<int> GetNoOfGuardsPerSectToday(long sectorId);
-    public Task<int[]> GetNoOfGuardsPerSect();
+    public Task<List<int>> GetNoOfGuardsPerSectToday();
+    public Task<List<int>> GetNoOfGuardsPerSect();
+    public Task<bool> IsGuardAssigned(long guardId);
+    public Task<bool> IsGuardWorking(long guardId);
 }
