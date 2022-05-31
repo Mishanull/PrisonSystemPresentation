@@ -25,7 +25,7 @@
                     <h5 class="card-title ">Broadcast an alert </h5>
                     <textarea @bind="_text" class="form-control " type="text" required></textarea>
                     <label >Duration In Minutes: </label>
-                    <input @bind="_duration" class="form-control " type="number" required/>
+                    <input @bind="_duration" class="form-control " type="number" min="1"  required/>
                     <br/>
                     <label >Send to : </label>
                     <br/>
@@ -45,13 +45,13 @@
                         <label class="form-check-label" for="flexCheck3">Sector 3</label>
                     </div>
                     <br/>
-                    <button class="btn btn-warning" @onclick="SendAlert">Send Alert</button>
+                    <button class="btn btn-warning"  @onclick="SendAlert">Send Alert</button>
                 </div>
             </div>
         </div>
         <div class="d-flex flex-column col-md-7 align-items-center">
             <div class="card text-center overflow-y-scroll " style="height: 30rem;">
-                <h5 class="card-header bg-grey text-warning">Recently Sent Alerts</h5>
+                <h5 class="card-header bg-grey text-warning">All alerts (Descending order by date)</h5>
                 <table class="table table-hover align-middle bg-white " style="position: relative; height: 15rem">
                     <thead class="bg-warning sticky-top">
                     <tr>
@@ -192,9 +192,13 @@
             {
                 throw new Exception("Please select one or more sectors!");
             }
+            if (_text == null || _text.Equals(String.Empty))
+            {
+                throw new Exception("An alert must have text");
+            }
             _alert.DateTime = DateTime.Now;
             _alert.Text = _text;
-            _alert.DurationInMinutes = _duration*60;
+            _alert.DurationInMinutes = _duration;
             bool[] ids = new bool[3];
             if (_sector1) ids[0] = true;
             if (_sector2) ids[1] = true;

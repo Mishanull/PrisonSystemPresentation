@@ -9,10 +9,10 @@ public interface IGuardService
     public Task CreateGuardAsync(Guard guard);
     public Task RemoveGuardAsync(long id);
     public Task UpdateGuardAsync(Guard guard);
-    public Task<Sector> GetGuardSectorAsync(long id);
-    public Task<ICollection<Guard>> GetGuardsBySectorAsync(long sectorId);
-    public Task<List<int>> GetNumberOfGuardsPerSectorTodayAsync();
-    public Task<List<int>> GetNumberOfGuardsPerSectorAsync();
-    public Task<bool> IsGuardAssignedAsync(long guardId);
-    public Task<bool> IsGuardWorkingAsync(long guardId);
+    public Task<Sector> GetGuardSector(long id);
+    public Task<ICollection<Guard>> GetGuardsBySectorToday(long sectorId);
+    public Task<List<int>> GetNoOfGuardsPerSectToday();
+    public Task<List<int>> GetNoOfGuardsPerSect();
+    public Task<bool> IsGuardAssigned(long guardId);
+    public Task<bool> IsGuardWorking(long guardId);
 }
