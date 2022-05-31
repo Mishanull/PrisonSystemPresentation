@@ -46,7 +46,6 @@
                         <th scope="col">Status</th>
                         <th scope="col">Notes</th>
                         <th scope="col">Points</th>
-                        <th scope="col">Actions</th>
                     </tr>
                     </thead>
                     @if (_prisoners!.Any())
@@ -129,16 +128,7 @@
                                         </a>
                                     </div>
                                 </td>
-                                <td>
-                                    <a @onclick="@(() => { NavMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
-                                        <button
-                                            type="button"
-                                            class="btn btn-link btn-rounded btn-sm fw-bold"
-                                            data-mdb-ripple-color="dark">
-                                            Edit
-                                        </button>
-                                    </a>
-                                </td>
+                                
                             </tr>
                         }
                         </tbody>

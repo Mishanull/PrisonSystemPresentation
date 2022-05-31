@@ -15,7 +15,7 @@
 @inject IAlertService AlertService
 @inject IWorkShiftService workShiftService
 @attribute [Authorize(Policy = "GuardAccess")]
-@if (IsAssigned(currentGuardId))
+@if (isAssigned)
 {
     <div class="row mt-5 align-items-center align-self-center">
         <div class="d-flex flex-column col-md-12 align-items-center">
@@ -137,7 +137,7 @@
                         </tr>
                         </thead>
                         <tbody>
-                        @foreach (var alert in _alertsToday)
+                        @foreach (var alert in _alertsToday.Reverse())
                         {
                             <tr>
                                 <td>@alert.DateTime.Day/@alert.DateTime.Month/@alert.DateTime.Year</td>
@@ -195,6 +195,7 @@ else
     private ICollection<Guard>? Colleagues { get; set; }
     private  WorkShift? CurrentWorkShift { get; set; }
     private bool isWorkingToday;
+    private bool isAssigned;
     private ICollection<Alert>? _alertsToday { get; set; }
     protected override async Task OnInitializedAsync()
     {
@@ -207,16 +208,17 @@ else
             alertStateContainer.OnChange += ShowModal;
             currentGuardId = u.Id;
             isWorkingToday =await _guardService.IsGuardWorking(currentGuardId);
-            if (IsAssigned(currentGuardId))
+            isAssigned = await _guardService.IsGuardAssigned(currentGuardId);
+            if (isAssigned)
             {
                 CurrentWorkShift = await workShiftService.GetWorkShiftByGuardAsync(currentGuardId);
                 sector = CurrentWorkShift.Sector;
                 sectorStateContainer.Property = sector!;
                 Colleagues = await _guardService.GetGuardsBySectorToday(sector!.Id);
-                _alertsToday = await AlertService.GetAlertsToday();
+                _alertsToday = await AlertService.GetAlertsToday() ;
+                
                 if (Colleagues != null && Colleagues.Any()) Colleagues.Remove(Colleagues.First(g => g.Id == currentGuardId));
             }
-
         }
         catch (Exception e)
         {
@@ -237,15 +239,11 @@ else
         parameters.Add(nameof(AlertModal.duration),Alert?.DurationInMinutes);
         _modalService.Show<AlertModal>("Alert", parameters);
     }
-
-    public bool IsAssigned(long guardId)
-    {
-        return _guardService.IsGuardAssigned(guardId).Result;
-    }
+    
     
     public bool IsActive(Alert alert)
     {
-        double totalSeconds = alert.DurationInMinutes;
+        double totalSeconds = alert.DurationInMinutes*60;
         TimeSpan finishTime=TimeSpan.FromSeconds(totalSeconds);
         DateTime finishDate = alert.DateTime.Add(finishTime);
         if (DateTime.Compare(finishDate, DateTime.Now) == -1 )
