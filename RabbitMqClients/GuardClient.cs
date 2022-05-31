@@ -201,7 +201,7 @@ public class GuardClient : IGuardService
         return sector!;
     }
 
-    public async Task<ICollection<Guard>> GetGuardsBySector(long sectorId)
+    public async Task<ICollection<Guard>> GetGuardsBySectorToday(long sectorId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

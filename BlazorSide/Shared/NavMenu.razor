@@ -83,7 +83,7 @@
         </AuthorizeView>
         <!-- Avatar -->
         <li class="nav-item me-3 me-lg-0">
-          <a class="nav-link" href="#">
+          <a class="nav-link" href="https://github.com/Mishanull/PrisonSystemPresentation/">
             <i class="fab fa-github"></i>
           </a>
           </li>
@@ -186,6 +186,7 @@
     public void Dispose()
     {
       timer?.Dispose();
+      alertStateContainer.OnChange -= ReceiveNotifications;
     }
 
   public void ShowAlert()
