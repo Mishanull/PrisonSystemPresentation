@@ -173,7 +173,7 @@ public class GuardClient : IGuardService
         }
     }
 
-    public async Task<Sector> GetGuardSector(long guardId)
+    public async Task<Sector> GetGuardSectorAsync(long guardId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -201,7 +201,7 @@ public class GuardClient : IGuardService
         return sector!;
     }
 
-    public async Task<ICollection<Guard>> GetGuardsBySector(long sectorId)
+    public async Task<ICollection<Guard>> GetGuardsBySectorAsync(long sectorId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -229,7 +229,7 @@ public class GuardClient : IGuardService
         return g;
     }
 
-    public async Task<List<int>> GetNoOfGuardsPerSectToday()
+    public async Task<List<int>> GetNumberOfGuardsPerSectorTodayAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -257,7 +257,7 @@ public class GuardClient : IGuardService
         return g;
     }
 
-    public async Task<List<int>> GetNoOfGuardsPerSect()
+    public async Task<List<int>> GetNumberOfGuardsPerSectorAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -285,7 +285,7 @@ public class GuardClient : IGuardService
         return g;
     }
 
-    public async Task<bool> IsGuardAssigned(long guardId)
+    public async Task<bool> IsGuardAssignedAsync(long guardId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -310,7 +310,7 @@ public class GuardClient : IGuardService
         return bool.Parse(response);
     }
 
-    public async Task<bool> IsGuardWorking(long guardId)
+    public async Task<bool> IsGuardWorkingAsync(long guardId)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

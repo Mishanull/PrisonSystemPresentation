@@ -65,7 +65,7 @@ public class UserClient : IUserService
 
     }
 
-    public async Task SendLogInConfirmation(long id)
+    public async Task SendLogInConfirmationAsync(long id)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -80,7 +80,7 @@ public class UserClient : IUserService
         cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
     }
 
-    public Task SendLogOutConfirmation(long id)
+    public Task SendLogOutConfirmationAsync(long id)
     {
         throw new NotImplementedException();
     }

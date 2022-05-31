@@ -52,7 +52,6 @@ else
             Claim userName = _user.Claims.First(c => c.Type.Equals("UserName"));
             User? u = await UserService.GetUserAsync(userName.Value);
             _currentGuardId = u.Id;
-           
         }
         catch (Exception e)
         {
@@ -65,7 +64,7 @@ else
     
     private bool IsAssigned(long guardId)
     {
-        return GuardService.IsGuardAssigned(guardId).Result;
+        return GuardService.IsGuardAssignedAsync(guardId).Result;
     }
 
     private void GetCurrentWorkShift(long guardId)

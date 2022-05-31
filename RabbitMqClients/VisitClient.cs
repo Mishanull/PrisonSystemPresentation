@@ -65,7 +65,7 @@ public class VisitClient : IVisitService
     }
     
 
-    public async Task<Visit> GetAccessCodeConfirmation(string code)
+    public async Task<Visit> GetAccessCodeConfirmationAsync(string code)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -173,7 +173,7 @@ public class VisitClient : IVisitService
         return visits;
     }
 
-    public async Task<ICollection<Visit>> GetVisitsToday()
+    public async Task<ICollection<Visit>> GetVisitsTodayAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -201,7 +201,7 @@ public class VisitClient : IVisitService
         return resp;
     }
 
-    public async Task<ICollection<Visit>> GetVisitsPending()
+    public async Task<ICollection<Visit>> GetVisitsPendingAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

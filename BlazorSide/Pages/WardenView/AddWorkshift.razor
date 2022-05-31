@@ -209,7 +209,7 @@
         _guardsToBeAdded = new List<Guard>();
         try
         {
-            ICollection<WorkShift> tempWorkshifts = await WorkShiftService.GetWorkShifts();
+            ICollection<WorkShift> tempWorkshifts = await WorkShiftService.GetWorkShiftsAsync();
             Console.Write(tempWorkshifts);
             ICollection<Guard> takenGuards = new List<Guard>();
             foreach (var workShift in tempWorkshifts)

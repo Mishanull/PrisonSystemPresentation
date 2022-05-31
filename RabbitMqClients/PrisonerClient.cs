@@ -110,7 +110,7 @@ public class PrisonerClient : IPrisonerService
         return p;
     }
 
-    public async Task<Prisoner> GetPrisonerBySsn(string prisonerSSN)
+    public async Task<Prisoner> GetPrisonerBySsnAsync(string prisonerSSN)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -215,7 +215,7 @@ public class PrisonerClient : IPrisonerService
         return ps;
     }
 
-    public async Task<int> GetPrisonerCount()
+    public async Task<int> GetPrisonerCountAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -291,7 +291,7 @@ public class PrisonerClient : IPrisonerService
         }
     }
 
-    public async Task<List<int>> GetNumPrisPerSectAsync()
+    public async Task<List<int>> GetNumberOfPrisonersPerSectorAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -319,7 +319,7 @@ public class PrisonerClient : IPrisonerService
         return g;
     }
 
-    public async Task<ICollection<Prisoner>> GetPrisonersWithLowBehaviour()
+    public async Task<ICollection<Prisoner>> GetPrisonersWithLowBehaviourAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

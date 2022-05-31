@@ -202,7 +202,7 @@
 
     private long GetSector(long gId)
     {
-        Sector sector=   GuardService.GetGuardSector(gId).Result;
+        Sector sector=   GuardService.GetGuardSectorAsync(gId).Result;
         return sector.Id;
     }
 
@@ -221,13 +221,13 @@
     
     private bool IsAssigned(long guardId)
     {
-        bool result=  GuardService.IsGuardAssigned(guardId).Result;
+        bool result=  GuardService.IsGuardAssignedAsync(guardId).Result;
         return result;
     }
 
     private bool IsWorking(long guardId)
     {
-        bool result = GuardService.IsGuardWorking(guardId).Result;
+        bool result = GuardService.IsGuardWorkingAsync(guardId).Result;
         return result;
     }
 }

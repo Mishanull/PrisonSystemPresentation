@@ -14,7 +14,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsumerBackgroundServices"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StateContainer", "StateContainer\StateContainer.csproj", "{FAB69CE7-21AE-45ED-B13A-962BB069C8CD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestingProject", "TestingProject\TestingProject.csproj", "{487F6233-AA1E-4543-BB5F-38749C51C915}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{487F6233-AA1E-4543-BB5F-38749C51C915}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

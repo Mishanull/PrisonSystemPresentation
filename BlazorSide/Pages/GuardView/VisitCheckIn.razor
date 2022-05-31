@@ -89,8 +89,8 @@
     {
         try
         {
-            _checkedVisit = await VisitService.GetAccessCodeConfirmation(code);
-            _visitedPrisoner = await PrisonerService.GetPrisonerBySsn(_checkedVisit.PrisonerSsn.ToString());
+            _checkedVisit = await VisitService.GetAccessCodeConfirmationAsync(code);
+            _visitedPrisoner = await PrisonerService.GetPrisonerBySsnAsync(_checkedVisit.PrisonerSsn.ToString());
             _isChecked = true;
         }
         catch (Exception e)

@@ -4,20 +4,18 @@ namespace StateContainer;
 
 public class SectorStateContainer
 {
-    private Sector? savedSector;
+    private Sector? _savedSector;
     public event Action OnChange;
     public Sector Property
     {
-        get => savedSector ?? new Sector();
+        get => _savedSector ?? new Sector();
         set
         {
-            savedSector = value;
+            _savedSector = value;
             Console.WriteLine(value);
             NotifyStateChanged();
         }
     }
-
-    
     
     private void NotifyStateChanged() => OnChange?.Invoke();
 }

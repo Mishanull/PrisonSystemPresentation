@@ -139,10 +139,10 @@ else
             User? u = await UserService.GetUserAsync(userName.Value);
             AlertStateContainer.OnChange += ShowModal;
             _currentGuardId = u.Id;
-            _sector = await GuardService.GetGuardSector(u.Id);
+            _sector = await GuardService.GetGuardSectorAsync(u.Id);
             SectorStateContainer.Property = _sector;
-            _isWorkingToday =await GuardService.IsGuardWorking(_currentGuardId);
-            _colleagues = await GuardService.GetGuardsBySector(_sector!.Id);
+            _isWorkingToday =await GuardService.IsGuardWorkingAsync(_currentGuardId);
+            _colleagues = await GuardService.GetGuardsBySectorAsync(_sector!.Id);
         }
         catch (Exception e)
         {
@@ -166,11 +166,11 @@ else
 
     private bool IsAssigned(long guardId)
     {
-        return GuardService.IsGuardAssigned(guardId).Result;
+        return GuardService.IsGuardAssignedAsync(guardId).Result;
     }
 
     private void GetCurrentSector(long guardId)
     {
-        _sector= GuardService.GetGuardSector( guardId).Result;
+        _sector= GuardService.GetGuardSectorAsync( guardId).Result;
     }
 }

@@ -710,16 +710,16 @@
   
   protected override async Task OnInitializedAsync()
   {
-    _alertsToday = await _alertService.GetAlertsToday();
-    List<int> num2 = await _guardService.GetNoOfGuardsPerSect();
+    _alertsToday = await _alertService.GetAlertsTodayAsync();
+    List<int> num2 = await _guardService.GetNumberOfGuardsPerSectorAsync();
     num2.ForEach(i=>Console.WriteLine(i));
   }
 
   private async Task LoadPrisonerMetricsAll()
   {
-    _prisonerSectorCount = (await _prisonerService.GetNumPrisPerSectAsync()).ToArray();
+    _prisonerSectorCount = (await _prisonerService.GetNumberOfPrisonersPerSectorAsync()).ToArray();
     _prisonerCount = _prisonerSectorCount.Sum();
-    _lowBehaviourPrisoners = await _prisonerService.GetPrisonersWithLowBehaviour();
+    _lowBehaviourPrisoners = await _prisonerService.GetPrisonersWithLowBehaviourAsync();
   }
 
   private async Task LoadPrisonOccupancy()
@@ -736,38 +736,38 @@
 
   private async  Task LoadGuardDataAll()
   {
-    _guardsPerSector = (await _guardService.GetNoOfGuardsPerSect()).ToArray();
+    _guardsPerSector = (await _guardService.GetNumberOfGuardsPerSectorAsync()).ToArray();
   }
 
   private async Task LoadGuardsTodayData()
   {
-    _guardsPerSectorToday = (await _guardService.GetNoOfGuardsPerSectToday()).ToArray();
+    _guardsPerSectorToday = (await _guardService.GetNumberOfGuardsPerSectorTodayAsync()).ToArray();
     _guardsWorkingToday = await _guardService.GetGuardsAsync(20);
   }
 
   private async Task LoadVisitsToday()
   {
-    _visitsToday = await _visitService.GetVisitsToday();
+    _visitsToday = await _visitService.GetVisitsTodayAsync();
   }
   private async Task LoadVisitsPending()
   {
-    _visitsPending = await _visitService.GetVisitsPending();
+    _visitsPending = await _visitService.GetVisitsPendingAsync();
   }
 
   private async Task LoadAlertsToday()
   {
-    _alertsToday = await _alertService.GetAlertsToday();
+    _alertsToday = await _alertService.GetAlertsTodayAsync();
   }
   
   private bool IsWorking(long guardId)
   {
-    bool result = _guardService.IsGuardWorking(guardId).Result;
+    bool result = _guardService.IsGuardWorkingAsync(guardId).Result;
     return result;
   }
   
   private long GetSector(long guardId)
   {
-    Sector sector = _guardService.GetGuardSector(guardId).Result;
+    Sector sector = _guardService.GetGuardSectorAsync(guardId).Result;
     return sector.Id;
   }
 }

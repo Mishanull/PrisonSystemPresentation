@@ -200,7 +200,7 @@
             if (_sector2) ids[1] = true;
             if (_sector3) ids[2] = true;
             _alert.Sectors = ids;
-            String response=await AlertService.SendAlert(_alert);
+            String response=await AlertService.SendAlertAsync(_alert);
             _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
             await InvokeAsync(StateHasChanged);
             if (response == "success")

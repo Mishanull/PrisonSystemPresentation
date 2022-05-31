@@ -223,7 +223,7 @@
         {
             _isSelected = true;
             _selectedVisit = v;
-            _currentPrisonerInVisit = await PrisonerService.GetPrisonerBySsn(v.PrisonerSsn.ToString());
+            _currentPrisonerInVisit = await PrisonerService.GetPrisonerBySsnAsync(v.PrisonerSsn.ToString());
         }
         catch (Exception e)
         {

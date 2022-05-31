@@ -41,7 +41,7 @@ public class AlertClient : IAlertService
            
     }
 
-    public async Task<string> SendAlert(Alert alert)
+    public async Task<string> SendAlertAsync(Alert alert)
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();
@@ -96,7 +96,7 @@ public class AlertClient : IAlertService
         return alerts;
     }
 
-    public async Task<ICollection<Alert>> GetAlertsToday()
+    public async Task<ICollection<Alert>> GetAlertsTodayAsync()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = channel.CreateBasicProperties();

@@ -5,6 +5,6 @@ namespace Contracts;
 public interface IUserService
 {
     public Task<User> GetUserAsync(string username);
-    public Task SendLogInConfirmation(long id);
-    public Task SendLogOutConfirmation(long id);
+    public Task SendLogInConfirmationAsync(long id);
+    public Task SendLogOutConfirmationAsync(long id);
 }
