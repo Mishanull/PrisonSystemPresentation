@@ -1,8 +1,7 @@
 ﻿<nav
-      id="sidebarMenu"
-      class="collapse d-lg-block position-fixed   h-100 " >
+  id="sidebarMenu"
+  class="collapse d-lg-block position-fixed   h-100 " >
   <div class="position-fixed " id="sidenav-list-container ">
-    
     <div class=" list-group list-group-flush mx-3 mt-4 " id="sidenav-list">
       <AuthorizeView Policy="WardenAccess">
         <NavLink
@@ -20,47 +19,45 @@
           class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
           <img src="img/prisoner.png" height="20" class="ms-2 icon-sidebar"/><span>Prisoners</span>
         </NavLink>
-
         <NavLink
           href="WorkshiftOptions"
           class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
           <img src="img/schedule.png" height="20" class="ms-2 icon-sidebar"/><span>Schedules</span>
         </NavLink>
         <NavLink
-                  href="Visits"
-                  class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
-                  <img src="img/visit.png" height="20" class="ms-2 icon-sidebar"/><span>Visits</span>
-          </NavLink>
+          href="Visits"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+          <img src="img/visit.png" height="20" class="ms-2 icon-sidebar"/><span>Visits</span>
+        </NavLink>
         <NavLink
-                href="AlertsOverview"
-                id="alert-link"
-                class=" nav-link list-group-item list-group-item-action py-2  mb-3 " >
-                <img src="img/alert.png" height="20" class="ms-2 icon-sidebar "/><span>Send An Alert</span>
-              </NavLink>
+          href="AlertsOverview"
+          id="alert-link"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 " >
+          <img src="img/alert.png" height="20" class="ms-2 icon-sidebar "/><span>Send An Alert</span>
+        </NavLink>
       </AuthorizeView>
       <AuthorizeView Policy="GuardAccess">
-            <NavLink
-              href="GuardIndex"
-              class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
-              <i class="fas fa-tachometer-alt  ms-2"></i><span>Overview</span>
-            </NavLink>
         <NavLink
-              href="Timetable"
-              class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
-              <img src="img/schedule.png" height="20" class="ms-2  icon-sidebar"/><span>Schedule</span>
-            </NavLink>
-            <NavLink
-              href="GuardsPrisonersOverview"
-              class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
-              <img src="img/prisoner.png" height="20" class="ms-2 icon-sidebar"/><span>Prisoners in your Sector</span>
-            </NavLink>
-            <NavLink
-            href="VisitCheckIn"
-            class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
-            <img src="img/visit.png" height="20" class="ms-2 icon-sidebar"/><span>Check-In Visitor</span>
-          </NavLink>
+          href="GuardIndex"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+          <i class="fas fa-tachometer-alt  ms-2"></i><span>Overview</span>
+        </NavLink>
+        <NavLink
+          href="Timetable"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+          <img src="img/schedule.png" height="20" class="ms-2  icon-sidebar"/><span>Schedule</span>
+        </NavLink>
+        <NavLink
+          href="GuardsPrisonersOverview"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+          <img src="img/prisoner.png" height="20" class="ms-2 icon-sidebar"/><span>Prisoners in your Sector</span>
+        </NavLink>
+        <NavLink
+          href="VisitCheckIn"
+          class=" nav-link list-group-item list-group-item-action py-2  mb-3 ">
+          <img src="img/visit.png" height="20" class="ms-2 icon-sidebar"/><span>Check-In Visitor</span>
+        </NavLink>
       </AuthorizeView>
     </div>
-    
   </div>
-    </nav>
+</nav>

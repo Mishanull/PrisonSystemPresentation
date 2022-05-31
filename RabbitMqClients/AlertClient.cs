@@ -10,32 +10,32 @@ namespace RabbitMqClients;
 
 public class AlertClient : IAlertService
 {
-    private readonly IConnection connection;
-    private readonly IModel channel;
-    private readonly EventingBasicConsumer consumer;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> callbackMapper = new();
-    private readonly string replyQueueName;
+    private readonly IConnection _connection;
+    private readonly IModel _channel;
+    private readonly EventingBasicConsumer _consumer;
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _callbackMapper = new();
+    private readonly string _replyQueueName;
 
     public AlertClient()
     {
         var factory = new ConnectionFactory() { HostName = "localhost" };
 
-        connection = factory.CreateConnection();
-        channel = connection.CreateModel();
-        replyQueueName = channel.QueueDeclare(queue: "").QueueName;
-        consumer = new EventingBasicConsumer(channel);
-        consumer.Received += (model, ea) =>
+        _connection = factory.CreateConnection();
+        _channel = _connection.CreateModel();
+        _replyQueueName = _channel.QueueDeclare(queue: "").QueueName;
+        _consumer = new EventingBasicConsumer(_channel);
+        _consumer.Received += (model, ea) =>
         {
-            if (!callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
+            if (!_callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
                 return;
             var body = ea.Body.ToArray();
             var response = Encoding.UTF8.GetString(body);
             tcs.TrySetResult(response);
         };
 
-        channel.BasicConsume(
-            consumer: consumer,
-            queue: replyQueueName,
+        _channel.BasicConsume(
+            consumer: _consumer,
+            queue: _replyQueueName,
             autoAck: true);
         
            
@@ -44,20 +44,20 @@ public class AlertClient : IAlertService
     public async Task<string> SendAlertAsync(Alert alert)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(alert, new JsonSerializerOptions
         {
             PropertyNamingPolicy= JsonNamingPolicy.CamelCase
         }));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.broadcast" , basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.broadcast" , basicProperties: props,
             body: messageBytes);
     
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response = await tcs.Task;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -71,18 +71,18 @@ public class AlertClient : IAlertService
     public async Task<ICollection<Alert>> GetAlertsAsync(int pageNumber, int pageSize)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         String[] array = new[] {pageNumber.ToString(), pageSize.ToString()};
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.get", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.get", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         if (response.Equals("fail") || response==null)
         {
@@ -99,17 +99,17 @@ public class AlertClient : IAlertService
     public async Task<ICollection<Alert>> GetAlertsTodayAsync()
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.getNum", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "alert.exchange", routingKey: "alert.getNum", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         if (response.Equals("fail") || response==null)
         {

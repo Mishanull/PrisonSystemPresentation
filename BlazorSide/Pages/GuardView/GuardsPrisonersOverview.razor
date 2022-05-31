@@ -204,10 +204,10 @@
             Claim userName = _user.Claims.First(c => c.Type.Equals("UserName"));
             User? u = await UserService.GetUserAsync(userName.Value);
             _selectedPage = 1;
-            bool isAssigned = await GuardService.IsGuardAssigned(u.Id);
+            bool isAssigned = await GuardService.IsGuardAssignedAsync(u.Id);
             if (isAssigned)
             {
-                Sector sector = await GuardService.GetGuardSector(u.Id);
+                Sector sector = await GuardService.GetGuardSectorAsync(u.Id);
                 _sectorId = (int) sector.Id;
 
                 _prisoners = await PrisonerService.GetPrisonersBySectorAsync(_selectedPage, _pageSize, _sectorId);
