@@ -46,6 +46,8 @@
                         <th scope="col">Status</th>
                         <th scope="col">Notes</th>
                         <th scope="col">Points</th>
+                        <th scope="col">Entry Date</th>
+                        <th scope="col">Release Date</th>
                     </tr>
                     </thead>
                     @if (_prisoners!.Any())
@@ -90,7 +92,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="ms-3">
-                                            <p class=" mb-1">@p.Sector.Id</p>
+                                            <p class=" mb-1">@p.Sector!.Id</p>
                                         </div>
                                     </div>
                                 </td>
@@ -128,6 +130,8 @@
                                         </a>
                                     </div>
                                 </td>
+                                <td> @p.EntryDate.Day/@p.EntryDate.Month/@p.EntryDate.Year</td>
+                                <td> @p.ReleaseDate.Day/@p.ReleaseDate.Month/@p.ReleaseDate.Year</td>
                                 
                             </tr>
                         }
@@ -257,14 +261,15 @@
     private async Task AddPoints(long guardId)
     {
         await PrisonerService.AddPointsToPrisonerAsync(guardId,1);
+        _prisoners = await PrisonerService.GetPrisonersBySectorAsync(_selectedPage, _pageSize, _sectorId);
         await InvokeAsync(StateHasChanged);
-        await base.OnParametersSetAsync();
+        
     }
     
     private async Task SubtractPoints(long guardId)
     {
         await PrisonerService.AddPointsToPrisonerAsync(guardId,-1);
+        _prisoners = await PrisonerService.GetPrisonersBySectorAsync(_selectedPage, _pageSize, _sectorId);
         await InvokeAsync(StateHasChanged);
-        await base.OnParametersSetAsync();
     }
 }

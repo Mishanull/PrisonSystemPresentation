@@ -42,6 +42,8 @@
                         <th scope="col">Sector</th>
                         <th scope="col">Status</th>
                         <th scope="col">Notes</th>
+                        <th scope="col">Entry Date</th>
+                        <th scope="col">Release Date</th>
                         <th scope="col">Points</th>
                         <th scope="col">Actions</th>
                     </tr>
@@ -93,7 +95,19 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
+                                @if (p.EntryDate.Date > DateTime.Now)
+                                {
+                                    <span class="badge badge-primary rounded-pill d-inline">Not imprisoned yet</span>
+
+                                }
+                                else if (p.ReleaseDate > DateTime.Now)
+                                {
+                                    <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
+                                }
+                                else if (p.ReleaseDate < DateTime.Now)
+                                {
+                                    <span class="badge badge-success rounded-pill d-inline">Released</span>
+                                }
                             </td>
                             <td>
                                 <a @onclick="@(() => { NavMgr.NavigateTo("/PrisonerNotes/" + @p.Id); })">
@@ -105,6 +119,8 @@
                                     </button>
                                 </a>
                             </td>
+                            <td> @p.EntryDate.Day/@p.EntryDate.Month/@p.EntryDate.Year</td>
+                            <td> @p.ReleaseDate.Day/@p.ReleaseDate.Month/@p.ReleaseDate.Year</td>
                             <td>
                                 <div class="d-flex align-items-center">
                                     <a @onclick="@(() => AddPoints(p.Id))">
