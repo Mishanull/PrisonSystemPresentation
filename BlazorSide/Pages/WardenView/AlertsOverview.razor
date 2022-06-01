@@ -4,8 +4,8 @@
 @using Contracts
 @using BlazorSide.UIComponents
 
-@inject IAlertService AlertService
-@inject IModalService ModalService
+@inject IAlertService alertService
+@inject IModalService _modalService
 
 @attribute [Authorize(Policy = "WardenAccess")]
 
@@ -169,7 +169,7 @@
     {
         try
         {
-            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
+            _alerts = await alertService.GetAlertsAsync(_selectedPage, _pageSize);
             _selectedPage = 1;
             _totalNumberOfAlerts = _alerts!.Count;
             if (_totalNumberOfAlerts < 10) _numberOfPages = 0;
@@ -179,7 +179,7 @@
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            ModalService.Show<ErrorModal>("Error",paramet);
+            _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
@@ -204,22 +204,22 @@
             if (_sector2) ids[1] = true;
             if (_sector3) ids[2] = true;
             _alert.Sectors = ids;
-            String response=await AlertService.SendAlertAsync(_alert);
-            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
+            String response=await alertService.SendAlertAsync(_alert);
+            _alerts = await alertService.GetAlertsAsync(_selectedPage, _pageSize);
             await InvokeAsync(StateHasChanged);
             if (response == "success")
             {
                 var parameters = new ModalParameters();
                 parameters.Add(nameof(MessageModal.Message), "Alert sent successfully! ");
                 parameters.Add(nameof(MessageModal.OkButton), "Ok");
-                var modalReference = ModalService.Show<MessageModal>("Alert", parameters);
+                var modalReference = _modalService.Show<MessageModal>("Alert", parameters);
             }
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            ModalService.Show<ErrorModal>("Error",paramet);
+            _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
@@ -229,7 +229,7 @@
         parameters.Add(nameof(AlertModal.Message),alert.Text);
         parameters.Add(nameof(AlertModal.dateTime),alert.DateTime);
         parameters.Add(nameof(AlertModal.duration),alert.DurationInMinutes);
-        ModalService.Show<AlertModal>("Alert", parameters);
+        _modalService.Show<AlertModal>("Alert", parameters);
     }
 
     public bool IsActive(Alert alert)
@@ -251,14 +251,14 @@
         try
         {
             _selectedPage = i;
-            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
+            _alerts = await alertService.GetAlertsAsync(_selectedPage, _pageSize);
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            ModalService.Show<ErrorModal>("Error",paramet);
+            _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
@@ -268,14 +268,14 @@
         {
             _pageSize = pageIndex;
             _numberOfPages = _totalNumberOfAlerts / _pageSize + 1;
-            _alerts = await AlertService.GetAlertsAsync(_selectedPage, _pageSize);
+            _alerts = await alertService.GetAlertsAsync(_selectedPage, _pageSize);
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            ModalService.Show<ErrorModal>("Error",paramet);
+            _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
 }

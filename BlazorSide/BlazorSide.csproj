@@ -23,6 +23,8 @@
 
     <ItemGroup>
       <PackageReference Include="Blazored.Modal" Version="6.0.1" />
+      <PackageReference Include="Blazorise.Bootstrap" Version="1.0.4" />
+      <PackageReference Include="Blazorise.Charts" Version="1.0.4" />
       <PackageReference Include="Syncfusion.Blazor.Calendars" Version="20.1.0.57" />
       <PackageReference Include="Syncfusion.Blazor.DropDowns" Version="20.1.0.57" />
       <PackageReference Include="Syncfusion.Blazor.ProgressBar" Version="20.1.0.57" />
