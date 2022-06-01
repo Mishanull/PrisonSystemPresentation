@@ -6,6 +6,7 @@
 @using Entities
 @using Contracts
 @using BlazorSide.UIComponents
+@using Utilities
 
 @attribute [Authorize(Policy = "GuardAccess")]
 
@@ -83,6 +84,48 @@
             try
             {
                 await GuardService.UpdateGuardAsync(_loggedGuard);
+            }
+            catch (Exception e)
+            {
+                var paramet = new ModalParameters();
+                parameters.Add(nameof(ErrorModal.Message),e.Message);
+                ModalService.Show<ErrorModal>("Error",paramet);
+            }
+        }
+    }
+
+    private string? _oldPassword, _newPassword;
+    private async Task ChangeGuardPassword()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to modify your password?");
+        var modalRef=ModalService.Show<ActionConfirm>("Success",parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
+        {
+            try
+            {
+                if (Security.VerifyPassword(_oldPassword, _loggedGuard.Password))
+                {
+                    if (!string.IsNullOrEmpty(_newPassword) && _newPassword.Length>6)
+                    {
+                        _loggedGuard.Password = _newPassword;
+                        // await GuardService.UpdateGuardAsync(_loggedGuard);
+                        await GuardService.ChangePasswordAsync(_loggedGuard);
+                    }
+                    else
+                    {
+                        _oldPassword = "";
+                        _newPassword = "";
+                        throw new Exception("New password must be at least 6-characters long.");
+                    }
+                }
+                else
+                {
+                    _oldPassword = "";
+                    _newPassword = "";
+                    throw new Exception("Incorrect password.");
+                }
             }
             catch (Exception e)
             {
