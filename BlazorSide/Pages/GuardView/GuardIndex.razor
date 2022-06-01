@@ -1,6 +1,6 @@
 ﻿@page "/GuardIndex"
+
 @using StateContainer
-@using BlazorSide.Pages.WardenView
 @using BlazorSide.UIComponents
 @using Contracts
 @using Entities
@@ -12,15 +12,178 @@
 @inject IGuardService _guardService
 @inject SectorStateContainer sectorStateContainer
 @inject IUserService _userService
-@if (IsAssigned(currentGuardId))
+@inject IAlertService AlertService
+@inject IWorkShiftService workShiftService
+@attribute [Authorize(Policy = "GuardAccess")]
+@if (isAssigned)
 {
-    GetCurrentSector(currentGuardId);
-    <h1>Sector: @sector!.Id </h1>
+    <div class="row mt-5 align-items-center align-self-center">
+        <div class="d-flex flex-column col-md-12 align-items-center">
+            <div class="card p-3 w-25">
+                <h3 class="text-center">Your sector is @sector!.Id
+                </h3>
+                <br/>
+                @if (isWorkingToday)
+                {
+                    <h3 class="text-center">
+                        You are working today
+                    </h3>
+                    <br/>
+                }
+                else
+                {
+                    <h3>
+                        Working times: <br/>
+                        From: @CurrentWorkShift!.Start!.Value.TimeOfDay.ToString(@"hh\:mm")<br/>
+                        To: @CurrentWorkShift.End!.Value.TimeOfDay.ToString(@"hh\:mm")<br/>
+                        Days: @CurrentWorkShift.DaysOfWeek<br/>
+                    </h3>
+                    <br/>
+                }
+            </div>
+        </div>
+        <div class="row mt-5 justify-content-center">
+
+        </div>
+        
+            <div class="d-flex flex-column col-md-6 align-items-center">
+                <div class="card text-center overflow-y-scroll" style="height: 30rem;">
+                    <h5 class="card-header bg-info text-white">Your Colleagues in sector @sector.Id today</h5>
+                    @if (Colleagues != null && Colleagues.Any())
+                    {
+                        <table class="table table-hover align-middle mb-0 bg-white">
+                            <thead class=" bg-info sticky-top">
+                            <tr class="text-uppercase text-white">
+                                <th scope="col">First name</th>
+                                <th scope="col">Last name</th>
+                                <th scope="col">Username</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Sector</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var g in Colleagues)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <img
+                                                src="img/officer.jpg"
+                                                class="rounded-circle"
+                                                alt=""
+                                                style="width: 45px; height: 45px"/>
+                                            <div class="ms-3">
+                                                <p class="fw-bold mb-1">@g.FirstName</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="ms-3">
+                                                <p class=" mb-1">@g.LastName</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="ms-3">
+                                                <p class=" mb-1">@g.Username</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="ms-3">
+                                                <p class=" mb-1">@g.Email</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="ms-3">
+
+                                                <p class=" mb-1">@sector!.Id</p>
+
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                        
+                    }
+                    else
+                     {
+                         <h5 class="text-center"> There are no colleagues in sector @sector.Id today. </h5>
+                     }
+                    
+                </div>
+            </div>
+        
+        <div class="d-flex flex-column col-md-6 align-items-center">
+            <div class="card text-center overflow-y-scroll" style="height: 30rem;">
+                <h5 class="card-header bg-info text-white">Alerts issued in the last 24 hours</h5>
+                @if (_alertsToday != null && _alertsToday.Any())
+                {
+                    <table class="table table-hover  align-middle bg-white " style="position: relative; ">
+                        <thead class="bg-info ">
+                        <tr class="text-uppercase text-white ">
+                            <th scope="col">Date </th>
+                            <th scope="col">Time</th>
+                            <th scope="col">Sector</th>
+                            <th scope="col">Duration (minutes)</th>
+                            <th scope="col">Details</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var alert in _alertsToday.Reverse())
+                        {
+                            <tr>
+                                <td>@alert.DateTime.Day/@alert.DateTime.Month/@alert.DateTime.Year</td>
+                                <td>@alert.DateTime.TimeOfDay.ToString(@"hh\:mm")
+                                    @if (IsActive(alert))
+                                    {
+                                        <br/>
+                                        <span class="badge rounded-pill badge-warning" style="margin-left: 2px">Active</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (alert.Sectors[0])
+                                    {
+                                        <span> 1 </span>
+                                    }
+                                    @if (alert.Sectors[1])
+                                    {
+                                        <span> 2 </span>
+                                    }
+                                    @if (alert.Sectors[2])
+                                    {
+                                        <span> 3 </span>
+                                    }
+                                </td>
+                                <td>@alert.DurationInMinutes</td>
+                                <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(alert))>See more</button></td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <h5 class="text-center"> There are no alerts issued today. </h5>
+                }
+            </div>
+        </div>
+
+    </div>
 }
 else
-{
+    {
     <h1>You are not assigned to any sector. Refer to the warden.</h1>
-}
+    }
+
+
 @code {
     [CascadingParameter]
     public Task<AuthenticationState> AuthState { get; set; }
@@ -29,7 +192,11 @@ else
     public Sector? sector { get; set; }
     private ClaimsPrincipal? user;
     private long currentGuardId;
-
+    private ICollection<Guard>? Colleagues { get; set; }
+    private  WorkShift? CurrentWorkShift { get; set; }
+    private bool isWorkingToday;
+    private bool isAssigned;
+    private ICollection<Alert>? _alertsToday { get; set; }
     protected override async Task OnInitializedAsync()
     {
         try
@@ -40,17 +207,29 @@ else
             User? u = await _userService.GetUserAsync(userName.Value);
             alertStateContainer.OnChange += ShowModal;
             currentGuardId = u.Id;
-            sectorStateContainer.Property = sector;
+            isWorkingToday =await _guardService.IsGuardWorkingAsync(currentGuardId);
+            isAssigned = await _guardService.IsGuardAssignedAsync(currentGuardId);
+            if (isAssigned)
+            {
+                CurrentWorkShift = await workShiftService.GetWorkShiftByGuardAsync(currentGuardId);
+                sector = CurrentWorkShift.Sector;
+                sectorStateContainer.Property = sector!;
+                Colleagues = await _guardService.GetGuardsBySectorTodayAsync(sector!.Id);
+                _alertsToday = await AlertService.GetAlertsTodayAsync() ;
+                
+                if (Colleagues != null && Colleagues.Any()) Colleagues.Remove(Colleagues.First(g => g.Id == currentGuardId));
+            }
         }
         catch (Exception e)
         {
+            Console.WriteLine(e.Message);
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
             _modalService.Show<ErrorModal>("Error",paramet);
         }
     }
-    
-    public void ShowModal()
+
+    private void ShowModal()
     {
         var parameters = new ModalParameters();
         Alert = alertStateContainer.Property;
@@ -60,15 +239,26 @@ else
         parameters.Add(nameof(AlertModal.duration),Alert?.DurationInMinutes);
         _modalService.Show<AlertModal>("Alert", parameters);
     }
-
-    public bool IsAssigned(long guardId)
-    {
-        return _guardService.IsGuardAssigned(guardId).Result;
-    }
-
-    public void GetCurrentSector(long guardId)
-    {
-        sector= _guardService.GetGuardSector( guardId).Result;
-    }
     
+    
+    public bool IsActive(Alert alert)
+    {
+        double totalSeconds = alert.DurationInMinutes*60;
+        TimeSpan finishTime=TimeSpan.FromSeconds(totalSeconds);
+        DateTime finishDate = alert.DateTime.Add(finishTime);
+        if (DateTime.Compare(finishDate, DateTime.Now) == -1 )
+        {
+            return false;
+        }
+        return true;
+
+    }
+    private void SeeMore(Alert alert)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(AlertModal.Message),alert.Text);
+        parameters.Add(nameof(AlertModal.dateTime),alert.DateTime);
+        parameters.Add(nameof(AlertModal.duration),alert.DurationInMinutes);
+        _modalService.Show<AlertModal>("Alert", parameters);
+    }
 }

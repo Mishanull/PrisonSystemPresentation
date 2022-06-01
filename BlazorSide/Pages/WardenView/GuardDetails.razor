@@ -1,107 +1,101 @@
 ﻿@page "/GuardDetails/{id:long}"
+
 @using Contracts
 @using Entities
 @using Microsoft.AspNetCore.Components
 @using BlazorSide.UIComponents
-@inject IGuardService _guardService
-@inject IModalService _modalService
-@inject NavigationManager _navMgr
+
+@inject IGuardService GuardService
+@inject IModalService ModalService
+@inject NavigationManager NavMgr
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
-    <EditForm Model="@editedGuard" OnValidSubmit="@EditGuard">
+    <EditForm Model="@EditedGuard" OnValidSubmit="@EditGuard">
         <DataAnnotationsValidator/> 
         <ValidationSummary/>
-        <h3>Guard n.-@editedGuard.Id:</h3>
+        <h3>Guard n.-@EditedGuard.Id:</h3>
         <div class="row">
-            <div class="col-md-6"><InputText @bind-Value="editedGuard.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
-            <div class="col-md-6"><InputText @bind-Value="editedGuard.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>
+            <div class="col-md-6"><InputText @bind-Value="EditedGuard.FirstName" class="form-control form-control-lg" type="text" placeholder="First Name"/></div>
+            <div class="col-md-6"><InputText @bind-Value="EditedGuard.LastName" class="form-control form-control-lg" type="text" placeholder="Last Name"/></div>
         </div>
         <br/>
-        <InputText @bind-Value="editedGuard.Email" class="form-control" type="email" placeholder="Email" />
+        <InputText @bind-Value="EditedGuard.Email" class="form-control" type="email" placeholder="Email" />
         <br/>  
-        <InputText @bind-Value="editedGuard.PhoneNumber" class="form-control" placeholder="Phone Number" rows="4"/>
+        <InputText @bind-Value="EditedGuard.PhoneNumber" class="form-control" placeholder="Phone Number" rows="4"/>
         <br/>
-        <InputText @bind-Value="editedGuard.Username" class="form-control" placeholder="Username" rows="4"/>
+        <InputText @bind-Value="EditedGuard.Username" class="form-control" placeholder="Username" rows="4"/>
         <br/>
         <div class="row">
             <div class="col-md-6"><button class="btn btn-white" type="submit">Edit Guard</button></div>
             <div class="col-md-6"><button class="btn btn-white" type="button" @onclick="DeleteGuard">Delete this guard</button></div>
         </div>
-        
-        
     </EditForm>
 </div>
-@if (!string.IsNullOrEmpty(errorLabel))
-        {
-            <label style="color: red;">Error: @errorLabel</label>
-        }
+@if (!string.IsNullOrEmpty(_errorLabel))
+{
+    <label style="color: red;">Error: @_errorLabel</label>
+}
+
 @code {
     [Parameter]
     public virtual long? Id { get; set; }
-    public virtual Guard editedGuard { get; set; }
-    private string errorLabel=String.Empty;
+    public virtual Guard EditedGuard { get; set; }
+    private string _errorLabel=String.Empty;
     [CascadingParameter]
-    private IModalService Modal { get; set; }
+    private IModalService _modal { get; set; }
     
     protected override async Task OnParametersSetAsync()
     {
         if (Id.HasValue)
         {
-            editedGuard = await _guardService.GetGuardByIdAsync(Id.Value);
+            EditedGuard = await GuardService.GetGuardByIdAsync(Id.Value);
         }
         await base.OnParametersSetAsync();
     }
 
     private async Task EditGuard()
     {
-        
-            var parameters = new ModalParameters();
-            parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to edit the information about the guard?");
-            var modalRef=_modalService.Show<ActionConfirm>("Success",parameters);
-            var result = await modalRef.Result;
-            if (!result.Cancelled)
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to edit the information about the guard?");
+        var modalRef=ModalService.Show<ActionConfirm>("Success",parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
+        {
+            try
             {
-                try
-                {
-                    await _guardService.UpdateGuardAsync(editedGuard);
-                    _navMgr.NavigateTo("/GuardsOverview");
-
-                }
-                catch (Exception e)
-                {
-                    var paramet = new ModalParameters();
-                    paramet.Add(nameof(ErrorModal.Message),e.Message);
-                    _modalService.Show<ErrorModal>("Error",paramet);
-                }
-            
+                await GuardService.UpdateGuardAsync(EditedGuard);
+                NavMgr.NavigateTo("/GuardsOverview");
             }
-
+            catch (Exception e)
+            {
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                ModalService.Show<ErrorModal>("Error",paramet);
+            }
+        }
     }
 
 
     private async Task DeleteGuard()
     {
         var parameters = new ModalParameters();
-            parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to delete the information about the guard? WARNING: You cannot undo this action");
-            var modalRef=_modalService.Show<ActionConfirm>("Delete",parameters);
-            var result = await modalRef.Result;
-            if (!result.Cancelled)
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to delete the information about the guard? WARNING: You cannot undo this action");
+        var modalRef=ModalService.Show<ActionConfirm>("Delete",parameters);
+        var result = await modalRef.Result;
+        if (!result.Cancelled)
+        {
+            try
             {
-                try
-                {
-                    await _guardService.RemoveGuardAsync(editedGuard.Id);
-                    _navMgr.NavigateTo("/GuardsOverview");
-                }
-                catch (Exception e)
-                {
-                    var paramet = new ModalParameters();
-                    paramet.Add(nameof(ErrorModal.Message),e.Message);
-                    _modalService.Show<ErrorModal>("Error",paramet);
-                }
+                await GuardService.RemoveGuardAsync(EditedGuard.Id);
+                NavMgr.NavigateTo("/GuardsOverview");
             }
-        
-       
+            catch (Exception e)
+            {
+                var paramet = new ModalParameters();
+                paramet.Add(nameof(ErrorModal.Message),e.Message);
+                ModalService.Show<ErrorModal>("Error",paramet);
+            }
+        }
     }
-
 }

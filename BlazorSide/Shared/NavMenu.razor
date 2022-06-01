@@ -6,11 +6,13 @@
 @using Contracts
 @using Microsoft.AspNetCore.SignalR
 @using StateContainer
-@inject IAuthService authService
-@inject IModalService _modalService
-@inject NavigationManager navMgr
-@inject IUserService _userService
-@inject AlertStateContainer alertStateContainer
+
+@inject IAuthService AuthService
+@inject IModalService ModalService
+@inject NavigationManager NavMgr
+@inject IUserService UserService
+@inject AlertStateContainer AlertStateContainer
+
 @implements IDisposable
 <nav
        id="main-navbar"
@@ -29,7 +31,6 @@
               aria-label="Toggle navigation">
         <i class="fas fa-bars"></i>
       </button>
-
       
       <span class="nav-item me-3 me-lg-0 my-auto">
                 <a class="nav-link" @onclick="Logout" style="cursor: pointer;" >
@@ -49,7 +50,7 @@
       <ul class="navbar-nav ms-0 d-flex flex-row" style="margin-right: 10px">
         <!-- Notification dropdown -->
         <AuthorizeView Policy="GuardAccess">
-        @if (elapsedTime <= notificationDuration)
+        @if (_elapsedTime <= _notificationDuration)
         {
           <li class="nav-item dropdown">
             <a
@@ -61,13 +62,11 @@
               <i class="fas fa-bell"></i>
 
               <span class="badge rounded-pill badge-notification bg-danger">Alert!</span>
-
-              
             </a>
             <ul
               class="dropdown-menu dropdown-menu-start"
               aria-labelledby="navbarDropdownMenuLink">
-              <li><a class="dropdown-item" @onclick="ShowAlert">@Alert.Text</a></li>
+              <li><a class="dropdown-item" @onclick="ShowAlert">@_alert.Text</a></li>
             </ul>
           </li>
         }
@@ -83,7 +82,7 @@
         </AuthorizeView>
         <!-- Avatar -->
         <li class="nav-item me-3 me-lg-0">
-          <a class="nav-link" href="#">
+          <a class="nav-link" href="https://github.com/Mishanull/PrisonSystemPresentation/">
             <i class="fab fa-github"></i>
           </a>
           </li>
@@ -97,56 +96,57 @@
 @code {
   [CascadingParameter]
     public Task<AuthenticationState> AuthState { get; set; }
-    private bool collapseNavMenu = true;
-    private string? NavBarCssClass => collapseNavMenu ? null : "show";
-    private string? NavButtonCssClass => collapseNavMenu ? "collapsed" : null;
-    private ClaimsPrincipal? user;
+    private bool _collapseNavMenu = true;
+    private string? NavBarCssClass => _collapseNavMenu ? null : "show";
+    private string? NavButtonCssClass => _collapseNavMenu ? "collapsed" : null;
+    private ClaimsPrincipal? _user;
     [CascadingParameter]
-    public IModalService Modal { get; set; }
-    private static Timer? timer;
-    private Alert? Alert { get; set; }
-    private int elapsedTime=0;
-    private int? notificationDuration;
-    public string text { get; set; }
+    public IModalService _modal { get; set; }
+    private static Timer? _timer;
+    private Alert? _alert { get; set; }
+    private int _elapsedTime=0;
+    private int? _notificationDuration;
+    private string _text { get; set; }
     public event Action? TimerDone;
+  
     protected override async Task OnInitializedAsync()
     {
       AuthenticationState authState = await AuthState;
-      user = authState.User;
-      Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
-      User? u = await _userService.GetUserAsync(userName.Value);
+      _user = authState.User;
+      Claim userName = _user.Claims.First(c => c.Type.Equals("UserName"));
+      User? u = await UserService.GetUserAsync(userName.Value);
       if (u.Role.Equals("guard"))
       {
-        alertStateContainer.OnChange += ReceiveNotifications;
+        AlertStateContainer.OnChange += ReceiveNotifications;
         TimerDone += StopTimer;
       }
     }
 
   private void ReceiveNotifications()
   {
-    Alert = alertStateContainer.Property;
+    _alert = AlertStateContainer.Property;
     StartTimer();
-    text = Alert.Text;
-    notificationDuration = Alert.DurationInMinutes/60;
+    _text = _alert.Text;
+    _notificationDuration = _alert.DurationInMinutes*60;
   }
 
   private void ToggleNavMenu()
     {
-        collapseNavMenu = !collapseNavMenu;
+        _collapseNavMenu = !_collapseNavMenu;
     }
     private async Task Logout()
     {
       
       var parameters = new ModalParameters();
       parameters.Add(nameof(ActionConfirm.Message), "Are you sure you want to log out?");
-      var modal=_modalService.Show<ActionConfirm>("Log Out",parameters);
+      var modal=ModalService.Show<ActionConfirm>("Log Out",parameters);
       var result = await modal.Result;
       if (result.Cancelled)
       {
         return;
       }
-      await authService.LogoutAsync();
-      navMgr.NavigateTo("/");
+      await AuthService.LogoutAsync();
+      NavMgr.NavigateTo("/");
     }
 
     private async Task GoToProfile()
@@ -157,43 +157,45 @@
         if (authState.User.Identity == null) return;
         ClaimsPrincipal user = authState.User;
         Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
-        User? u = await _userService.GetUserAsync(userName.Value);
-        navMgr.NavigateTo("/GuardProfile/" + u.Id);
+        User? u = await UserService.GetUserAsync(userName.Value);
+        NavMgr.NavigateTo("/GuardProfile/" + u.Id);
       }
       catch (Exception e)
       {
         var paramet = new ModalParameters();
         paramet.Add(nameof(ErrorModal.Message),e.Message);
-        _modalService.Show<ErrorModal>("Error",paramet);
+        ModalService.Show<ErrorModal>("Error",paramet);
       }
     }
-    public  void StartTimer()
+  
+    private  void StartTimer()
     {
-      elapsedTime = 0;
-      timer = new Timer( _ =>
+      _elapsedTime = 0;
+      _timer = new Timer( _ =>
       {
          InvokeAsync(StateHasChanged);
-        elapsedTime++;
+        _elapsedTime++;
       }, null, 0, 1000);
     }
 
-    public void StopTimer()
+    private void StopTimer()
     {
-       timer?.DisposeAsync();
-      timer = null;
+       _timer?.DisposeAsync();
+      _timer = null;
     }
 
     public void Dispose()
     {
-      timer?.Dispose();
+      _timer?.Dispose();
+      AlertStateContainer.OnChange -= ReceiveNotifications;
     }
 
-  public void ShowAlert()
+  private void ShowAlert()
   {
     var parameters = new ModalParameters();
-    parameters.Add(nameof(AlertModal.Message),Alert?.Text);
-    parameters.Add(nameof(AlertModal.dateTime),Alert?.DateTime);
-    parameters.Add(nameof(AlertModal.duration),Alert?.DurationInMinutes);
-    _modalService.Show<AlertModal>("Alert", parameters);
+    parameters.Add(nameof(AlertModal.Message),_alert?.Text);
+    parameters.Add(nameof(AlertModal.dateTime),_alert?.DateTime);
+    parameters.Add(nameof(AlertModal.duration),_alert?.DurationInMinutes);
+    ModalService.Show<AlertModal>("Alert", parameters);
   }
 }

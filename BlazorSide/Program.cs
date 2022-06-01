@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 using RabbitMQClient;
 using RabbitMqClients;
 using Blazored.Modal;
+using Blazorise;
+using Blazorise.Bootstrap;
 using ConsumerBackgroundServices;
 
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -33,10 +35,17 @@ builder.Services.AddScoped<ISectorService, SectorClient >();
 builder.Services.AddScoped<INotesService, NoteClient >();
 
 builder.Services.AddScoped<IVisitService, VisitClient>();
+builder.Services.AddScoped<IChartService, ChartClient>();
 builder.Services.AddSingleton<StateContainer.AlertStateContainer>();
 builder.Services.AddSingleton<StateContainer.SectorStateContainer>();
 builder.Services.AddSingleton<Consumer>();
 builder.Services.AddHostedService(sp=>sp.GetService<Consumer>());
+builder.Services
+    .AddBlazorise(options =>
+    {
+        options.Immediate = true;
+    })
+    .AddBootstrapProviders();
 
 builder.Services.AddAuthorization(options =>
 {

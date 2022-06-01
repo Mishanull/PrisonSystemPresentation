@@ -10,11 +10,11 @@ namespace RabbitMqClients;
 
 public class VisitClient : IVisitService
 {
-    private readonly IConnection connection;
-    private readonly IModel channel;
-    private readonly EventingBasicConsumer consumer;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> callbackMapper = new();
-    private readonly string replyQueueName;
+    private readonly IConnection _connection;
+    private readonly IModel _channel;
+    private readonly EventingBasicConsumer _consumer;
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _callbackMapper = new();
+    private readonly string _replyQueueName;
     
     private const string Exchange = "visit.exchange";
 
@@ -22,40 +22,40 @@ public class VisitClient : IVisitService
     {
         var factory = new ConnectionFactory() { HostName = "localhost" };
 
-        connection = factory.CreateConnection();
-        channel = connection.CreateModel();
-        replyQueueName = channel.QueueDeclare(queue: "").QueueName;
-        Console.WriteLine(replyQueueName);
-        consumer = new EventingBasicConsumer(channel);
-        consumer.Received += (model, ea) =>
+        _connection = factory.CreateConnection();
+        _channel = _connection.CreateModel();
+        _replyQueueName = _channel.QueueDeclare(queue: "").QueueName;
+        Console.WriteLine(_replyQueueName);
+        _consumer = new EventingBasicConsumer(_channel);
+        _consumer.Received += (model, ea) =>
         {
-            if (!callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
+            if (!_callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
                 return;
             var body = ea.Body.ToArray();
             var response = Encoding.UTF8.GetString(body);
             tcs.TrySetResult(response);
         };
 
-        channel.BasicConsume(consumer: consumer, queue: replyQueueName, autoAck: true);
+        _channel.BasicConsume(consumer: _consumer, queue: _replyQueueName, autoAck: true);
     }
 
     public async Task CreateVisitAsync(Visit visit)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(visit, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         }));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "visit.add", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "visit.add", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -68,17 +68,17 @@ public class VisitClient : IVisitService
     public async Task<Visit> GetAccessCodeConfirmationAsync(string code)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes(code);
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "visit.getByCode", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "visit.getByCode", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Visit visit = new Visit();
         if (response.Equals("fail"))
@@ -122,20 +122,20 @@ public class VisitClient : IVisitService
     public async Task UpdateVisitStatusAsync(Visit v)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
        
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(v, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         }));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "visit.update", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "visit.update", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -147,18 +147,18 @@ public class VisitClient : IVisitService
     public async Task<ICollection<Visit>> GetVisitsAsync(int pageNumber, int pageSize)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         String[] array = new[] {pageNumber.ToString(), pageSize.ToString()};
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "visit.get", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "visit.get", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -173,20 +173,20 @@ public class VisitClient : IVisitService
         return visits;
     }
 
-    public async Task<ICollection<Visit>> GetVisitsToday()
+    public async Task<ICollection<Visit>> GetVisitsTodayAsync()
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "visit.getNumToday", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "visit.getNumToday", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -201,20 +201,20 @@ public class VisitClient : IVisitService
         return resp;
     }
 
-    public async Task<ICollection<Visit>> GetVisitsPending()
+    public async Task<ICollection<Visit>> GetVisitsPendingAsync()
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "visit.getPending", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "visit.getPending", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))

@@ -45,27 +45,34 @@ public class GuardsIntegrationTests
     public async Task UpdateGuard_test()
     {
         Guard g;
-        var guards = await _guardService.GetGuardsAsync(1);
-
-        bool wasModified = false;
-        if (guards.Count == 0)
+        bool wasAdded = false;
+        try
+        {
+            g = (await _guardService.GetGuardsAsync(1)).First();
+        }
+        catch (Exception)
         {
             await _guardService.CreateGuardAsync(NewGuard());
-            wasModified = true;
+            wasAdded = true;
+            g = (await _guardService.GetGuardsAsync(1)).First();
         }
-        
-        g = (await _guardService.GetGuardsAsync(1)).First();
 
-        g.FirstName = "updated";
+        string originalName = g.FirstName;
+        g.FirstName = "updated-firstname";
         await _guardService.UpdateGuardAsync(g);
         Guard updatedFetchedGuard = await _guardService.GetGuardByIdAsync(g.Id);
         
         Assert.True(g.Id==updatedFetchedGuard.Id && g.FirstName.Equals(updatedFetchedGuard.FirstName));
 
         //rollback changes
-        if (wasModified)
+        if (wasAdded)
         {
             await _guardService.RemoveGuardAsync(g.Id);
+        }
+        else
+        {
+            g.FirstName = originalName;
+            await _guardService.UpdateGuardAsync(g);
         }
     }
 }

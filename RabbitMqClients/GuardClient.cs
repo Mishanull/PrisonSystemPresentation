@@ -10,33 +10,33 @@ namespace RabbitMQClients;
 
 public class GuardClient : IGuardService
 {
-    private readonly IConnection connection;
-    private readonly IModel channel;
-    private readonly EventingBasicConsumer consumer;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> callbackMapper = new();
-    private readonly string replyQueueName;
+    private readonly IConnection _connection;
+    private readonly IModel _channel;
+    private readonly EventingBasicConsumer _consumer;
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _callbackMapper = new();
+    private readonly string _replyQueueName;
 
     public GuardClient()
     {
         var factory = new ConnectionFactory() { HostName = "localhost" };
 
-        connection = factory.CreateConnection();
-        channel = connection.CreateModel();
-        replyQueueName = channel.QueueDeclare(queue: "").QueueName;
-        Console.WriteLine(replyQueueName);
-        consumer = new EventingBasicConsumer(channel);
-        consumer.Received += (model, ea) =>
+        _connection = factory.CreateConnection();
+        _channel = _connection.CreateModel();
+        _replyQueueName = _channel.QueueDeclare(queue: "").QueueName;
+        Console.WriteLine(_replyQueueName);
+        _consumer = new EventingBasicConsumer(_channel);
+        _consumer.Received += (model, ea) =>
         {
-            if (!callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
+            if (!_callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
                 return;
             var body = ea.Body.ToArray();
             var response = Encoding.UTF8.GetString(body);
             tcs.TrySetResult(response);
         };
 
-        channel.BasicConsume(
-            consumer: consumer,
-            queue: replyQueueName,
+        _channel.BasicConsume(
+            consumer: _consumer,
+            queue: _replyQueueName,
             autoAck: true);
         
            
@@ -45,18 +45,18 @@ public class GuardClient : IGuardService
     public async Task<Guard> GetGuardByIdAsync(long id)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getById", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getById", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -73,18 +73,18 @@ public class GuardClient : IGuardService
     public async Task<ICollection<Guard>> GetGuardsAsync(int number)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(number.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guards.get", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guards.get", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -101,10 +101,10 @@ public class GuardClient : IGuardService
     public async Task CreateGuardAsync(Guard guard)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         String guardToSend = JsonSerializer.Serialize(guard,new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -112,12 +112,12 @@ public class GuardClient : IGuardService
         Console.WriteLine(guardToSend);
         var messageBytes = Encoding.UTF8.GetBytes(guardToSend);
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.add", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.add", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published guard/add");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
         {
@@ -128,18 +128,18 @@ public class GuardClient : IGuardService
     public async Task RemoveGuardAsync(long id)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.remove", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.remove", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -152,19 +152,19 @@ public class GuardClient : IGuardService
     public async Task UpdateGuardAsync(Guard guard)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         string guardToSend = JsonSerializer.Serialize(guard);
         var messageBytes = Encoding.UTF8.GetBytes(guardToSend);
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.update", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.update", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -176,18 +176,18 @@ public class GuardClient : IGuardService
     public async Task<Sector> GetGuardSectorAsync(long guardId)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getBySector", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getBySector", basicProperties: props,
             body: messageBytes);
     
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -201,21 +201,21 @@ public class GuardClient : IGuardService
         return sector!;
     }
 
-    public async Task<ICollection<Guard>> GetGuardsBySector(long sectorId)
+    public async Task<ICollection<Guard>> GetGuardsBySectorTodayAsync(long sectorId)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(sectorId.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getPerSectorToday", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getPerSectorToday", basicProperties: props,
             body: messageBytes);
-    
+
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -229,21 +229,49 @@ public class GuardClient : IGuardService
         return g;
     }
 
-    public async Task<List<int>> GetNoOfGuardsPerSectToday()
+    public async Task<ICollection<Guard>> GetGuardsBySectorAsync(long sectorId)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
-        var messageBytes = Encoding.UTF8.GetBytes("");
+        props.ReplyTo = _replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes(sectorId.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getNumPerSectorToday", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getPerSectorToday", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
+        String response =  tcs.Task.Result;
+        Console.WriteLine(response);
+        if (response.Equals("fail"))
+        {
+            throw new Exception("Failed to fetch guards.");
+        }
+        ICollection<Guard> g = JsonSerializer.Deserialize<ICollection<Guard>>(response, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        return g;
+    }
+
+    public async Task<List<int>> GetNumberOfGuardsPerSectorTodayAsync()
+    {
+        CancellationToken cancellationToken = default;
+        IBasicProperties props = _channel.CreateBasicProperties();
+        var correlationId = Guid.NewGuid().ToString();
+        props.CorrelationId = correlationId;
+        props.ReplyTo = _replyQueueName;
+        var messageBytes = Encoding.UTF8.GetBytes("");
+        var tcs = new TaskCompletionSource<string>();
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getNumPerSectorToday", basicProperties: props,
+            body: messageBytes);
+    
+        Console.WriteLine("message published");
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -257,21 +285,21 @@ public class GuardClient : IGuardService
         return g;
     }
 
-    public async Task<List<int>> GetNoOfGuardsPerSect()
+    public async Task<List<int>> GetNumberOfGuardsPerSectorAsync()
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getNumPerSector", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.getNumPerSector", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -285,21 +313,21 @@ public class GuardClient : IGuardService
         return g;
     }
 
-    public async Task<bool> IsGuardAssigned(long guardId)
+    public async Task<bool> IsGuardAssignedAsync(long guardId)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.isAssigned", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.isAssigned", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -310,21 +338,21 @@ public class GuardClient : IGuardService
         return bool.Parse(response);
     }
 
-    public async Task<bool> IsGuardWorking(long guardId)
+    public async Task<bool> IsGuardWorkingAsync(long guardId)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.isWorking", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.isWorking", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))

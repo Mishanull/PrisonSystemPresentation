@@ -1,17 +1,11 @@
 ﻿@page "/GuardsOptions"
-@using BlazorLoginApp.Authentication
-@using Contracts
-@inject NavigationManager _navMgr
-@inject IAuthService _authService
-@inject IGuardService _prisonerService
+@inject NavigationManager NavMgr
 
 @attribute [Authorize(Policy = "WardenAccess")]
 
 
 <AuthorizeView>
-
     <Authorized>
-       
         <div class="row">
                 <div class="col-md-6 m-0">
                     <div class="card">
@@ -35,21 +29,16 @@
                     </div>
                 </div>
             </div>
-        
     </Authorized>
 </AuthorizeView>
 
 @code {
-    
-    
-
     private async Task AddGuard()
     {
-       _navMgr.NavigateTo($"/AddGuard");
+       NavMgr.NavigateTo($"/AddGuard");
     }
     private async Task GuardsOverview()
     {
-        _navMgr.NavigateTo($"/GuardsOverview");
+        NavMgr.NavigateTo($"/GuardsOverview");
     }
-
 }

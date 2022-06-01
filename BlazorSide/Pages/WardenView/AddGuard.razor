@@ -1,111 +1,105 @@
 ﻿@page "/AddGuard"
+
 @using Entities
 @using Microsoft.AspNetCore.Components
 @using Contracts
 @using BlazorSide.UIComponents
-@using System.Security
-@using Utilities
-@inject IGuardService _guardService
-@inject IModalService _modalService
-@inject NavigationManager _navMgr
+
+@inject IGuardService GuardService
+@inject IModalService ModalService
+@inject NavigationManager NavMgr
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
-    <EditForm Model="@newGuard" OnValidSubmit="@AddNewGuard">
+    <EditForm Model="@_newGuard" OnValidSubmit="@AddNewGuard">
         <DataAnnotationsValidator/> 
         <ValidationSummary/>
         <h3>Add Guard:</h3>
         <div class="row">
             <div class="col-md-6">
-                <label class="text-white"> First Name:</label> <InputText @bind-Value="newGuard.FirstName" class="form-control " type="text" />
+                <label class="text-white"> First Name:</label> <InputText @bind-Value="_newGuard.FirstName" class="form-control " type="text" />
             </div>
             <div class="col-md-6">
-                <label class="text-white">Last Name:</label> <InputText @bind-Value="newGuard.LastName" class="form-control " type="text" />
+                <label class="text-white">Last Name:</label> <InputText @bind-Value="_newGuard.LastName" class="form-control " type="text" />
             </div>
         </div>
         <br/>
-        <label class="text-white">Email:</label> <InputText @bind-Value="newGuard.Email" class="form-control" type="email" />
+        <label class="text-white">Email:</label> <InputText @bind-Value="_newGuard.Email" class="form-control" type="email" />
         <br/>  
-        <label class="text-white">Phone Number:</label> <InputText @bind-Value="newGuard.PhoneNumber" class="form-control" type="tel"  />
+        <label class="text-white">Phone Number:</label> <InputText @bind-Value="_newGuard.PhoneNumber" class="form-control" type="tel"  />
         <br/>
-        @* <label class="text-white">Username:</label><InputText @bind-Value="newGuard.Username" class="form-control"  /> *@
-        @* <br/> *@
         <button class="btn btn-white" type="submit">Add New Guard</button>
     </EditForm>
 </div>
-@if (!string.IsNullOrEmpty(errorLabel))
+@if (!string.IsNullOrEmpty(_errorLabel))
         {
-            <label style="color: red;">Error: @errorLabel</label>
+            <label style="color: red;">Error: @_errorLabel</label>
         }
+
 @code {
-    private Guard newGuard=new Guard();
-    private string errorLabel=String.Empty;
+    private Guard _newGuard = new Guard();
+    private string _errorLabel = String.Empty;
     [CascadingParameter]
-    private IModalService Modal { get; set; }
+    private IModalService _modal { get; set; }
+    
     private async Task AddNewGuard()
     {
-        
-            var parameters = new ModalParameters();
-            parameters.Add(nameof(ChoiceModal.Message),"Guard added successfully");
-            parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
-            parameters.Add(nameof(ChoiceModal.SecondButton),"Go to Guards Overview");
-            parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Guard");
-            try
+        var parameters = new ModalParameters();
+        parameters.Add(nameof(ChoiceModal.Message),"Guard added successfully");
+        parameters.Add(nameof(ChoiceModal.FirstButton),"Go back");
+        parameters.Add(nameof(ChoiceModal.SecondButton),"Go to Guards Overview");
+        parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Guard");
+        try
+        {
+            await GuardService.CreateGuardAsync(_newGuard);
+            _newGuard = new Guard();
+            var modalRef=ModalService.Show<ChoiceModal>("Success",parameters);
+            var result = await modalRef.Result;
+            if (!result.Cancelled)
             {
-                await _guardService.CreateGuardAsync(newGuard);
-                newGuard = new Guard();
-                var modalRef=_modalService.Show<ChoiceModal>("Success",parameters);
-                var result = await modalRef.Result;
-                if (!result.Cancelled)
+                string? message;
+                message = result.Data?.ToString() ?? string.Empty;
+                switch (message)
                 {
-                    string? message;
-                    message = result.Data?.ToString() ?? string.Empty;
-                    switch (message)
+                    case "Go back":
                     {
-                        case "Go back":
-                        {
-                            await BackToOptions();
-                            break;
-                        }
-                        case "Go to Guards Overview":
-                        {
-                            await GoToOverview();
-                            break;
-                        }
-                        case "Add Another Guard":
-                        {
-                            await BackToAdd();
-                            break;
-                        }
+                        await BackToOptions();break;
+                    }
+                    case "Go to Guards Overview":
+                    {
+                        await GoToOverview();
+                        break;
+                    }
+                    case "Add Another Guard":
+                    {
+                        await BackToAdd();break;
                     }
                 }
             }
-        
-            catch (Exception e)
+        }
+        catch (Exception e)
                 {
                     var paramet = new ModalParameters();
                     paramet.Add(nameof(ErrorModal.Message),e.Message);
-                    _modalService.Show<ErrorModal>("Error",paramet);
+                    ModalService.Show<ErrorModal>("Error",paramet);
                 }
-            
-            
-        }
+    }
     
 
     private async Task BackToAdd()
     {
-        newGuard=new Guard();
+        _newGuard=new Guard();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task GoToOverview()
     {
-        _navMgr.NavigateTo("/GuardsOverview");
+        NavMgr.NavigateTo("/GuardsOverview");
     }
 
     private async Task BackToOptions()
     {
-        _navMgr.NavigateTo("/GuardsOptions");
+        NavMgr.NavigateTo("/GuardsOptions");
     }
 
 }

@@ -1,21 +1,23 @@
 ﻿@page "/GuardsPrisonersOverview"
+
 @using Contracts
 @using Entities
 @using BlazorSide.UIComponents
 @using Microsoft.AspNetCore.Components
-@using Microsoft.Extensions.Options
 @using System.Security.Claims
-@inject NavigationManager _navMgr
-@inject IModalService _modalService
-@inject IPrisonerService prisonerService
-@inject IGuardService guardService
-@inject IUserService userService
+
+@inject NavigationManager NavMgr
+@inject IModalService ModalService
+@inject IPrisonerService PrisonerService
+@inject IGuardService GuardService
+@inject IUserService UserService
+
 @attribute [Authorize(Policy = "GuardAccess")]
 
 
 <div class="row mt-3 align-items-center">
     
-    @if (prisoners == null || !prisoners!.Any())
+    @if (_prisoners == null || !_prisoners!.Any())
     {
         <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">Loading...</span>
@@ -23,15 +25,12 @@
     }
     else
     {
-        
         <div class="d-flex flex-row mb-3 justify-content-center ">
-        
             <div class="p-2">
                 <input class="form-control" type="text" placeholder="Filter..."
-                       @bind="Filter"
+                       @bind="_filter"
                        @bind:event="oninput">
             </div>
-
         </div>
         <div class="d-flex flex-column align-items-center  ">
             <div class="card text-center overflow-y-scroll " style="height: 40rem;">
@@ -47,16 +46,14 @@
                         <th scope="col">Status</th>
                         <th scope="col">Notes</th>
                         <th scope="col">Points</th>
-                        <th scope="col">Actions</th>
                     </tr>
                     </thead>
-                    @if (prisoners!.Any())
+                    @if (_prisoners!.Any())
                     {
                         <tbody>
-                        @foreach (var p in prisoners!.Where(IsVisible))
+                        @foreach (var p in _prisoners!.Where(IsVisible))
                         {
                             <tr>
-
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <img
@@ -93,7 +90,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="ms-3">
-                                            <p class=" mb-1">@p.Sector</p>
+                                            <p class=" mb-1">@p.Sector.Id</p>
                                         </div>
                                     </div>
                                 </td>
@@ -101,7 +98,7 @@
                                     <span class="badge badge-warning rounded-pill d-inline">Imprisoned</span>
                                 </td>
                                 <td>
-                                    <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerNotes/" + @p.Id); })">
+                                    <a @onclick="@(() => { NavMgr.NavigateTo("/PrisonerNotes/" + @p.Id); })">
                                         <button
                                             type="button"
                                             class="btn btn-link btn-rounded btn-sm fw-bold"
@@ -110,7 +107,6 @@
                                         </button>
                                     </a>
                                 </td>
-
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <a @onclick="@(() => AddPoints(p.Id))">
@@ -122,7 +118,7 @@
                                             </button>
                                         </a>
                                         <p class=" mb-1"> @p.Points</p>
-                                        <a @onclick="@(() => SubPoints(p.Id) )">
+                                        <a @onclick="@(() => SubtractPoints(p.Id) )">
                                             <button
                                                 type="button"
                                                 class="btn btn-link btn-rounded btn-sm fw-bold"
@@ -132,34 +128,22 @@
                                         </a>
                                     </div>
                                 </td>
-
-                                <td>
-                                    <a @onclick="@(() => { _navMgr.NavigateTo("/PrisonerDetail/" + @p.Id); })">
-                                        <button
-                                            type="button"
-                                            class="btn btn-link btn-rounded btn-sm fw-bold"
-                                            data-mdb-ripple-color="dark">
-                                            Edit
-                                        </button>
-                                    </a>
-                                </td>
+                                
                             </tr>
                         }
                         </tbody>
                     }
                     <br/>
-
                 </table>
             </div>
             <br/>
             <nav>
                 <ul class="pagination ">
-                    @for (int i = 0; i < noOfPages; i++)
+                    @for (int i = 0; i < _numberOfPages; i++)
                     {
                         int page = i;
-                        @if (selectedPage == page + 1)
+                        @if (_selectedPage == page + 1)
                         {
-
                             <li class="page-item active ms-3" aria-current="page" style="cursor: pointer; background-color:  #41B3D3 !important;">
                                 <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
                                     @(i + 1)
@@ -185,7 +169,7 @@
                         id="dropdownMenuButton"
                         data-mdb-toggle="dropdown"
                         aria-expanded="false">
-                        Rows/page: @PageSize
+                        Rows/page: @_pageSize
                     </button>
                     <ul class="dropdown-menu  " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
                         <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
@@ -197,87 +181,90 @@
             </div>
         </div>
     }
-    
 </div>
+
 @code {
     [CascadingParameter]
-    public Task<AuthenticationState> AuthState { get; set; }
-    private ICollection<Prisoner>? prisoners { get; set; } = null;
-    private string Filter { get; set; }
-    private int PageSize { get; set; } = 10;
-    private int TotalNumberOfPrisoners { get; set; }
-    private int noOfPages { get; set; }
-    private int selectedPage { get; set; }
-    private int sectorId { get; set; } 
-    private ClaimsPrincipal? user;
+    public Task<AuthenticationState> _authState { get; set; }
+    private ICollection<Prisoner>? _prisoners { get; set; } = null;
+    private string _filter { get; set; }
+    private int _pageSize { get; set; } = 10;
+    private int _totalNumberOfPrisoners { get; set; }
+    private int _numberOfPages { get; set; }
+    private int _selectedPage { get; set; }
+    private int _sectorId { get; set; } 
+    private ClaimsPrincipal? _user;
 
     protected  override async Task OnInitializedAsync()
     {
         try
         {
-            AuthenticationState authState = await AuthState;
-            user = authState.User;
-            Claim userName = user.Claims.First(c => c.Type.Equals("UserName"));
-            User? u = await userService.GetUserAsync(userName.Value);
-            selectedPage = 1;
-            Sector sector = await guardService.GetGuardSectorAsync(u.Id);
-            sectorId = (int)sector.Id;
-            
-            prisoners = await prisonerService.GetPrisonersBySectorAsync(selectedPage,PageSize, sectorId);
-            TotalNumberOfPrisoners = prisoners!.Count;
-            if (TotalNumberOfPrisoners < 10) noOfPages = 0;
-            else noOfPages = TotalNumberOfPrisoners / PageSize +1;
+            AuthenticationState authState = await _authState;
+            _user = authState.User;
+            Claim userName = _user.Claims.First(c => c.Type.Equals("UserName"));
+            User? u = await UserService.GetUserAsync(userName.Value);
+            _selectedPage = 1;
+            bool isAssigned = await GuardService.IsGuardAssignedAsync(u.Id);
+            if (isAssigned)
+            {
+                Sector sector = await GuardService.GetGuardSectorAsync(u.Id);
+                _sectorId = (int) sector.Id;
+
+                _prisoners = await PrisonerService.GetPrisonersBySectorAsync(_selectedPage, _pageSize, _sectorId);
+                _totalNumberOfPrisoners = _prisoners!.Count;
+                if (_totalNumberOfPrisoners < 10) _numberOfPages = 0;
+                else _numberOfPages = _totalNumberOfPrisoners / _pageSize + 1;
+            }
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            _modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
     }
 
     private bool IsVisible(Prisoner prisoner)
     {
-        if (string.IsNullOrEmpty(Filter))
+        if (string.IsNullOrEmpty(_filter))
             return true;
 
-        if (prisoner.FirstName.Contains(Filter, StringComparison.OrdinalIgnoreCase)
-            || prisoner.LastName.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+        if (prisoner.FirstName.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+            || prisoner.LastName.Contains(_filter, StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (prisoner.Ssn.ToString().StartsWith(Filter) || prisoner!.Sector!.Id.ToString().StartsWith(Filter))
+        if (prisoner.Ssn.ToString().StartsWith(_filter) || prisoner!.Sector!.Id.ToString().StartsWith(_filter))
             return true;
 
         return false;
     }
 
-    private async Task SelectPage(int i)
+    private async Task SelectPage(int pageIndex)
     {
-        selectedPage = i;
-        prisoners = await prisonerService.GetPrisonersBySectorAsync(selectedPage,PageSize,sectorId);
+        _selectedPage = pageIndex;
+        _prisoners = await PrisonerService.GetPrisonersBySectorAsync(_selectedPage,_pageSize,_sectorId);
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task SetPageSize(int i)
+    private async Task SetPageSize(int pageSize)
     {
-        PageSize = i;
-        noOfPages = TotalNumberOfPrisoners / PageSize + 1;
-        prisoners = await prisonerService.GetPrisonersBySectorAsync(selectedPage,PageSize,sectorId);
+        _pageSize = pageSize;
+        _numberOfPages = _totalNumberOfPrisoners / _pageSize + 1;
+        _prisoners = await PrisonerService.GetPrisonersBySectorAsync(_selectedPage,_pageSize,_sectorId);
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task AddPoints(long id)
+    private async Task AddPoints(long guardId)
     {
-        await prisonerService.AddPointsToPrisonerAsync(id,1);
+        await PrisonerService.AddPointsToPrisonerAsync(guardId,1);
         await InvokeAsync(StateHasChanged);
         await base.OnParametersSetAsync();
     }
     
-    private async Task SubPoints(long id)
+    private async Task SubtractPoints(long guardId)
     {
-        await prisonerService.AddPointsToPrisonerAsync(id,-1);
+        await PrisonerService.AddPointsToPrisonerAsync(guardId,-1);
         await InvokeAsync(StateHasChanged);
         await base.OnParametersSetAsync();
     }
-    
 }

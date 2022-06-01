@@ -8,7 +8,7 @@ using RabbitMQ.Client.Events;
 
 namespace RabbitMqClients;
 
-public class SectorClient : ISectorService
+public class ChartClient : IChartService
 {
     private readonly IConnection _connection;
     private readonly IModel _channel;
@@ -16,16 +16,13 @@ public class SectorClient : ISectorService
     private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _callbackMapper = new();
     private readonly string _replyQueueName;
 
-    private const string Exchange = "sector.exchange";
-
-    public SectorClient()
+    public ChartClient()
     {
         var factory = new ConnectionFactory() { HostName = "localhost" };
 
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
         _replyQueueName = _channel.QueueDeclare(queue: "").QueueName;
-        Console.WriteLine(_replyQueueName);
         _consumer = new EventingBasicConsumer(_channel);
         _consumer.Received += (model, ea) =>
         {
@@ -36,10 +33,14 @@ public class SectorClient : ISectorService
             tcs.TrySetResult(response);
         };
 
-        _channel.BasicConsume(consumer: _consumer, queue: _replyQueueName, autoAck: true);
+        _channel.BasicConsume(
+            consumer: _consumer,
+            queue: _replyQueueName,
+            autoAck: true);
+        
+           
     }
-    
-    public async Task<ICollection<Sector>> GetSectorsAsync()
+    public async Task<Dictionary<string, int>> GetChartData()
     {
         CancellationToken cancellationToken = default;
         IBasicProperties props = _channel.CreateBasicProperties();
@@ -51,19 +52,18 @@ public class SectorClient : ISectorService
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
         _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: Exchange, routingKey: "sectors.get", basicProperties: props, body: messageBytes);
+        _channel.BasicPublish(exchange: "chart.exchange", routingKey: "chart.get", basicProperties: props, body: messageBytes);
         cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-        
         String response =  tcs.Task.Result;
-        if (response.Equals("fail"))
+        if (response.Equals("fail") || response==null)
         {
-            throw new Exception("Failed to load sectors");
+            throw new Exception("Failed to load alerts");
         }
     
-        ICollection<Sector> ss = JsonSerializer.Deserialize<ICollection<Sector>>(response, new JsonSerializerOptions
+       Dictionary<string,int> chartData = JsonSerializer.Deserialize<Dictionary<string,int>>(response, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
         })!;
-        return ss;
+        return chartData;
     }
 }

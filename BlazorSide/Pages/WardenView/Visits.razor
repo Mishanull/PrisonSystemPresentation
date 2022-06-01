@@ -1,15 +1,16 @@
 ﻿@page "/Visits"
+
 @using Entities
 @using Contracts
 @using BlazorSide.UIComponents
-@using System.Globalization
-@using Microsoft.AspNetCore.Components.Server
-@inject IVisitService visitService
-@inject IModalService modalService
-@inject IPrisonerService prisonerService
-@inject NavigationManager navMgr
+
+@inject IVisitService VisitService
+@inject IModalService ModalService
+@inject IPrisonerService PrisonerService
+@inject NavigationManager NavMgr
+
 <div class=" row mt-5 justify-content-center">
-    @if (VisitsList == null || !VisitsList!.Any())
+    @if (_visitsList == null || !_visitsList!.Any())
         {
             <div class="spinner-border text-info" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -19,13 +20,13 @@
     {
         <div class="d-flex flex-row mb-3 justify-content-center  ">
             <div class="p-2">
-                <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select status" @bind-Value="@currentOption" DataSource="@(Options)">
+                <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select status" @bind-Value="@_currentOption" DataSource="@(Options)">
                     <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
                 </SfDropDownList>
             </div>
             <div class="p-2">
                 <input class="form-control" type="text" placeholder="Filter..."
-                       @bind="Filter"
+                       @bind="_filter"
                        @bind:event="oninput">
             </div>
         </div>
@@ -44,12 +45,12 @@
                     </thead>
                     <tbody>
 
-                    @for (int i = VisitsList.ToList().Count - 1; i >= 0; i--)
+                    @for (int i = _visitsList.ToList().Count - 1; i >= 0; i--)
                     {
-                        if (!IsVisible(VisitsList.ToList()[i]))
+                        if (!IsVisible(_visitsList.ToList()[i]))
                             continue;
-                        Visit? visit = VisitsList.ToList()[i];
-                        @if (selectedVisit != null && selectedVisit!.Equals(visit))
+                        Visit? visit = _visitsList.ToList()[i];
+                        @if (_selectedVisit != null && _selectedVisit!.Equals(visit))
                         {
                             <tr class="table-active">
                                 <td >@visit.FirstName @visit.LastName
@@ -100,7 +101,6 @@
                                             <span class="badge rounded-pill badge-success" style="margin-left: 2px">@visit.Status</span>
                                             break;
                                     }
-
                                 </td>
                                 <td><button class="btn btn-outline-info" @onclick=@(() => SeeMore(visit))>See more</button></td>
                             </tr>
@@ -112,12 +112,11 @@
             <br/>
                 <nav>
                     <ul class="pagination ">
-                        @for (int i = 0; i < noOfPages; i++)
+                        @for (int i = 0; i < _numberOfPages; i++)
                         {
                             int page = i;
-                            @if (selectedPage == page + 1)
+                            @if (_selectedPage == page + 1)
                             {
-    
                                 <li class="page-item active ms-3" aria-current="page" style="cursor: pointer; background-color:  #41B3D3 !important;">
                                     <a class="page-link" @onclick=@(() => SelectPage(page + 1))>
                                         @(i + 1)
@@ -143,7 +142,7 @@
                             id="dropdownMenuButton"
                             data-mdb-toggle="dropdown"
                             aria-expanded="false">
-                            Rows/page: @PageSize
+                            Rows/page: @_pageSize
                         </button>
                         <ul class="dropdown-menu  " aria-labelledby="dropdownMenuButton" style="z-index: 999;">
                             <li><a class="dropdown-item" @onclick=@(() => SetPageSize(10))>10</a></li>
@@ -153,40 +152,39 @@
                         </ul>
                     </div>
                 </div>
-        </div>
-        @if (isSelected && currentPrisonerInVisit!=null)
+        </div> 
+        @if (_isSelected && _currentPrisonerInVisit!=null)
     {
-        long id = currentPrisonerInVisit.Id;
+        long id = _currentPrisonerInVisit.Id;
         <div class="d-flex flex-column col-md-6">
             <div class="card ">
                 <h5 class="card-header bg-info text-white">Selected Visit</h5>
                 <div class="card-body font-normal">
-                    <h6>Visitor's Name: @selectedVisit!.FirstName @selectedVisit.LastName</h6>
-                    <h6>Email: @selectedVisit.Email</h6>
-                    <h6>Desired date for visit: @selectedVisit.VisitDate.Day/@selectedVisit.VisitDate.Month/@selectedVisit.VisitDate.Year</h6>
-                    <h6>Desired time for visit: @selectedVisit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</h6>
-                    <h6>Prisoner to be visited: <a style="cursor: pointer; text-decoration: underline;"@onclick=@(() => GoToPrisoner(id))>@currentPrisonerInVisit!.FirstName @currentPrisonerInVisit.LastName </a></h6>
+                    <h6>Visitor's Name: @_selectedVisit!.FirstName @_selectedVisit.LastName</h6>
+                    <h6>Email: @_selectedVisit.Email</h6>
+                    <h6>Desired date for visit: @_selectedVisit.VisitDate.Day/@_selectedVisit.VisitDate.Month/@_selectedVisit.VisitDate.Year</h6>
+                    <h6>Desired time for visit: @_selectedVisit.VisitDate.TimeOfDay.ToString(@"hh\:mm")</h6>
+                    <h6>Prisoner to be visited: <a style="cursor: pointer; text-decoration: underline;"@onclick=@(() => GoToPrisoner(id))>@_currentPrisonerInVisit!.FirstName @_currentPrisonerInVisit.LastName </a></h6>
                     <br/>
-                    @if (selectedVisit.Status == Status.Waiting)
+                    @if (_selectedVisit.Status == Status.Waiting)
                     {
                         <button class="btn btn-info" @onclick="Approve">Approve Visit</button>
                         <button class="btn btn-danger" @onclick="Deny">Deny Visit</button>
                     }
                     else
                     {
-                        @switch (selectedVisit.Status)
+                        @switch (_selectedVisit.Status)
                         {
                             case Status.Approved:
-                                <h6>Status: <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@selectedVisit.Status</span></h6>
+                                <h6>Status: <span class="badge rounded-pill badge-primary" style="margin-left: 2px">@_selectedVisit.Status</span></h6>
                                 break;
                              case Status.Denied:
-                                 <h6>Status: <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@selectedVisit.Status</span></h6>
+                                 <h6>Status: <span class="badge rounded-pill badge-danger" style="margin-left: 2px">@_selectedVisit.Status</span></h6>
                                  break;
                             case Status.Fulfilled:
-                                <h6>Status:<span class="badge rounded-pill badge-success" style="margin-left: 2px">@selectedVisit.Status</span></h6>
+                                <h6>Status:<span class="badge rounded-pill badge-success" style="margin-left: 2px">@_selectedVisit.Status</span></h6>
                                 break;
                         }
-                        
                     }
                 </div>
             </div>
@@ -197,61 +195,60 @@
         
     
 @code {
-    private OptionsValues currentOption { get; set; }=OptionsValues.All;
-    private ICollection<Visit>? VisitsList { get; set; }
-    private bool isSelected;
-    private Visit? selectedVisit { get; set; } = null;
-    private Prisoner? currentPrisonerInVisit;
-    private string Filter { get; set; }
-    
+    private OptionsValues _currentOption { get; set; }=OptionsValues.All;
+    private ICollection<Visit>? _visitsList { get; set; }
+    private bool _isSelected;
+    private Visit? _selectedVisit { get; set; } = null;
+    private Prisoner? _currentPrisonerInVisit;
+    private string _filter { get; set; }
     [CascadingParameter]
-    private IModalService Modal { get; set; }
+    private IModalService _modal { get; set; }
+    private int _pageSize { get; set; } = 10;
+    private int _totalNumberOfVisits { get; set; }
+    private int _numberOfPages { get; set; }
+    private int _selectedPage { get; set; }
     
-    private int PageSize { get; set; } = 10;
-    private int TotalNumberOfVisits { get; set; }
-    private int noOfPages { get; set; }
-    private int selectedPage { get; set; }
     protected override async Task OnInitializedAsync()
     {
-        selectedPage = 1;
-        VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
-        TotalNumberOfVisits = VisitsList!.Count;
-        if (TotalNumberOfVisits < 10) noOfPages = 0;
-        else noOfPages = TotalNumberOfVisits / PageSize +1;
+        _selectedPage = 1;
+        _visitsList = await VisitService.GetVisitsAsync(_selectedPage, _pageSize);
+        _totalNumberOfVisits = _visitsList!.Count;
+        if (_totalNumberOfVisits < 10) _numberOfPages = 0;
+        else _numberOfPages = _totalNumberOfVisits / _pageSize +1;
     }
 
-    public async void SeeMore(Visit v)
+    private async void SeeMore(Visit v)
     {
         try
         {
-            isSelected = true;
-            selectedVisit = v;
-            currentPrisonerInVisit = await prisonerService.GetPrisonerBySsn(v.PrisonerSsn.ToString());
+            _isSelected = true;
+            _selectedVisit = v;
+            _currentPrisonerInVisit = await PrisonerService.GetPrisonerBySsnAsync(v.PrisonerSsn.ToString());
         }
         catch (Exception e)
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ErrorModal.Message),e.Message);
-            modalService.Show<ErrorModal>("Error",parameters);
+            ModalService.Show<ErrorModal>("Error",parameters);
         }
     }
 
-    public async Task Approve()
+    private async Task Approve()
     {
         try
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ActionConfirm.Message),"Are you sure that you want to approve this visit?");
-            var modalRef=modalService.Show<ActionConfirm>("Confirm",parameters);
+            var modalRef=ModalService.Show<ActionConfirm>("Confirm",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
-                selectedVisit!.Status = Status.Approved;
-                await visitService.UpdateVisitStatusAsync(selectedVisit!);
-                VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
+                _selectedVisit!.Status = Status.Approved;
+                await VisitService.UpdateVisitStatusAsync(_selectedVisit!);
+                _visitsList = await VisitService.GetVisitsAsync(_selectedPage, _pageSize);
                 await InvokeAsync(StateHasChanged);
-                selectedVisit = null;
-                isSelected = false;
+                _selectedVisit = null;
+                _isSelected = false;
             }
             modalRef.Close(result);
         }
@@ -259,30 +256,31 @@
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ErrorModal.Message),e.Message);
-            modalService.Show<ErrorModal>("Error",parameters);
+            ModalService.Show<ErrorModal>("Error",parameters);
         }
     }
 
-    public void GoToPrisoner(long id)
+    private void GoToPrisoner(long id)
     {
-        navMgr.NavigateTo($"/PrisonerDetail/{id}");
+        NavMgr.NavigateTo($"/PrisonerDetail/{id}");
     }
-    public async Task Deny()
+
+    private async Task Deny()
     {
         try
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ActionConfirm.Message),"Are you sure that you want to deny this visit?");
-            var modalRef=modalService.Show<ActionConfirm>("Confirm",parameters);
+            var modalRef=ModalService.Show<ActionConfirm>("Confirm",parameters);
             var result = await modalRef.Result;
             if (!result.Cancelled)
             {
-                selectedVisit!.Status = Status.Denied;
-                await visitService.UpdateVisitStatusAsync(selectedVisit!);
-                VisitsList = await visitService.GetVisitsAsync(selectedPage, PageSize);
+                _selectedVisit!.Status = Status.Denied;
+                await VisitService.UpdateVisitStatusAsync(_selectedVisit!);
+                _visitsList = await VisitService.GetVisitsAsync(_selectedPage, _pageSize);
                 await InvokeAsync(StateHasChanged);
-                selectedVisit = null;
-                isSelected = false;
+                _selectedVisit = null;
+                _isSelected = false;
             }
             modalRef.Close(result);
         }
@@ -290,7 +288,7 @@
         {
             var parameters = new ModalParameters();
             parameters.Add(nameof(ErrorModal.Message),e.Message);
-            modalService.Show<ErrorModal>();
+            ModalService.Show<ErrorModal>();
         }
     }
     
@@ -307,15 +305,15 @@
     
     private void OnDropdownSelected()
     {
-        Console.WriteLine(currentOption);
+        Console.WriteLine(_currentOption);
     }
     
     private bool IsVisible(Visit visit)
     {
-        if ( CheckFilter(visit) && currentOption.ToString().Equals("All"))
+        if ( CheckFilter(visit) && _currentOption.ToString().Equals("All"))
             return true;
  
-        if (CheckFilter(visit) && currentOption.ToString().Equals(visit.Status.ToString()))
+        if (CheckFilter(visit) && _currentOption.ToString().Equals(visit.Status.ToString()))
             return true;
 
         return false;
@@ -323,32 +321,32 @@
 
     private bool CheckFilter(Visit visit )
     {
-        if (string.IsNullOrEmpty(Filter))
+        if (string.IsNullOrEmpty(_filter))
             return true;
  
-        if (visit.FirstName.Contains(Filter, StringComparison.OrdinalIgnoreCase) 
-            || visit.LastName.Contains(Filter, StringComparison.OrdinalIgnoreCase))
+        if (visit.FirstName.Contains(_filter, StringComparison.OrdinalIgnoreCase) 
+            || visit.LastName.Contains(_filter, StringComparison.OrdinalIgnoreCase))
             return true;
  
-        if (visit.PrisonerSsn.ToString().StartsWith(Filter))
+        if (visit.PrisonerSsn.ToString().StartsWith(_filter))
             return true;
 
         return false;
         
     }
 
-    private async Task SelectPage(int i)
+    private async Task SelectPage(int pageIndex)
     {
-        selectedPage = i;
-        VisitsList = await visitService.GetVisitsAsync(selectedPage,PageSize);
+        _selectedPage = pageIndex;
+        _visitsList = await VisitService.GetVisitsAsync(_selectedPage,_pageSize);
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task SetPageSize(int i)
+    private async Task SetPageSize(int pageSize)
     {
-        PageSize = i;
-        noOfPages = TotalNumberOfVisits / PageSize + 1;
-        VisitsList = await visitService.GetVisitsAsync(selectedPage,PageSize);
+        _pageSize = pageSize;
+        _numberOfPages = _totalNumberOfVisits / _pageSize + 1;
+        _visitsList = await VisitService.GetVisitsAsync(_selectedPage,_pageSize);
         await InvokeAsync(StateHasChanged);
     }
 

@@ -3,30 +3,29 @@
 @using Entities
 @using Contracts
 @using BlazorSide.UIComponents
-@using Syncfusion.Blazor
 @using System.ComponentModel.DataAnnotations
 
-@inject IPrisonerService _prisonerService
-@inject ISectorService _sectorService
-@inject IModalService modalService
-@inject NavigationManager _navMgr
+@inject IPrisonerService PrisonerService
+@inject ISectorService SectorService
+@inject IModalService ModalService
+@inject NavigationManager NavMgr
 
 @attribute [Authorize(Policy = "WardenAccess")]
 
 <div class="container-fluid w-50 align-self-center p-3 mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
-    <EditForm Model="@newPrisoner" OnValidSubmit="@AddNewPrisoner">
+    <EditForm Model="@_newPrisoner" OnValidSubmit="@AddNewPrisoner">
         <DataAnnotationsValidator/> 
         <ValidationSummary/>
         <div class="row">
             <div class="col-md-6">
-                <label class="text-white"> First Name:</label> <InputText @bind-Value="newPrisoner.FirstName" class="form-control " type="text" />
+                <label class="text-white"> First Name:</label> <InputText @bind-Value="_newPrisoner.FirstName" class="form-control " type="text" />
             </div>
             <div class="col-md-6">
-                <label class="text-white">Last Name:</label> <InputText @bind-Value="newPrisoner.LastName" class="form-control " type="text" />
+                <label class="text-white">Last Name:</label> <InputText @bind-Value="_newPrisoner.LastName" class="form-control " type="text" />
             </div>
         </div>
         <br/>
-        <label class="text-white">SSN: </label> <InputNumber @bind-Value="newPrisoner.Ssn" class="form-control"  />
+        <label class="text-white">SSN: </label> <InputNumber @bind-Value="_newPrisoner.Ssn" class="form-control" Min="1111"  />
         <br/>
         <div class="form- mb-4">
             <label for="Date-Entry" class="text-white"> Entry Date</label>
@@ -40,10 +39,10 @@
                 <DatePickerEvents TValue="DateTime"></DatePickerEvents>
             </SfDatePicker>
         </div>
-        <label class="text-white">Crime Commited: </label> <InputText @bind-Value="newPrisoner.CrimeCommitted" class="form-control" type="text"  />
+        <label class="text-white">Crime Commited: </label> <InputText @bind-Value="_newPrisoner.CrimeCommitted" class="form-control" type="text"  />
         <br/>
         <label class="text-white">Sector:
-            <SfDropDownList TItem="Sector" TValue="Sector" PopupHeight="200px"  @bind-Value="@newPrisoner.Sector" Placeholder="Select a sector: " DataSource=@(sectors)>
+            <SfDropDownList TItem="Sector" TValue="Sector" PopupHeight="200px"  @bind-Value="@_newPrisoner.Sector" Placeholder="Select a sector: " DataSource=@(_sectors)>
                 <DropDownListFieldSettings   Text="Id" Value="Id"></DropDownListFieldSettings>
             </SfDropDownList>
         </label>
@@ -53,24 +52,25 @@
     </EditForm>
 </div>
 
-@if (!string.IsNullOrEmpty(errorLabel))
+@if (!string.IsNullOrEmpty(_errorLabel))
 {
-    <label style="color: red;">Error: @errorLabel</label>
+    <label style="color: red;">Error: @_errorLabel</label>
 }
 
 @code {
-    private Prisoner newPrisoner=new Prisoner();
+    private Prisoner _newPrisoner = new Prisoner();
     [Required]
     private DateTime _entryDate = DateTime.Now;
     private DateTime _releaseDate = DateTime.Now;
-    private string errorLabel=String.Empty;
-    [CascadingParameter]
-    private IModalService Modal { get; set; }
-    private ICollection<Sector> sectors;
     
+    private string _errorLabel = String.Empty;
+    [CascadingParameter]
+    private IModalService _modal { get; set; }
+
+    private ICollection<Sector> _sectors;
     protected async override Task OnInitializedAsync()
     {
-        sectors = await _sectorService.GetSectorsAsync();
+        _sectors = await SectorService.GetSectorsAsync();
     }
     
     private async Task AddNewPrisoner()
@@ -86,12 +86,12 @@
                 {
                     throw new Exception("Release date cannot be earlier or the same day as entry date.");
                 }
-                newPrisoner.EntryDate = _entryDate;
-                newPrisoner.ReleaseDate = _releaseDate;
-                await _prisonerService.CreatePrisonerAsync(newPrisoner);
-                newPrisoner = new Prisoner();
+                _newPrisoner.EntryDate = _entryDate;
+                _newPrisoner.ReleaseDate = _releaseDate;
+                await PrisonerService.CreatePrisonerAsync(_newPrisoner);
+                _newPrisoner = new Prisoner();
                 
-                var modalRef=modalService.Show<ChoiceModal>("Success",parameters);
+                var modalRef=ModalService.Show<ChoiceModal>("Success",parameters);
                 var result = await modalRef.Result;
                 if (!result.Cancelled)
                 {
@@ -122,11 +122,9 @@
             {
                 var paramet = new ModalParameters();
                 paramet.Add(nameof(ErrorModal.Message),e.Message);
-                modalService.Show<ErrorModal>("Error",paramet);
+                ModalService.Show<ErrorModal>("Error",paramet);
             }
-            
-        }
-    
+    }
 
     private async Task BackToAdd()
     {
@@ -135,12 +133,12 @@
 
     private async Task GoToOverview()
     {
-        _navMgr.NavigateTo("/PrisonersOverview");
+        NavMgr.NavigateTo("/PrisonersOverview");
     }
 
     private async Task BackToOptions()
     {
-        _navMgr.NavigateTo("/PrisonersOptions");
+        NavMgr.NavigateTo("/PrisonersOptions");
     }
 
 }

@@ -4,20 +4,18 @@ namespace StateContainer;
 
 public class AlertStateContainer
 {
-    private Alert? savedAlert;
+    private Alert? _savedAlert;
     public event Action OnChange;
     public Alert Property
     {
-        get => savedAlert ?? new Alert();
+        get => _savedAlert ?? new Alert();
         set
         {
-            savedAlert = value;
+            _savedAlert = value;
             Console.WriteLine(value);
             NotifyStateChanged();
         }
     }
-
-    
     
     private void NotifyStateChanged() => OnChange?.Invoke();
 }

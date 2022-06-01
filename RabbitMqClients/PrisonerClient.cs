@@ -11,11 +11,11 @@ namespace RabbitMqClients;
 public class PrisonerClient : IPrisonerService
 {
     
-    private readonly IConnection connection;
-    private readonly IModel channel;
-    private readonly EventingBasicConsumer consumer;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> callbackMapper = new();
-    private readonly string replyQueueName;
+    private readonly IConnection _connection;
+    private readonly IModel _channel;
+    private readonly EventingBasicConsumer _consumer;
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _callbackMapper = new();
+    private readonly string _replyQueueName;
 
     private const string Exchange = "prisoner.exchange";
 
@@ -23,37 +23,37 @@ public class PrisonerClient : IPrisonerService
     {
         var factory = new ConnectionFactory() { HostName = "localhost" };
 
-        connection = factory.CreateConnection();
-        channel = connection.CreateModel();
-        replyQueueName = channel.QueueDeclare(queue: "").QueueName;
-        Console.WriteLine(replyQueueName);
-        consumer = new EventingBasicConsumer(channel);
-        consumer.Received += (model, ea) =>
+        _connection = factory.CreateConnection();
+        _channel = _connection.CreateModel();
+        _replyQueueName = _channel.QueueDeclare(queue: "").QueueName;
+        Console.WriteLine(_replyQueueName);
+        _consumer = new EventingBasicConsumer(_channel);
+        _consumer.Received += (model, ea) =>
         {
-            if (!callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
+            if (!_callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
                 return;
             var body = ea.Body.ToArray();
             var response = Encoding.UTF8.GetString(body);
             tcs.TrySetResult(response);
         };
 
-        channel.BasicConsume(consumer: consumer, queue: replyQueueName, autoAck: true);
+        _channel.BasicConsume(consumer: _consumer, queue: _replyQueueName, autoAck: true);
     }
     
     
     public async Task CreatePrisonerAsync(Prisoner prisoner)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(prisoner));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.add", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.add", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -65,16 +65,16 @@ public class PrisonerClient : IPrisonerService
     public async Task RemovePrisonerAsync(long id)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.remove", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.remove", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -86,17 +86,17 @@ public class PrisonerClient : IPrisonerService
     public async Task<Prisoner> GetPrisonerByIdAsync(long prisonerId)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(prisonerId));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getById", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getById", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -110,19 +110,19 @@ public class PrisonerClient : IPrisonerService
         return p;
     }
 
-    public async Task<Prisoner> GetPrisonerBySsn(string prisonerSSN)
+    public async Task<Prisoner> GetPrisonerBySsnAsync(string prisonerSSN)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(prisonerSSN);
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getBySSN", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getBySSN", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -167,17 +167,17 @@ public class PrisonerClient : IPrisonerService
     public async Task UpdatePrisonerAsync(Prisoner newPrisoner)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(newPrisoner));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs); 
+        _callbackMapper.TryAdd(correlationId, tcs); 
         
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.update", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.update", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -189,18 +189,18 @@ public class PrisonerClient : IPrisonerService
     public async Task<ICollection<Prisoner>?> GetPrisonersAsync(int pageNumber, int pageSize)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
 
         String[] array = new[] {pageNumber.ToString(), pageSize.ToString()};
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.get", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.get", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -215,20 +215,20 @@ public class PrisonerClient : IPrisonerService
         return ps;
     }
 
-    public async Task<int> GetPrisonerCount()
+    public async Task<int> GetPrisonerCountAsync()
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
 
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.count", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.count", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -243,18 +243,18 @@ public class PrisonerClient : IPrisonerService
     public async Task<ICollection<Prisoner>?> GetPrisonersBySectorAsync(int pageNumber, int pageSize, int sectorId)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
 
         String[] array = new[] {pageNumber.ToString(), pageSize.ToString(),sectorId.ToString()};
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.getBySector", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoners.getBySector", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
         {
@@ -271,18 +271,18 @@ public class PrisonerClient : IPrisonerService
     public async Task AddPointsToPrisonerAsync(long prisonerId, int points)
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         
         String[] array = {prisonerId.ToString(), points.ToString()};
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(array));
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs); 
+        _callbackMapper.TryAdd(correlationId, tcs); 
         
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.addPoints", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.addPoints", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
@@ -291,21 +291,21 @@ public class PrisonerClient : IPrisonerService
         }
     }
 
-    public async Task<List<int>> GetNumPrisPerSectAsync()
+    public async Task<List<int>> GetNumberOfPrisonersPerSectorAsync()
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getNumPerSector", basicProperties: props,
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getNumPerSector", basicProperties: props,
             body: messageBytes);
     
         Console.WriteLine("message published");
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         Console.WriteLine(response);
         if (response.Equals("fail"))
@@ -319,20 +319,20 @@ public class PrisonerClient : IPrisonerService
         return g;
     }
 
-    public async Task<ICollection<Prisoner>> GetPrisonersWithLowBehaviour()
+    public async Task<ICollection<Prisoner>> GetPrisonersWithLowBehaviourAsync()
     {
         CancellationToken cancellationToken = default;
-        IBasicProperties props = channel.CreateBasicProperties();
+        IBasicProperties props = _channel.CreateBasicProperties();
         var correlationId = Guid.NewGuid().ToString();
         
         props.CorrelationId = correlationId;
-        props.ReplyTo = replyQueueName;
+        props.ReplyTo = _replyQueueName;
 
         var messageBytes = Encoding.UTF8.GetBytes("");
         var tcs = new TaskCompletionSource<string>();
-        callbackMapper.TryAdd(correlationId, tcs);                
-        channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getLowBehaviour", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => callbackMapper.TryRemove(correlationId, out var tmp));
+        _callbackMapper.TryAdd(correlationId, tcs);                
+        _channel.BasicPublish(exchange: Exchange, routingKey: "prisoner.getLowBehaviour", basicProperties: props, body: messageBytes);
+        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         String response =  tcs.Task.Result;
         if (response.Equals("fail"))
         {

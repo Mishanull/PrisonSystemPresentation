@@ -1,28 +1,28 @@
 ﻿@page "/PrisonerNotes/{Id:long}"
+
 @using Entities
 @using Contracts
-@using BlazorLoginApp.Authentication
 @using BlazorSide.UIComponents
 @using System.ComponentModel.DataAnnotations
 
-@inject NavigationManager _navMgr
-@inject IAuthService _authService
-@inject INotesService _NotesService
-@inject IPrisonerService _prisonerService
-@inject IModalService _modalService
+@inject NavigationManager NavMgr
+@inject INotesService NotesService
+@inject IPrisonerService PrisonerService
+@inject IModalService ModalService
+
 @attribute [Authorize(Policy = "GuardAccess")]
 
 <div class="container-fluid w-50 align-self-center p- mx-5" style="background-color:#41B3D3; border-radius: 5px; ">
     <br/>
     <label class="text-white"> Notes:</label>
     <br/>
-        @if (!notes!.Any() || notes == null)
+        @if (!_notes!.Any() || _notes == null)
             {
                 <p>Not existing notes</p>
             }
             else
             {
-                @foreach (var n in notes!)
+                @foreach (var n in _notes!)
                 {
                     <div class="d-flex align-items-center">
                         <div class="ms-3">
@@ -32,12 +32,12 @@
                     <hr/>
                 }
             }
-        <EditForm Model="@newNote" OnValidSubmit="@AddNote">
+        <EditForm Model="@_newNote" OnValidSubmit="@AddNote">
         <DataAnnotationsValidator/>
         <ValidationSummary/>
         <div class="row">
             <div class="col-md-9">
-                <label class="text-white"> Add note:</label> <InputTextArea @bind-Value="newNote.Text" class="form-control" type="text"/>
+                <label class="text-white"> Add note:</label> <InputTextArea @bind-Value="_newNote.Text" class="form-control" type="text"/>
             </div>
         </div>
         <br/>
@@ -46,25 +46,23 @@
         <hr/>
         </EditForm>
 </div>
- 
-
 
 @code{
     [Parameter]
     public long Id { get; set; }
-    ICollection<Note>? notes;
+    private ICollection<Note>? _notes;
     [Required]
-    Note newNote = new Note();
-    Prisoner prisoner = new Prisoner();
+    private Note _newNote = new Note();
+    private Prisoner _prisoner = new Prisoner();
     private string _errorLabel="";
     
     [CascadingParameter]
-    private IModalService Modal { get; set; }
+    private IModalService _modal { get; set; }
     
     protected override async Task OnInitializedAsync()
     {
-        prisoner = await _prisonerService.GetPrisonerByIdAsync(Id);
-        notes = prisoner.Notes;
+        _prisoner = await PrisonerService.GetPrisonerByIdAsync(Id);
+        _notes = _prisoner.Notes;
     }
 
     private async Task AddNote()
@@ -76,10 +74,10 @@
             parameters.Add(nameof(ChoiceModal.ThirdButton),"Add Another Note");
             try
             {
-                await _NotesService.AddNoteAsync(Id,newNote.Text);
-                newNote = new Note();
+                await NotesService.AddNoteAsync(Id,_newNote.Text);
+                _newNote = new Note();
                 
-                var modalRef = _modalService.Show<ChoiceModal>("Success",parameters);
+                var modalRef = ModalService.Show<ChoiceModal>("Success",parameters);
                 var result = await modalRef.Result;
                 if (!result.Cancelled)
                 {
@@ -110,27 +108,25 @@
             {
                 var paramet = new ModalParameters();
                 paramet.Add(nameof(ErrorModal.Message),e.Message);
-                _modalService.Show<ErrorModal>("Error",paramet);
+                ModalService.Show<ErrorModal>("Error",paramet);
             }
-            
-        }
+    }
     
 
     private async Task BackToAdd()
     {
-        prisoner = await _prisonerService.GetPrisonerByIdAsync(Id);
-        notes = prisoner.Notes;
+        _prisoner = await PrisonerService.GetPrisonerByIdAsync(Id);
+        _notes = _prisoner.Notes;
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task GoToOverview()
     {
-        _navMgr.NavigateTo("/PrisonersOverview");
+        NavMgr.NavigateTo("/PrisonersOverview");
     }
 
     private async Task BackToOptions()
     {
-        _navMgr.NavigateTo("/PrisonersOptions");
+        NavMgr.NavigateTo("/PrisonersOptions");
     }
-
 }

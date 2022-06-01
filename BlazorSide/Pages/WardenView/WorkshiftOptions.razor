@@ -1,17 +1,14 @@
 ﻿@page "/WorkshiftOptions"
-@inject NavigationManager _navMgr
+
+@inject NavigationManager NavMgr
 
 @attribute [Authorize(Policy = "WardenAccess")]
 
-
 <AuthorizeView>
-
     <Authorized>
-       
         <div class="row">
             <div class="col-md-6 m-0">
                 <div class="card text-center" style="width: 50% !important;">
-                        
                     <a @onclick="AddWorkshift" >
                         <button class="border-0 p-0"><img src="img/more.png" height="100" width="100" style="background-color: white;"/></button>
                     </a>
@@ -31,21 +28,16 @@
                 </div>
             </div>
         </div>
-        
     </Authorized>
 </AuthorizeView>
 
 @code {
-    
-    
-
     private async Task AddWorkshift()
     {
-        _navMgr.NavigateTo($"/AddWorkshift");
+        NavMgr.NavigateTo($"/AddWorkshift");
     }
     private async Task WorkshiftsOverview()
     {
-        _navMgr.NavigateTo($"/WorkshiftsOverview");
+        NavMgr.NavigateTo($"/WorkshiftsOverview");
     }
-
 }

@@ -1,95 +1,152 @@
 @page "/GuardsOverview"
+
 @using Entities
 @using Contracts
-@using Microsoft.Extensions.Options
-@inject IGuardService _guardService
-@inject IModalService _modalService
-@inject NavigationManager _navMgr
-@attribute [Authorize(Policy = "WardenAccess")]
-@using Syncfusion.Blazor
-@using Syncfusion.Blazor.DropDowns
 @using BlazorSide.UIComponents
-    <br/>
+
+@inject IGuardService GuardService
+@inject IModalService ModalService
+@inject NavigationManager NavMgr
+@attribute [Authorize(Policy = "WardenAccess")]
+
+<br/>
 <div class="d-flex flex-row mb-3 justify-content-center">
     <div class="p-2">
-        <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@currentOption" DataSource="@(Options)">
+        <SfDropDownList TValue="OptionsValues" @onselectionchange="OnDropdownSelected" TItem="string" Placeholder="Select options for viewing data" @bind-Value="@_currentOption" DataSource="@(Options)">
             <DropDownListEvents TItem="string" TValue="OptionsValues" ValueChange="@OnDropdownSelected"></DropDownListEvents>
         </SfDropDownList>
     </div>
     <div class="p-2">
         <input class="form-control" type="text" placeholder="Filter..."
-               @bind="Filter"
+               @bind="_filter"
                @bind:event="oninput">
     </div>
 </div>
 <div class="d-flex flex-row container mt-5 justify-content-center">
-@if (guards == null && !guards!.Any())
+    @if (_guards == null && !_guards!.Any())
     {
         <div class="spinner-border text-info" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
     }
-else
-{
-    @if (currentOption == OptionsValues.Table)
+    else
     {
-        <div class="d-flex flex-column col-md-7 align-items-center">
-            <div class="card text-center overflow-y-scroll" style="height: 30rem;"><h5 class="card-header bg-info text-white">Guards Overview</h5>
-                <table class="table table-hover align-middle mb-0 bg-white">
+        @if (_currentOption == OptionsValues.Table)
+        {
+            <div class="d-flex flex-column col-md-7 align-items-center">
+                <div class="card text-center overflow-y-scroll" style="height: 30rem;"><h5 class="card-header bg-info text-white">Guards Overview</h5>
+                    <table class="table table-hover align-middle mb-0 bg-white">
 
-                    <thead class=" bg-info sticky-top">
-                    <tr class="text-uppercase text-white">
-                        <th scope="col">First name</th>
-                        <th scope="col">Last name</th>
-                        <th scope="col">Username</th>
-                        <th scope="col">Email</th>
-                        <th scope="col">Sector</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Actions</th>
-                    </tr>
-                    </thead>
+                        <thead class=" bg-info sticky-top">
+                        <tr class="text-uppercase text-white">
+                            <th scope="col">First name</th>
+                            <th scope="col">Last name</th>
+                            <th scope="col">Username</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Sector</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Actions</th>
+                        </tr>
+                        </thead>
 
-                    <tbody>
-                    @foreach (var g in guards.Where(IsVisible))
-                    {
-                        <tr>
+                        <tbody>
+                        @foreach (var g in _guards.Where(IsVisible))
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img
+                                            src="img/officer.jpg"
+                                            class="rounded-circle"
+                                            alt=""
+                                            style="width: 45px; height: 45px"/>
+                                        <div class="ms-3">
+                                            <p class="fw-bold mb-1">@g.FirstName</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@g.LastName</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@g.Username</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            <p class=" mb-1">@g.Email</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="ms-3">
+                                            @if (IsAssigned(@g.Id))
+                                            {
+                                                <p class=" mb-1">@GetSector(g.Id)</p>
+                                            }
+                                            else
+                                            {
+                                                <p class=" mb-1">Unassigned</p>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (IsWorking(g.Id))
+                                    {
+                                        <span class="badge badge-success rounded-pill d-inline">Working Today</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-warning rounded-pill d-inline">Not Working Today</span>
 
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img
-                                        src="img/officer.jpg"
-                                        class="rounded-circle"
-                                        alt=""
-                                        style="width: 45px; height: 45px"/>
-                                    <div class="ms-3">
-                                        <p class="fw-bold mb-1">@g.FirstName</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@g.LastName</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@g.Username</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
-                                        <p class=" mb-1">@g.Email</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <div class="ms-3">
+                                    }
+                                </td>
+                                <td>
+                                    <a @onclick="@(() => { NavMgr.NavigateTo("/GuardDetails/" + @g.Id); })">
+                                        <button
+                                            type="button"
+                                            class="btn btn-link btn-rounded btn-sm fw-bold"
+                                            data-mdb-ripple-color="dark">
+                                            Edit
+                                        </button>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+        else if (_currentOption == OptionsValues.Grid)
+        {
+            <div class="row row-cols-1 row-cols-md-3">
+                @foreach (var g in _guards.Where(IsVisible))
+                {
+                    <div class="col mx-3">
+                        <div class="card mt-3 ">
+                            <div class="card-header text-white" style="background-color: #41B3D3 !important">@g.FirstName @g.LastName</div>
+                            <div class="card-body text-center">
+                                <img
+                                    src="img/officer.jpg"
+                                    class="rounded-circle"
+                                    alt=""
+                                    style="width: 100px; height: 100px"/>
+                                <ul class="list-group list-group-light">
+                                    <li class="list-group-item px-3">Username: @g.Username</li>
+                                    <li class="list-group-item px-3">Email: @g.Email</li>
+                                    <li class="list-group-item px-3">Status: <span class="badge badge-danger rounded-pill d-inline">Not Working Today</span> </li>
+                                    <li class="list-group-item px-3">
                                         @if (IsAssigned(@g.Id))
                                         {
                                             <p class=" mb-1">@GetSector(g.Id)</p>
@@ -98,139 +155,79 @@ else
                                         {
                                             <p class=" mb-1">Unassigned</p>
                                         }
-                                    </div>
-                                </div>
-                            </td>
-                            <td>
-                                @if (IsWorking(g.Id))
-                                {
-                                    <span class="badge badge-success rounded-pill d-inline">Working Today</span>
-                                }
-                                else
-                                {
-                                    <span class="badge badge-warning rounded-pill d-inline">Not Working Today</span>
-
-                                }
-                            </td>
-
-                            <td>
-                                <a @onclick="@(() => { _navMgr.NavigateTo("/GuardDetails/" + @g.Id); })">
-                                    <button
-                                        type="button"
-                                        class="btn btn-link btn-rounded btn-sm fw-bold"
-                                        data-mdb-ripple-color="dark">
-                                        Edit
-                                    </button>
-                                </a>
-                            </td>
-                        </tr>
-                    }
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    }
-    else if (currentOption == OptionsValues.Grid)
-    {
-        <div class="row row-cols-1 row-cols-md-3">
-            @foreach (var g in guards.Where(IsVisible))
-            {
-                <div class="col mx-3">
-                    <div class="card mt-3 ">
-                        <div class="card-header text-white" style="background-color: #41B3D3 !important">@g.FirstName @g.LastName</div>
-                        <div class="card-body text-center">
-                            <img
-                                src="img/officer.jpg"
-                                class="rounded-circle"
-                                alt=""
-                                style="width: 100px; height: 100px"/>
-                            <ul class="list-group list-group-light">
-                                <li class="list-group-item px-3">Username: @g.Username</li>
-                                <li class="list-group-item px-3">Email: @g.Email</li>
-                                <li class="list-group-item px-3">Status: <span class="badge badge-danger rounded-pill d-inline">Not Working Today</span> </li>
-                                <li class="list-group-item px-3">
-                                    @if (IsAssigned(@g.Id))
-                                    {
-                                        <p class=" mb-1">@GetSector(g.Id)</p>
-                                    }
-                                    else
-                                    {
-                                        <p class=" mb-1">Unassigned</p>
-                                    }
-                                </li>
-                            </ul>
-                            <br/>
-                            <a @onclick="@(() => { _navMgr.NavigateTo("/GuardDetails/" + @g.Id); })" class="btn btn-primary">Edit</a>
+                                    </li>
+                                </ul>
+                                <br/>
+                                <a @onclick="@(() => { NavMgr.NavigateTo("/GuardDetails/" + @g.Id); })" class="btn btn-primary">Edit</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <br/>
-            }
-
-        </div>
+                    <br/>
+                }
+            </div>
+        }
     }
-}
 </div>
+
 @code{
-    private OptionsValues currentOption { get; set; }=OptionsValues.Table;
-    private ICollection<Guard>? guards;
-    private string Filter { get; set; }
+    private OptionsValues _currentOption { get; set; }=OptionsValues.Table;
+    private ICollection<Guard>? _guards;
+    private string _filter { get; set; }
     
     protected  override async Task OnInitializedAsync()
     {
         try
         {
-            guards = await _guardService.GetGuardsAsync(20);
+            _guards = await GuardService.GetGuardsAsync(20);
         }
         catch (Exception e)
         {
             var paramet = new ModalParameters();
             paramet.Add(nameof(ErrorModal.Message),e.Message);
-            _modalService.Show<ErrorModal>("Error",paramet);
+            ModalService.Show<ErrorModal>("Error",paramet);
         }
     }
+    
     public string[] Options = Enum.GetNames(typeof(OptionsValues));
-
     public enum OptionsValues
     {
         Table,
         Grid
     }
+    
     private void OnDropdownSelected()
     {
-        Console.WriteLine(currentOption);
-
-    }
-    
-    private bool IsVisible(Guard guard)
-    {
-        if (string.IsNullOrEmpty(Filter))
-            return true;
- 
-        if (guard.FirstName.Contains(Filter, StringComparison.OrdinalIgnoreCase) 
-            || guard.LastName.Contains(Filter, StringComparison.OrdinalIgnoreCase)
-                || guard.Email.Contains(Filter, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
+        Console.WriteLine(_currentOption);
     }
 
     private long GetSector(long gId)
     {
-        Sector sector=   _guardService.GetGuardSectorAsync(gId).Result;
+        Sector sector=   GuardService.GetGuardSectorAsync(gId).Result;
         return sector.Id;
     }
 
+    private bool IsVisible(Guard guard)
+    {
+        if (string.IsNullOrEmpty(_filter))
+            return true;
+ 
+        if (guard.FirstName.Contains(_filter, StringComparison.OrdinalIgnoreCase) 
+            || guard.LastName.Contains(_filter, StringComparison.OrdinalIgnoreCase)
+            || guard.Email.Contains(_filter, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+    
     private bool IsAssigned(long guardId)
     {
-        bool result=  _guardService.IsGuardAssigned(guardId).Result;
+        bool result=  GuardService.IsGuardAssignedAsync(guardId).Result;
         return result;
     }
 
     private bool IsWorking(long guardId)
     {
-        bool result = _guardService.IsGuardWorking(guardId).Result;
+        bool result = GuardService.IsGuardWorkingAsync(guardId).Result;
         return result;
     }
-
 }

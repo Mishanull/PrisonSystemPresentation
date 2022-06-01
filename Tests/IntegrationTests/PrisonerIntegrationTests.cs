@@ -36,7 +36,7 @@ public class PrisonerIntegrationTests
     {
         Prisoner p = await NewPrisoner();
         Assert.DoesNotThrow(() => _prisonerService.CreatePrisonerAsync(p));
-        p = await _prisonerService.GetPrisonerBySsn(p.Ssn.ToString());
+        p = await _prisonerService.GetPrisonerBySsnAsync(p.Ssn.ToString());
         await _prisonerService.RemovePrisonerAsync(p.Id);
     }
     
@@ -51,7 +51,7 @@ public class PrisonerIntegrationTests
         }
         else
         {
-            Prisoner p = await _prisonerService.GetPrisonerBySsn(prisoners.First().Ssn.ToString());
+            Prisoner p = await _prisonerService.GetPrisonerBySsnAsync(prisoners.First().Ssn.ToString());
             Assert.That(p.Ssn, Is.EqualTo(prisoners.First().Ssn));
         }
     }
