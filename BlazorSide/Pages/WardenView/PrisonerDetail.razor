@@ -41,8 +41,8 @@
                 <InputText @bind-Value="_prisoner.CrimeCommitted" class="form-control" placeholder="Crime committed" rows="4"/>
                 <br/>
                 <div class="row">
-                    <div class="col-md-6"><button class="btn btn-white" @onclick="EditPrisoner" >Edit prisoner</button></div>
-                    <div class="col-md-6"><button class="btn btn-white" @onclick="DeletePrisoner">Delete prisoner</button></div>
+                    <div class="col-md-6"><button class="btn btn-white" type="submit" @onclick="EditPrisoner" >Edit prisoner</button></div>
+                    <div class="col-md-6"><button class="btn btn-white" type="button" @onclick="DeletePrisoner">Delete prisoner</button></div>
                 </div>
             </EditForm>
         </div>
@@ -73,7 +73,7 @@
     private async void EditPrisoner()
     {
         var parameters = new ModalParameters();
-        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to edit the information about the guard?");
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to edit the information about the prisoner?");
         var modalRef=ModalService.Show<ActionConfirm>("Success",parameters);
         var result = await modalRef.Result;
         if (!result.Cancelled)
@@ -96,7 +96,7 @@
     private async Task DeletePrisoner()
     {
         var parameters = new ModalParameters();
-        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to delete the information about the guard? WARNING: You cannot undo this action");
+        parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to delete the information about the prisoner? WARNING: You cannot undo this action");
         var modalRef=ModalService.Show<ActionConfirm>("Delete",parameters);
         var result = await modalRef.Result;
         if (!result.Cancelled)
@@ -104,7 +104,7 @@
             try
             {
                 await PrisonerService.RemovePrisonerAsync(_prisoner!.Id);
-                NavMgr.NavigateTo("/GuardsOverview");
+                NavMgr.NavigateTo("/PrisonersOverview");
             }
             catch (Exception e)
             {
