@@ -15,5 +15,4 @@ public interface IGuardService
     public Task<List<int>> GetNumberOfGuardsPerSectorAsync();
     public Task<bool> IsGuardAssignedAsync(long guardId);
     public Task<bool> IsGuardWorkingAsync(long guardId);
-    public Task ChangePasswordAsync(Guard loggedGuard);
 }

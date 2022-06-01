@@ -361,27 +361,5 @@ public class GuardClient : IGuardService
         return bool.Parse(response);
     }
 
-    public async Task ChangePasswordAsync(Guard loggedGuard)
-    {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        string guardToSend = JsonSerializer.Serialize(loggedGuard);
-        var messageBytes = Encoding.UTF8.GetBytes(guardToSend);
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: "guard.exchange", routingKey: "guard.changePassword", basicProperties: props,
-            body: messageBytes);
-    
-        Console.WriteLine("message published");
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-        String response =  tcs.Task.Result;
-        Console.WriteLine(response);
-        if (response.Equals("fail"))
-        {
-            throw new Exception("Failed to change password.");
-        }
-    }
+  
 }

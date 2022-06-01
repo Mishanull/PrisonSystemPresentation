@@ -38,10 +38,6 @@
                         <label>Your Username: </label>
                         <InputText @bind-Value="_loggedGuard.Username" class="form-control " type="text" readonly/>
                     </div>
-                    <div class="col-md-6">
-                        <label>Your Password:</label>
-                        <InputText @bind-Value="_loggedGuard.Password" class="form-control " type="password" readonly/>
-                    </div>
                 </div>
                 <br/>
                 <div class="row">
@@ -57,7 +53,24 @@
                 <br/>
                 <button class="d-flex btn btn-primary " type="submit">Submit Changes</button>
             </EditForm>
+            <br/>
+             <button class="d-flex btn btn-primary" @onclick="@(() => isChangingPassword=true)" >Change Password</button>
         </div>
+        <br/>
+        @if (isChangingPassword)
+        {
+            <br/>
+            <div class="d-flex flex-column w-25">
+                <label>Your Old Password: </label>
+                <br/>
+                <input class="form-control" type="password" @bind="_oldPassword"/>
+                <label>Your New Password: </label>
+                <br/>
+                <input class="form-control" type="password" @bind="_newPassword"/>
+                <button class="d-flex btn btn-primary " @onclick="ChangeGuardPassword">Submit Changes</button>
+
+            </div>
+        }
     </div>
 </div>
 
@@ -67,7 +80,8 @@
     private Guard _loggedGuard= new Guard();
     [CascadingParameter]
     private IModalService _modal { get; set; }
-    
+
+    private bool isChangingPassword;
     protected override async Task OnInitializedAsync()
     {
         _loggedGuard = await GuardService.GetGuardByIdAsync(Id.Value);
@@ -99,19 +113,22 @@
     {
         var parameters = new ModalParameters();
         parameters.Add(nameof(ActionConfirm.Message),"Are you sure you want to modify your password?");
-        var modalRef=ModalService.Show<ActionConfirm>("Success",parameters);
+        var modalRef=ModalService.Show<ActionConfirm>("Confirm",parameters);
         var result = await modalRef.Result;
         if (!result.Cancelled)
         {
             try
             {
-                if (Security.VerifyPassword(_oldPassword, _loggedGuard.Password))
+                if (Security.VerifyPassword(_oldPassword!, _loggedGuard.Password))
                 {
                     if (!string.IsNullOrEmpty(_newPassword) && _newPassword.Length>6)
                     {
-                        _loggedGuard.Password = _newPassword;
-                        // await GuardService.UpdateGuardAsync(_loggedGuard);
-                        await GuardService.ChangePasswordAsync(_loggedGuard);
+                        _loggedGuard.Password = Security.HashPassword(_newPassword);
+                        await GuardService.UpdateGuardAsync(_loggedGuard);
+                        var param = new ModalParameters();
+                        param.Add(nameof(MessageModal.Message),"Your password was changed successfully.");
+                        param.Add(nameof(MessageModal.OkButton),"Ok");
+                        _modal.Show<MessageModal>("Success", param);
                     }
                     else
                     {
@@ -126,6 +143,7 @@
                     _newPassword = "";
                     throw new Exception("Incorrect password.");
                 }
+                isChangingPassword = false;
             }
             catch (Exception e)
             {

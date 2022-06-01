@@ -65,23 +65,5 @@ public class UserClient : IUserService
 
     }
 
-    public async Task SendLogInConfirmationAsync(long id)
-    {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: "sep3.prison", routingKey: "login.confirm", basicProperties: props, body: messageBytes);
-        Console.WriteLine("message published login");
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-    }
-
-    public Task SendLogOutConfirmationAsync(long id)
-    {
-        throw new NotImplementedException();
-    }
+    
 }
