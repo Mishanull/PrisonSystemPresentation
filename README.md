@@ -1,4 +1,4 @@
-# PrisonSystemPresentation
+# Prison System Presentation Tier
 ### This repository represents the presentation tier of a larger 3-tier distributed system. The other tiers can be found in the following repos:
   * Application Tier: https://github.com/Mishanull/PrisonSystemApplication
   * Data Access Tier: https://github.com/Mishanull/PrisonSystemDataAccess
@@ -29,7 +29,9 @@ therefore their only interaction with the system is requesting a visit at a spec
 and date with one prisoner. 
   The project is carried out using agile development practices, where a product backlog 
 containing all user stories and requirements is created during analysis, and the main tool used for Scrum is Jira, in this case.
-
+## Design of the presentation tier
+Class diagram is as follows:
+![ClassDiagram](https://github.com/Mishanull/PrisonSystemPresentation/blob/8e6ec3735ae3e67460b050444d5b7ce2461404e1/Appendix-D_Presentation%20Tier%20Class%20Diagram.svg)
 ## The instructions for running this are as follows:
 
 * Clone all of the 3 repos in separate projects
