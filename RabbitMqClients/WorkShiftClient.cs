@@ -8,55 +8,23 @@ using RabbitMQ.Client.Events;
 
 namespace RabbitMqClients;
 
-public class WorkShiftClient : IWorkShiftService
+public class WorkShiftClient : RabbitMQClient, IWorkShiftService
 {
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
-    private readonly EventingBasicConsumer _consumer;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _callbackMapper = new();
-    private readonly string _replyQueueName;
+    
     
     private const string Exchange = "workShift.exchange";
 
-    public WorkShiftClient()
+    public WorkShiftClient() : base()
     {
-        var factory = new ConnectionFactory() { HostName = "localhost" };
-
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _replyQueueName = _channel.QueueDeclare(queue: "").QueueName;
-        Console.WriteLine(_replyQueueName);
-        _consumer = new EventingBasicConsumer(_channel);
-        _consumer.Received += (model, ea) =>
-        {
-            if (!_callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
-                return;
-            var body = ea.Body.ToArray();
-            var response = Encoding.UTF8.GetString(body);
-            tcs.TrySetResult(response);
-        };
-
-        _channel.BasicConsume(
-            consumer: _consumer,
-            queue: _replyQueueName,
-            autoAck: true);
     }
     public async Task<ICollection<WorkShift>> GetWorkShiftsAsync()
     {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
+        var routingKey = "workShift.get";
         
         var messageBytes = Encoding.UTF8.GetBytes("");
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.get", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
+ 
         
-        String response =  tcs.Task.Result;
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         if (response.Equals("fail"))
         {
             throw new Exception("Failed to load workshifts");
@@ -71,19 +39,10 @@ public class WorkShiftClient : IWorkShiftService
 
     public async Task CreateWorkShiftAsync(WorkShift workShift)
     {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        
+        var routingKey = "workShift.add";
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(workShift));
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.add", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-        Console.WriteLine("message published workshift/add");
-        String response =  tcs.Task.Result;
+        
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         Console.WriteLine(response);
         if (response.Equals("fail"))
         {
@@ -94,19 +53,11 @@ public class WorkShiftClient : IWorkShiftService
 
     public async Task RemoveWorkShiftAsync(long id)
     {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        
+        var routingKey = "workShift.remove";
         var messageBytes = Encoding.UTF8.GetBytes(id.ToString());
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.remove", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
-        String response =  tcs.Task.Result;
+        
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         if (response.Equals("fail"))
         {
             throw new Exception($"Failed to remove workshift n.-{id}");
@@ -115,20 +66,12 @@ public class WorkShiftClient : IWorkShiftService
 
     public async Task UpdateWorkShiftAsync(WorkShift workShift)
     {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        
+
+        var routingKey = "workShift.update";
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(workShift));
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs); 
         
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.update", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
-        String response =  tcs.Task.Result;
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         if (response.Equals("fail"))
         {
             throw new Exception($"Failed to update workshift n.-{workShift.Id}");
@@ -137,20 +80,10 @@ public class WorkShiftClient : IWorkShiftService
 
     public async Task<WorkShift> GetWorkShiftByIdAsync(long? id)
     {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        
+        var routingKey = "workShift.getById";
         var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(id));
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.getById", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
         
-        String response =  tcs.Task.Result;
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         if (response.Equals("fail"))
         {
             throw new Exception($"Failed to load workshift n.-{id}");
@@ -165,21 +98,10 @@ public class WorkShiftClient : IWorkShiftService
 
     public async Task AddGuardToWorkShiftAsync(string guardId, string shiftId)
     {
-        string[] idArray = {guardId, shiftId};
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(idArray));
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs); 
-        
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.addGuard", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-        
-        String response =  tcs.Task.Result;
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(new[]{guardId, shiftId}));
+        var routingKey = "workShift.addGuard";
+
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         if (response.Equals("fail"))
         {
             throw new Exception($"Failed to add guard n.-{guardId} to workshift n.-{shiftId}");
@@ -188,22 +110,9 @@ public class WorkShiftClient : IWorkShiftService
 
     public async Task RemoveGuardFromWorkShiftAsync(string guardId, string shiftId)
     {
-        string ids = $"{guardId}{shiftId}";
-        Console.WriteLine(ids);
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
-        
-        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(ids));
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs); 
-        
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.removeGuard", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-        
-        String response =  tcs.Task.Result;
+        var messageBytes = Encoding.UTF8.GetBytes(JsonSerializer.Serialize($"{guardId}{shiftId}"));
+        var routingKey = "workShift.removeGuard";
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         if (response.Equals("fail"))
         {
             throw new Exception($"Failed to remove guard n.-{guardId} from workshift n.-{shiftId}");
@@ -212,20 +121,10 @@ public class WorkShiftClient : IWorkShiftService
 
     public async Task<WorkShift> GetWorkShiftByGuardAsync(long guardId)
     {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
+        var routingKey = "workShift.getByGuardId";
         
         var messageBytes = Encoding.UTF8.GetBytes(guardId.ToString());
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: Exchange, routingKey: "workShift.getByGuardId", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-        
-        String response =  tcs.Task.Result;
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         if (response.Equals("fail"))
         {
             throw new Exception($"Failed to load workshift from guard n.-{guardId}");

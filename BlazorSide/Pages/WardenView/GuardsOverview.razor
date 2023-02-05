@@ -3,6 +3,7 @@
 @using Entities
 @using Contracts
 @using BlazorSide.UIComponents
+@using System.Globalization
 
 @inject IGuardService GuardService
 @inject IModalService ModalService
@@ -50,7 +51,7 @@
                         </thead>
 
                         <tbody>
-                        @foreach (var g in _guards.Where(IsVisible))
+                        @foreach (var g in _guards!.Where(IsVisible))
                         {
                             <tr>
                                 <td>
@@ -89,7 +90,7 @@
                                 <td>
                                     <div class="d-flex align-items-center">
                                         <div class="ms-3">
-                                            @if (IsAssigned(@g.Id))
+                                            @if (IsAssigned(@g.Id).Result)
                                             {
                                                 <p class=" mb-1">@GetSector(g.Id)</p>
                                             }
@@ -101,7 +102,7 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if (IsWorking(g.Id))
+                                    @if (IsWorking(g.Id).Result)
                                     {
                                         <span class="badge badge-success rounded-pill d-inline">Working Today</span>
                                     }
@@ -147,7 +148,7 @@
                                     <li class="list-group-item px-3">Email: @g.Email</li>
                                     <li class="list-group-item px-3">Status: <span class="badge badge-danger rounded-pill d-inline">Not Working Today</span> </li>
                                     <li class="list-group-item px-3">
-                                        @if (IsAssigned(@g.Id))
+                                        @if (IsAssigned(@g.Id).Result)
                                         {
                                             <p class=" mb-1">@GetSector(g.Id)</p>
                                         }
@@ -174,11 +175,11 @@
     private ICollection<Guard>? _guards;
     private string _filter { get; set; }
     
-    protected  override async Task OnInitializedAsync()
+    protected  override async  Task OnInitializedAsync()
     {
         try
         {
-            _guards = await GuardService.GetGuardsAsync(20);
+            _guards = await GuardService.GetGuardsAsync(20) ;
         }
         catch (Exception e)
         {
@@ -200,10 +201,10 @@
         Console.WriteLine(_currentOption);
     }
 
-    private long GetSector(long gId)
+    private  Task<long> GetSector(long gId)
     {
-        Sector sector=   GuardService.GetGuardSectorAsync(gId).Result;
-        return sector.Id;
+        long sector=  Task.FromResult(GuardService.GetGuardSectorAsync(gId).Result).Result.Id ;
+        return Task.FromResult<long>(sector);
     }
 
     private bool IsVisible(Guard guard)
@@ -219,15 +220,15 @@
         return false;
     }
     
-    private bool IsAssigned(long guardId)
+    private async Task<bool> IsAssigned(long guardId)
     {
-        bool result=  GuardService.IsGuardAssignedAsync(guardId).Result;
+        var result=  await  GuardService.IsGuardAssignedAsync(guardId);
         return result;
     }
 
-    private bool IsWorking(long guardId)
+    private async  Task<bool> IsWorking(long guardId)
     {
-        bool result = GuardService.IsGuardWorkingAsync(guardId).Result;
+        var result = await GuardService.IsGuardWorkingAsync(guardId);
         return result;
     }
 }

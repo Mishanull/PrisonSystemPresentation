@@ -9,48 +9,19 @@ using RabbitMQ.Client.Events;
 
 namespace RabbitMQClient;
 
-public class UserClient : IUserService
+public class UserClient : RabbitMqClients.RabbitMQClient, IUserService
 {
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
-    private readonly EventingBasicConsumer _consumer;
-    private readonly ConcurrentDictionary<string, TaskCompletionSource<string>> _callbackMapper = new();
-    private readonly string _replyQueueName;
-
+    private const string Exchange = "sep3.prison";
     public UserClient()
     {
-        var factory = new ConnectionFactory() { HostName = "localhost" };
-
-        _connection = factory.CreateConnection();
-        _channel = _connection.CreateModel();
-        _replyQueueName = _channel.QueueDeclare(queue: "").QueueName;
-        Console.WriteLine(_replyQueueName);
-        _consumer = new EventingBasicConsumer(_channel);
-        _consumer.Received += (model, ea) =>
-        {
-            if (!_callbackMapper.TryRemove(ea.BasicProperties.CorrelationId, out TaskCompletionSource<string>? tcs))
-                return;
-            var body = ea.Body.ToArray();
-            var response = Encoding.UTF8.GetString(body);
-            tcs.TrySetResult(response);
-        };
-
-        _channel.BasicConsume(consumer: _consumer, queue: _replyQueueName, autoAck: true);
+       
     }
 
     public async Task<User> GetUserAsync(string username)
     {
-        CancellationToken cancellationToken = default;
-        IBasicProperties props = _channel.CreateBasicProperties();
-        var correlationId = Guid.NewGuid().ToString();
-        props.CorrelationId = correlationId;
-        props.ReplyTo = _replyQueueName;
         var messageBytes = Encoding.UTF8.GetBytes(username);
-        var tcs = new TaskCompletionSource<string>();
-        _callbackMapper.TryAdd(correlationId, tcs);                
-        _channel.BasicPublish(exchange: "sep3.prison", routingKey: "prison.users", basicProperties: props, body: messageBytes);
-        cancellationToken.Register(() => _callbackMapper.TryRemove(correlationId, out var tmp));
-        String response =  tcs.Task.Result;
+        var routingKey = "prison.users";
+        var response =  await SendMessageWithRoutingKey(routingKey,messageBytes,Exchange);
         Console.WriteLine(response);
         if (response.Equals("fail"))
         {
