@@ -6,17 +6,20 @@
     The system is a three-tier architecture that consists of presentation, application, and 
 data access layers. The presentation layer is developed in  C# 
 and uses the Blazor framework to create an interactive UI to handle all the 
-interaction with the user. The application layer written in Java acts as a server and 
+interaction with the user.
+
+   The application layer written in Java acts as a server and 
 contains most of the business logic. Communication between the two is carried out using 
 the Advanced Message Queuing Protocol (AMQP) supported by a RabbitMQ message 
 broker. Messages are sent to dedicated queues to which the server listens and then 
 sends replies with requested data. 
-  The data access layer is also developed in the C# 
-language and is connected to an SQLite database using Entity Framework Core (EFC), 
+
+  The data access layer is also developed in  C#  and is connected to an SQLite database using Entity Framework Core (EFC), 
 where all the system data is stored. Communication between it and the application tier is facilitated using 
 HTTP (REST) protocol. Data access has exposed web API endpoints in form of URLs to which 
 the application layer can make HTTP requests (POST, GET, PUT, PATCH, DELETE) in 
 order to manipulate the data and perform CRUD operations.
+
   This project is a system representing a prison facility. It contains multiple types of 
 users with different permissions and access - warden, guard and a visitor. Warden is the 
 administrator who adds and manages accounts and work shift schedules of the guards, 
@@ -26,11 +29,13 @@ they have no interaction with it. Guards have access to functionalities required
 tasks - they have an overview of the prisoners and can update their information to a 
 limited extent. Visitors are people outside the prison, who do not have an account and 
 therefore their only interaction with the system is requesting a visit at a specified time 
-and date with one prisoner. 
+and date with one prisoner.
+
   The project is carried out using agile development practices, where a product backlog 
 containing all user stories and requirements is created during analysis, and the main tool used for Scrum is Jira, in this case.
-## Design of the presentation tier
-Class diagram is as follows:
+## Design of the presentation tier  
+Class diagram is as follows:  
+
 ![ClassDiagram](https://github.com/Mishanull/PrisonSystemPresentation/blob/8e6ec3735ae3e67460b050444d5b7ce2461404e1/Appendix-D_Presentation%20Tier%20Class%20Diagram.svg)
 ## The instructions for running this are as follows:
 ### Prerequisites  
