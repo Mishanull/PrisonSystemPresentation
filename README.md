@@ -33,9 +33,20 @@ containing all user stories and requirements is created during analysis, and the
 Class diagram is as follows:
 ![ClassDiagram](https://github.com/Mishanull/PrisonSystemPresentation/blob/8e6ec3735ae3e67460b050444d5b7ce2461404e1/Appendix-D_Presentation%20Tier%20Class%20Diagram.svg)
 ## The instructions for running this are as follows:
-
+### Prerequisites  
+* Make sure you have a rabbitMQ server running on localhost (install from here: https://www.rabbitmq.com/download.html)
+* Make sure you have .NET6 installed
+* Modify the data source URL in the code inside the data access tier to correspond to your local SQLite database path (Unfortunately we couldn't host a database for free indefinetely anywhere)
+* Run the following commands in the terminal: 
+  * dotnet tool install --global dotnet-ef (if you don't have ef tools installed) 
+    or dotnet tool update --global dotnet-ef (if the version isn't updated to 7.0.6)
+  * dotnet ef Migrations add $NameOfMigration$
+  * dotnet ef database update
+  
+### Steps  
 * Clone all of the 3 repos in separate projects
-* Modify the data source URL in the code inside the data access tier to correspond to your local path (Unfortunately we couldn't host a database for free indefinetely anywhere)
+
 * Run all 3 programs in whatever order you want
 * Once you start, use the following credentials for logging in as an admin: username: mike, password: 12345 
 * Follow the user guide in this repo to understand how to use the system, if it is not intuitive for you.
+
